@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0}
+</style>
+</helmet>
+
+<div style="min-width:100%;min-height:100vh;width:max-content;box-sizing:border-box;padding:52px 56px;background:#e7e5df;font-family:'Anuphan',sans-serif">
+
+  <!-- ===== HEADER ===== -->
+  <div style="max-width:880px;margin-bottom:44px">
+    <div style="font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:#a8854a;font-weight:600">Mun · มั่น</div>
+    <div style="font-size:34px;font-weight:600;color:#2a2723;letter-spacing:-.5px;margin-top:8px">แอปติดตามพอร์ตการลงทุน</div>
+    <div style="font-size:15px;color:#6f6a60;margin-top:10px;line-height:1.6;max-width:620px">แอปพลิเคชันบน iOS สำหรับติดตามหุ้นไทย หุ้นต่างประเทศ และคริปโตในที่เดียว — สไตล์แมตต์หรูหรา โทนครีม-ทอง พร้อมโหมดสว่างและมืด</div>
+    <div style="display:flex;gap:22px;margin-top:20px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px"><span style="width:13px;height:13px;border-radius:4px;background:#a8854a"></span><span style="font-size:13px;color:#6f6a60">ทองแมตต์ · สีหลัก</span></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="width:13px;height:13px;border-radius:4px;background:#4f8a6b"></span><span style="font-size:13px;color:#6f6a60">เขียว = กำไร</span></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="width:13px;height:13px;border-radius:4px;background:#c0664f"></span><span style="font-size:13px;color:#6f6a60">แดง = ขาดทุน</span></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Newsreader',serif;font-size:16px;color:#2a2723">Aa</span><span style="font-size:13px;color:#6f6a60">Anuphan · Newsreader</span></div>
+    </div>
+  </div>
+
+  <!-- ===== LIGHT ROW ===== -->
+  <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#9a948a;font-weight:600;margin-bottom:18px">โหมดสว่าง · Light</div>
+  <div style="display:flex;gap:40px;align-items:flex-start;margin-bottom:52px">
+
+    <!-- FRAME: Dashboard light -->
+    <div style="display:flex;flex-direction:column;gap:14px;flex:none">
+      <span style="font-size:13px;color:#6f6a60;font-weight:500">ภาพรวมพอร์ต</span>
+      <div style="--page:#f4f1ea;--card:#fffdf8;--card2:#f6f2e9;--ink:#2a2723;--sub:#8f897e;--faint:#b8b2a6;--line:#e8e2d5;--gold:#a8854a;--goldsoft:#efe6d2;--up:#4f8a6b;--down:#c0664f;width:390px;height:844px;border-radius:46px;background:var(--page);overflow:hidden;position:relative;box-shadow:0 22px 60px -18px rgba(60,52,38,.4);border:1px solid rgba(0,0,0,.06)">
+        <!-- status bar -->
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px">
+          <span style="font-size:15px;font-weight:600;color:var(--ink);letter-spacing:.3px">9:41</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="var(--ink)"></rect><rect x="5" y="4" width="3" height="7" rx="1" fill="var(--ink)"></rect><rect x="10" y="2" width="3" height="9" rx="1" fill="var(--ink)"></rect><rect x="15" y="0" width="3" height="11" rx="1" fill="var(--ink)" opacity=".3"></rect></svg>
+            <span style="font-size:12px;font-weight:600;color:var(--ink)">5G</span>
+            <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="var(--ink)" opacity=".4"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="var(--ink)"></rect><rect x="23" y="4" width="2" height="4" rx="1" fill="var(--ink)" opacity=".4"></rect></svg>
+          </div>
+        </div>
+        <!-- app bar -->
+        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;color:var(--sub)">สวัสดีตอนเช้า</div>
+            <div style="font-size:19px;font-weight:600;color:var(--ink);letter-spacing:.2px">สมหญิง วัฒนกุล</div>
+          </div>
+          <div style="width:42px;height:42px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:600;font-size:15px;border:1px solid var(--line)">สญ</div>
+        </div>
+        <!-- hero card -->
+        <div style="margin:12px 16px 0;padding:22px 22px 18px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:13px;color:var(--sub);letter-spacing:.3px">มูลค่าพอร์ตรวม</div>
+            <div style="display:flex;gap:4px;background:var(--card2);border-radius:8px;padding:3px">
+              <span style="font-size:11px;font-weight:600;color:var(--card);background:var(--gold);padding:4px 9px;border-radius:6px">฿</span>
+              <span style="font-size:11px;font-weight:600;color:var(--sub);padding:4px 9px">$</span>
+            </div>
+          </div>
+          <div style="font-family:'Newsreader',serif;font-size:42px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:8px;letter-spacing:-.5px">฿2,847,500</div>
+          <div style="font-size:14px;color:var(--sub);margin-top:3px">≈ $78,230.45</div>
+          <div style="display:flex;align-items:center;gap:9px;margin-top:14px">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:color-mix(in oklab,var(--up) 13%,transparent);color:var(--up);font-size:13px;font-weight:600">▲ ฿24,300 · +0.86%</span>
+            <span style="font-size:12.5px;color:var(--sub)">วันนี้</span>
+          </div>
+          <svg width="100%" height="62" viewBox="0 0 320 62" preserveAspectRatio="none" style="margin-top:14px;display:block"><path d="M0,48 C24,44 36,30 60,32 C88,34 96,46 124,40 C150,35 158,18 188,22 C214,25 224,34 250,28 C278,22 292,10 320,8" fill="none" stroke="var(--up)" stroke-width="2.2" stroke-linecap="round"></path><circle cx="320" cy="8" r="3.4" fill="var(--up)"></circle></svg>
+          <div style="display:flex;gap:6px;margin-top:14px">
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;width:34px;text-align:center">1ว</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;width:34px;text-align:center">1สั</span>
+            <span style="font-size:12px;font-weight:600;color:var(--gold);background:var(--goldsoft);border-radius:8px;padding:5px 0;width:34px;text-align:center">1ด</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;width:34px;text-align:center">3ด</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;width:34px;text-align:center">1ป</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;width:46px;text-align:center">ทั้งหมด</span>
+          </div>
+        </div>
+        <!-- allocation -->
+        <div style="margin:18px 16px 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+            <span style="font-size:14px;font-weight:600;color:var(--ink)">สัดส่วนการลงทุน</span>
+            <span style="font-size:12.5px;color:var(--gold);font-weight:600">ปรับสมดุล</span>
+          </div>
+          <div style="display:flex;height:11px;border-radius:6px;overflow:hidden;gap:2px">
+            <span style="width:42%;background:#a8854a"></span>
+            <span style="width:28%;background:#7d9b6f"></span>
+            <span style="width:18%;background:#6f8aa8"></span>
+            <span style="width:12%;background:#bfa07f"></span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;margin-top:13px">
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:#a8854a"></span><span style="font-size:12.5px;color:var(--sub);flex:1">หุ้นต่างประเทศ</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">42%</span></div>
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:#7d9b6f"></span><span style="font-size:12.5px;color:var(--sub);flex:1">หุ้นไทย</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">28%</span></div>
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:#6f8aa8"></span><span style="font-size:12.5px;color:var(--sub);flex:1">คริปโต</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">18%</span></div>
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:#bfa07f"></span><span style="font-size:12.5px;color:var(--sub);flex:1">เงินสด</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">12%</span></div>
+          </div>
+        </div>
+        <!-- holdings -->
+        <div style="margin:20px 16px 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+            <span style="font-size:14px;font-weight:600;color:var(--ink)">การถือครอง</span>
+            <span style="font-size:12.5px;color:var(--gold);font-weight:600">ดูทั้งหมด</span>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 16px">
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">AA</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">Apple</div><div style="font-size:12.5px;color:var(--sub)">AAPL · 25 หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">$5,335</div><div style="font-size:12.5px;font-weight:600;color:var(--up)">+1.35%</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">PT</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ปตท.</div><div style="font-size:12.5px;color:var(--sub)">PTT · 1,200 หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">฿39,600</div><div style="font-size:12.5px;font-weight:600;color:var(--up)">+0.46%</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:16px">₿</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">Bitcoin</div><div style="font-size:12.5px;color:var(--sub)">BTC · 0.08</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">฿198,400</div><div style="font-size:12.5px;font-weight:600;color:var(--down)">−2.10%</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">NV</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">Nvidia</div><div style="font-size:12.5px;color:var(--sub)">NVDA · 18 หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">$2,214</div><div style="font-size:12.5px;font-weight:600;color:var(--up)">+3.22%</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- tab bar -->
+        <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:13px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2.2"></rect><rect x="13" y="3" width="8" height="5" rx="2.2"></rect><rect x="13" y="10" width="8" height="11" rx="2.2"></rect><rect x="3" y="13" width="8" height="8" rx="2.2"></rect></svg><span style="font-size:10.5px;color:var(--gold);font-weight:600">ภาพรวม</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16l5-6 4 3 6-8"></path><path d="M18 5h3v3"></path></svg><span style="font-size:10.5px;color:var(--faint)">ตลาด</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"></path></svg><span style="font-size:10.5px;color:var(--faint)">เฝ้าดู</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg><span style="font-size:10.5px;color:var(--faint)">ปันผล</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg><span style="font-size:10.5px;color:var(--faint)">บัญชี</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRAME: Stock Detail light -->
+    <div style="display:flex;flex-direction:column;gap:14px;flex:none">
+      <span style="font-size:13px;color:#6f6a60;font-weight:500">รายละเอียดหุ้น</span>
+      <div style="--page:#f4f1ea;--card:#fffdf8;--card2:#f6f2e9;--ink:#2a2723;--sub:#8f897e;--faint:#b8b2a6;--line:#e8e2d5;--gold:#a8854a;--goldsoft:#efe6d2;--up:#4f8a6b;--down:#c0664f;width:390px;height:844px;border-radius:46px;background:var(--page);overflow:hidden;position:relative;box-shadow:0 22px 60px -18px rgba(60,52,38,.4);border:1px solid rgba(0,0,0,.06)">
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px">
+          <span style="font-size:15px;font-weight:600;color:var(--ink);letter-spacing:.3px">9:41</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="var(--ink)"></rect><rect x="5" y="4" width="3" height="7" rx="1" fill="var(--ink)"></rect><rect x="10" y="2" width="3" height="9" rx="1" fill="var(--ink)"></rect><rect x="15" y="0" width="3" height="11" rx="1" fill="var(--ink)" opacity=".3"></rect></svg>
+            <span style="font-size:12px;font-weight:600;color:var(--ink)">5G</span>
+            <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="var(--ink)" opacity=".4"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="var(--ink)"></rect><rect x="23" y="4" width="2" height="4" rx="1" fill="var(--ink)" opacity=".4"></rect></svg>
+          </div>
+        </div>
+        <!-- nav -->
+        <div style="padding:6px 20px 4px;display:flex;align-items:center;justify-content:space-between">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+          <div style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--ink);letter-spacing:.5px">AAPL</div><div style="font-size:11.5px;color:var(--sub)">Apple Inc.</div></div>
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 21l-5.3 1 1.3-5.9-4.5-4 6-.6z"></path></svg>
+        </div>
+        <!-- price -->
+        <div style="padding:14px 24px 0">
+          <div style="font-size:12.5px;color:var(--sub)">NASDAQ · ดอลลาร์สหรัฐ</div>
+          <div style="font-family:'Newsreader',serif;font-size:44px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:4px;letter-spacing:-.5px">$213.40</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:color-mix(in oklab,var(--up) 13%,transparent);color:var(--up);font-size:13px;font-weight:600">▲ $2.85 · +1.35%</span>
+            <span style="font-size:13px;color:var(--sub)">≈ ฿7,768</span>
+          </div>
+        </div>
+        <!-- chart -->
+        <div style="padding:18px 16px 0">
+          <svg width="100%" height="148" viewBox="0 0 358 148" preserveAspectRatio="none" style="display:block"><path d="M0,108 C30,100 44,118 74,110 C104,102 116,70 150,78 C184,86 196,58 230,52 C262,46 276,64 304,50 C330,38 344,26 358,22 L358,148 L0,148 Z" fill="color-mix(in oklab,var(--gold) 11%,transparent)"></path><path d="M0,108 C30,100 44,118 74,110 C104,102 116,70 150,78 C184,86 196,58 230,52 C262,46 276,64 304,50 C330,38 344,26 358,22" fill="none" stroke="var(--up)" stroke-width="2.4" stroke-linecap="round"></path><circle cx="358" cy="22" r="3.6" fill="var(--up)"></circle></svg>
+          <div style="display:flex;gap:6px;margin-top:10px;padding:0 6px">
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;flex:1;text-align:center">1ว</span>
+            <span style="font-size:12px;font-weight:600;color:var(--gold);background:var(--goldsoft);border-radius:8px;padding:5px 0;flex:1;text-align:center">1สั</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;flex:1;text-align:center">1ด</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;flex:1;text-align:center">3ด</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;flex:1;text-align:center">1ป</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;flex:1;text-align:center">สูงสุด</span>
+          </div>
+        </div>
+        <!-- stats -->
+        <div style="margin:18px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px 12px">
+          <div><div style="font-size:11.5px;color:var(--sub)">เปิด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">211.20</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">สูงสุด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">214.85</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">ต่ำสุด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">210.90</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">มูลค่าตลาด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">3.27T</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">ปริมาณ</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">48.2M</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">P/E</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">32.6</div></div>
+        </div>
+        <!-- your position -->
+        <div style="margin:14px 16px 0;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:16px 18px">
+          <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px">การถือครองของคุณ</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:9px"><span style="font-size:13px;color:var(--sub)">จำนวน</span><span style="font-size:13.5px;font-weight:600;color:var(--ink)">25 หุ้น · $5,335</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:9px"><span style="font-size:13px;color:var(--sub)">ต้นทุนเฉลี่ย</span><span style="font-size:13.5px;font-weight:600;color:var(--ink)">$176.20</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--sub)">กำไรที่ยังไม่รับรู้</span><span style="font-size:13.5px;font-weight:600;color:var(--up)">+$925 · +20.9%</span></div>
+        </div>
+        <!-- action bar -->
+        <div style="position:absolute;left:0;right:0;bottom:0;height:96px;background:var(--card);border-top:1px solid var(--line);display:flex;gap:12px;padding:14px 18px 0">
+          <div style="flex:1;height:52px;border-radius:15px;border:1.5px solid var(--down);color:var(--down);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600">ขาย</div>
+          <div style="flex:1;height:52px;border-radius:15px;background:var(--gold);color:#fffdf8;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600">ซื้อ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRAME: Watchlist light -->
+    <div style="display:flex;flex-direction:column;gap:14px;flex:none">
+      <span style="font-size:13px;color:#6f6a60;font-weight:500">เฝ้าดู</span>
+      <div style="--page:#f4f1ea;--card:#fffdf8;--card2:#f6f2e9;--ink:#2a2723;--sub:#8f897e;--faint:#b8b2a6;--line:#e8e2d5;--gold:#a8854a;--goldsoft:#efe6d2;--up:#4f8a6b;--down:#c0664f;width:390px;height:844px;border-radius:46px;background:var(--page);overflow:hidden;position:relative;box-shadow:0 22px 60px -18px rgba(60,52,38,.4);border:1px solid rgba(0,0,0,.06)">
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px">
+          <span style="font-size:15px;font-weight:600;color:var(--ink);letter-spacing:.3px">9:41</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="var(--ink)"></rect><rect x="5" y="4" width="3" height="7" rx="1" fill="var(--ink)"></rect><rect x="10" y="2" width="3" height="9" rx="1" fill="var(--ink)"></rect><rect x="15" y="0" width="3" height="11" rx="1" fill="var(--ink)" opacity=".3"></rect></svg>
+            <span style="font-size:12px;font-weight:600;color:var(--ink)">5G</span>
+            <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="var(--ink)" opacity=".4"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="var(--ink)"></rect><rect x="23" y="4" width="2" height="4" rx="1" fill="var(--ink)" opacity=".4"></rect></svg>
+          </div>
+        </div>
+        <!-- title -->
+        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">เฝ้าดู</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+        </div>
+        <!-- segmented -->
+        <div style="display:flex;gap:7px;padding:12px 18px 0;overflow:hidden">
+          <span style="font-size:13px;font-weight:600;color:#fffdf8;background:var(--gold);border-radius:10px;padding:8px 15px;white-space:nowrap">ทั้งหมด</span>
+          <span style="font-size:13px;color:var(--sub);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 15px;white-space:nowrap">หุ้นไทย</span>
+          <span style="font-size:13px;color:var(--sub);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 15px;white-space:nowrap">ต่างประเทศ</span>
+          <span style="font-size:13px;color:var(--sub);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 15px;white-space:nowrap">คริปโต</span>
+        </div>
+        <!-- index cards -->
+        <div style="display:flex;gap:11px;padding:16px 18px 0">
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 13px 11px">
+            <div style="font-size:12px;color:var(--sub);font-weight:600">SET</div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px">1,308.22</div>
+            <svg width="100%" height="20" viewBox="0 0 70 20" preserveAspectRatio="none" style="margin:5px 0 3px;display:block"><path d="M0,6 C12,4 18,12 30,11 C44,10 50,15 70,16" fill="none" stroke="var(--down)" stroke-width="1.8"></path></svg>
+            <div style="font-size:12px;font-weight:600;color:var(--down)">−0.32%</div>
+          </div>
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 13px 11px">
+            <div style="font-size:12px;color:var(--sub);font-weight:600">S&P 500</div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px">5,521.4</div>
+            <svg width="100%" height="20" viewBox="0 0 70 20" preserveAspectRatio="none" style="margin:5px 0 3px;display:block"><path d="M0,15 C14,14 20,8 34,9 C48,10 54,4 70,3" fill="none" stroke="var(--up)" stroke-width="1.8"></path></svg>
+            <div style="font-size:12px;font-weight:600;color:var(--up)">+0.41%</div>
+          </div>
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 13px 11px">
+            <div style="font-size:12px;color:var(--sub);font-weight:600">BTC</div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px">฿2.48M</div>
+            <svg width="100%" height="20" viewBox="0 0 70 20" preserveAspectRatio="none" style="margin:5px 0 3px;display:block"><path d="M0,4 C14,6 20,3 34,8 C48,13 54,11 70,16" fill="none" stroke="var(--down)" stroke-width="1.8"></path></svg>
+            <div style="font-size:12px;font-weight:600;color:var(--down)">−2.10%</div>
+          </div>
+        </div>
+        <!-- watch list -->
+        <div style="margin:16px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+          <div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">TSLA</div><div style="font-size:12px;color:var(--sub)">Tesla Inc.</div></div>
+            <svg width="56" height="24" viewBox="0 0 56 24" preserveAspectRatio="none"><path d="M0,18 C12,16 18,9 28,11 C40,13 46,5 56,4" fill="none" stroke="var(--up)" stroke-width="1.8"></path></svg>
+            <div style="text-align:right;min-width:74px"><div style="font-size:14.5px;font-weight:600;color:var(--ink)">$248.50</div><div style="font-size:12px;font-weight:600;color:var(--up)">+2.10%</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">CPALL</div><div style="font-size:12px;color:var(--sub)">ซีพี ออลล์</div></div>
+            <svg width="56" height="24" viewBox="0 0 56 24" preserveAspectRatio="none"><path d="M0,8 C12,9 18,14 28,13 C40,12 46,16 56,17" fill="none" stroke="var(--down)" stroke-width="1.8"></path></svg>
+            <div style="text-align:right;min-width:74px"><div style="font-size:14.5px;font-weight:600;color:var(--ink)">฿58.25</div><div style="font-size:12px;font-weight:600;color:var(--down)">−0.43%</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">NVDA</div><div style="font-size:12px;color:var(--sub)">Nvidia Corp.</div></div>
+            <svg width="56" height="24" viewBox="0 0 56 24" preserveAspectRatio="none"><path d="M0,20 C12,18 18,12 28,10 C40,8 46,4 56,2" fill="none" stroke="var(--up)" stroke-width="1.8"></path></svg>
+            <div style="text-align:right;min-width:74px"><div style="font-size:14.5px;font-weight:600;color:var(--ink)">$123.04</div><div style="font-size:12px;font-weight:600;color:var(--up)">+3.22%</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">KBANK</div><div style="font-size:12px;color:var(--sub)">กสิกรไทย</div></div>
+            <svg width="56" height="24" viewBox="0 0 56 24" preserveAspectRatio="none"><path d="M0,14 C12,13 18,10 28,11 C40,12 46,8 56,7" fill="none" stroke="var(--up)" stroke-width="1.8"></path></svg>
+            <div style="text-align:right;min-width:74px"><div style="font-size:14.5px;font-weight:600;color:var(--ink)">฿132.50</div><div style="font-size:12px;font-weight:600;color:var(--up)">+0.76%</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:13px 0">
+            <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ETH</div><div style="font-size:12px;color:var(--sub)">Ethereum</div></div>
+            <svg width="56" height="24" viewBox="0 0 56 24" preserveAspectRatio="none"><path d="M0,6 C12,8 18,5 28,10 C40,15 46,13 56,18" fill="none" stroke="var(--down)" stroke-width="1.8"></path></svg>
+            <div style="text-align:right;min-width:74px"><div style="font-size:14.5px;font-weight:600;color:var(--ink)">฿82,300</div><div style="font-size:12px;font-weight:600;color:var(--down)">−1.40%</div></div>
+          </div>
+        </div>
+        <!-- tab bar -->
+        <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:13px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2.2"></rect><rect x="13" y="3" width="8" height="5" rx="2.2"></rect><rect x="13" y="10" width="8" height="11" rx="2.2"></rect><rect x="3" y="13" width="8" height="8" rx="2.2"></rect></svg><span style="font-size:10.5px;color:var(--faint)">ภาพรวม</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16l5-6 4 3 6-8"></path><path d="M18 5h3v3"></path></svg><span style="font-size:10.5px;color:var(--faint)">ตลาด</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"></path></svg><span style="font-size:10.5px;color:var(--gold);font-weight:600">เฝ้าดู</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg><span style="font-size:10.5px;color:var(--faint)">ปันผล</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg><span style="font-size:10.5px;color:var(--faint)">บัญชี</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRAME: Dividends light -->
+    <div style="display:flex;flex-direction:column;gap:14px;flex:none">
+      <span style="font-size:13px;color:#6f6a60;font-weight:500">เงินปันผล</span>
+      <div style="--page:#f4f1ea;--card:#fffdf8;--card2:#f6f2e9;--ink:#2a2723;--sub:#8f897e;--faint:#b8b2a6;--line:#e8e2d5;--gold:#a8854a;--goldsoft:#efe6d2;--up:#4f8a6b;--down:#c0664f;width:390px;height:844px;border-radius:46px;background:var(--page);overflow:hidden;position:relative;box-shadow:0 22px 60px -18px rgba(60,52,38,.4);border:1px solid rgba(0,0,0,.06)">
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px">
+          <span style="font-size:15px;font-weight:600;color:var(--ink);letter-spacing:.3px">9:41</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="var(--ink)"></rect><rect x="5" y="4" width="3" height="7" rx="1" fill="var(--ink)"></rect><rect x="10" y="2" width="3" height="9" rx="1" fill="var(--ink)"></rect><rect x="15" y="0" width="3" height="11" rx="1" fill="var(--ink)" opacity=".3"></rect></svg>
+            <span style="font-size:12px;font-weight:600;color:var(--ink)">5G</span>
+            <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="var(--ink)" opacity=".4"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="var(--ink)"></rect><rect x="23" y="4" width="2" height="4" rx="1" fill="var(--ink)" opacity=".4"></rect></svg>
+          </div>
+        </div>
+        <div style="padding:6px 22px 4px"><div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">เงินปันผล</div></div>
+        <!-- summary card -->
+        <div style="margin:12px 16px 0;padding:20px 22px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
+          <div style="font-size:13px;color:var(--sub)">รับแล้วในปีนี้</div>
+          <div style="font-family:'Newsreader',serif;font-size:38px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:6px;letter-spacing:-.5px">฿18,420</div>
+          <div style="display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
+            <div><div style="font-size:12px;color:var(--sub)">คาดทั้งปี</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">฿32,000</div></div>
+            <div><div style="font-size:12px;color:var(--sub)">อัตราผลตอบแทน</div><div style="font-size:16px;font-weight:600;color:var(--gold);margin-top:3px">3.20%</div></div>
+            <div><div style="font-size:12px;color:var(--sub)">รับ/เดือน</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">฿1,535</div></div>
+          </div>
+        </div>
+        <!-- monthly bars -->
+        <div style="margin:18px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:16px">ปันผลรายเดือน</div>
+          <div style="display:flex;align-items:flex-end;gap:8px;height:88px">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">ม.ค.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:52px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">ก.พ.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:26px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">มี.ค.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:64px;background:var(--gold);border-radius:5px"></div><span style="font-size:10.5px;color:var(--gold);font-weight:600">เม.ย.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:30px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">พ.ค.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:46px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">มิ.ย.</span></div>
+          </div>
+        </div>
+        <!-- upcoming -->
+        <div style="margin:18px 16px 0">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:9px">จ่ายเร็ว ๆ นี้</div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">PT</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ปตท.</div><div style="font-size:12.5px;color:var(--sub)">XD 25 มิ.ย. · ฿2.00/หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+฿2,400</div><div style="font-size:12px;color:var(--sub)">2 ก.ค.</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">KB</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">กสิกรไทย</div><div style="font-size:12.5px;color:var(--sub)">XD 28 มิ.ย. · ฿3.25/หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+฿1,625</div><div style="font-size:12px;color:var(--sub)">8 ก.ค.</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">AA</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">Apple</div><div style="font-size:12.5px;color:var(--sub)">XD 10 ก.ค. · $0.25/หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+$6.25</div><div style="font-size:12px;color:var(--sub)">17 ก.ค.</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- tab bar -->
+        <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:13px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2.2"></rect><rect x="13" y="3" width="8" height="5" rx="2.2"></rect><rect x="13" y="10" width="8" height="11" rx="2.2"></rect><rect x="3" y="13" width="8" height="8" rx="2.2"></rect></svg><span style="font-size:10.5px;color:var(--faint)">ภาพรวม</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16l5-6 4 3 6-8"></path><path d="M18 5h3v3"></path></svg><span style="font-size:10.5px;color:var(--faint)">ตลาด</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"></path></svg><span style="font-size:10.5px;color:var(--faint)">เฝ้าดู</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg><span style="font-size:10.5px;color:var(--gold);font-weight:600">ปันผล</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg><span style="font-size:10.5px;color:var(--faint)">บัญชี</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRAME: Transactions light -->
+    <div style="display:flex;flex-direction:column;gap:14px;flex:none">
+      <span style="font-size:13px;color:#6f6a60;font-weight:500">รายการซื้อขาย</span>
+      <div style="--page:#f4f1ea;--card:#fffdf8;--card2:#f6f2e9;--ink:#2a2723;--sub:#8f897e;--faint:#b8b2a6;--line:#e8e2d5;--gold:#a8854a;--goldsoft:#efe6d2;--up:#4f8a6b;--down:#c0664f;width:390px;height:844px;border-radius:46px;background:var(--page);overflow:hidden;position:relative;box-shadow:0 22px 60px -18px rgba(60,52,38,.4);border:1px solid rgba(0,0,0,.06)">
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px">
+          <span style="font-size:15px;font-weight:600;color:var(--ink);letter-spacing:.3px">9:41</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="var(--ink)"></rect><rect x="5" y="4" width="3" height="7" rx="1" fill="var(--ink)"></rect><rect x="10" y="2" width="3" height="9" rx="1" fill="var(--ink)"></rect><rect x="15" y="0" width="3" height="11" rx="1" fill="var(--ink)" opacity=".3"></rect></svg>
+            <span style="font-size:12px;font-weight:600;color:var(--ink)">5G</span>
+            <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="var(--ink)" opacity=".4"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="var(--ink)"></rect><rect x="23" y="4" width="2" height="4" rx="1" fill="var(--ink)" opacity=".4"></rect></svg>
+          </div>
+        </div>
+        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">รายการซื้อขาย</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4" stroke-linecap="round"></path></svg></div>
+        </div>
+        <!-- filter chips -->
+        <div style="display:flex;gap:7px;padding:12px 18px 0">
+          <span style="font-size:13px;font-weight:600;color:#fffdf8;background:var(--gold);border-radius:10px;padding:8px 15px">ทั้งหมด</span>
+          <span style="font-size:13px;color:var(--sub);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 15px">ซื้อ</span>
+          <span style="font-size:13px;color:var(--sub);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 15px">ขาย</span>
+          <span style="font-size:13px;color:var(--sub);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 15px">ปันผล</span>
+        </div>
+        <!-- group: today -->
+        <div style="padding:18px 22px 8px;font-size:12.5px;font-weight:600;color:var(--sub)">20 มิถุนายน 2568</div>
+        <div style="margin:0 16px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="width:40px;height:40px;border-radius:12px;background:color-mix(in oklab,var(--up) 14%,transparent);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--up)" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"></path></svg></div>
+            <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ซื้อ NVDA</div><div style="font-size:12.5px;color:var(--sub)">5 หุ้น · $122.40</div></div>
+            <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">−$612.00</div><div style="font-size:12px;color:var(--sub)">10:24</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 0">
+            <div style="width:40px;height:40px;border-radius:12px;background:color-mix(in oklab,var(--down) 14%,transparent);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--down)" stroke-width="2.4" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></div>
+            <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ขาย CPALL</div><div style="font-size:12.5px;color:var(--sub)">300 หุ้น · ฿58.50</div></div>
+            <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">+฿17,550</div><div style="font-size:12px;color:var(--sub)">09:48</div></div>
+          </div>
+        </div>
+        <!-- group: yesterday -->
+        <div style="padding:18px 22px 8px;font-size:12.5px;font-weight:600;color:var(--sub)">19 มิถุนายน 2568</div>
+        <div style="margin:0 16px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="width:40px;height:40px;border-radius:12px;background:color-mix(in oklab,var(--up) 14%,transparent);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--up)" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"></path></svg></div>
+            <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ซื้อ AAPL</div><div style="font-size:12.5px;color:var(--sub)">10 หุ้น · $210.80</div></div>
+            <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">−$2,108.00</div><div style="font-size:12px;color:var(--sub)">15:02</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v8M10 10h3.2a1.4 1.4 0 010 2.8h-2.4a1.4 1.4 0 000 2.8H14" stroke-linecap="round"></path></svg></div>
+            <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ปันผล ปตท.</div><div style="font-size:12.5px;color:var(--sub)">1,200 หุ้น · ฿1.50</div></div>
+            <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+฿1,800</div><div style="font-size:12px;color:var(--sub)">11:30</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 0">
+            <div style="width:40px;height:40px;border-radius:12px;background:color-mix(in oklab,var(--down) 14%,transparent);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--down)" stroke-width="2.4" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></div>
+            <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ขาย BTC</div><div style="font-size:12.5px;color:var(--sub)">0.02 · ฿2.51M</div></div>
+            <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">+฿50,200</div><div style="font-size:12px;color:var(--sub)">08:15</div></div>
+          </div>
+        </div>
+        <!-- tab bar -->
+        <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:13px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2.2"></rect><rect x="13" y="3" width="8" height="5" rx="2.2"></rect><rect x="13" y="10" width="8" height="11" rx="2.2"></rect><rect x="3" y="13" width="8" height="8" rx="2.2"></rect></svg><span style="font-size:10.5px;color:var(--faint)">ภาพรวม</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16l5-6 4 3 6-8"></path><path d="M18 5h3v3"></path></svg><span style="font-size:10.5px;color:var(--gold);font-weight:600">ตลาด</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"></path></svg><span style="font-size:10.5px;color:var(--faint)">เฝ้าดู</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg><span style="font-size:10.5px;color:var(--faint)">ปันผล</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg><span style="font-size:10.5px;color:var(--faint)">บัญชี</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== DARK ROW ===== -->
+  <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#9a948a;font-weight:600;margin-bottom:18px">โหมดมืด · Dark</div>
+  <div style="display:flex;gap:40px;align-items:flex-start">
+
+    <!-- FRAME: Dashboard dark -->
+    <div style="display:flex;flex-direction:column;gap:14px;flex:none">
+      <span style="font-size:13px;color:#6f6a60;font-weight:500">ภาพรวมพอร์ต</span>
+      <div style="--page:#161410;--card:#211d17;--card2:#1b1813;--ink:#f1ece0;--sub:#a39c8d;--faint:#6f6a5e;--line:#322d24;--gold:#cba35f;--goldsoft:#2b2519;--up:#74b08c;--down:#d98a70;width:390px;height:844px;border-radius:46px;background:var(--page);overflow:hidden;position:relative;box-shadow:0 22px 60px -18px rgba(20,16,8,.6);border:1px solid rgba(0,0,0,.4)">
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px">
+          <span style="font-size:15px;font-weight:600;color:var(--ink);letter-spacing:.3px">9:41</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="var(--ink)"></rect><rect x="5" y="4" width="3" height="7" rx="1" fill="var(--ink)"></rect><rect x="10" y="2" width="3" height="9" rx="1" fill="var(--ink)"></rect><rect x="15" y="0" width="3" height="11" rx="1" fill="var(--ink)" opacity=".3"></rect></svg>
+            <span style="font-size:12px;font-weight:600;color:var(--ink)">5G</span>
+            <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="var(--ink)" opacity=".4"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="var(--ink)"></rect><rect x="23" y="4" width="2" height="4" rx="1" fill="var(--ink)" opacity=".4"></rect></svg>
+          </div>
+        </div>
+        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;color:var(--sub)">สวัสดีตอนเช้า</div>
+            <div style="font-size:19px;font-weight:600;color:var(--ink);letter-spacing:.2px">สมหญิง วัฒนกุล</div>
+          </div>
+          <div style="width:42px;height:42px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:600;font-size:15px;border:1px solid var(--line)">สญ</div>
+        </div>
+        <div style="margin:12px 16px 0;padding:22px 22px 18px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:13px;color:var(--sub);letter-spacing:.3px">มูลค่าพอร์ตรวม</div>
+            <div style="display:flex;gap:4px;background:var(--card2);border-radius:8px;padding:3px">
+              <span style="font-size:11px;font-weight:600;color:var(--page);background:var(--gold);padding:4px 9px;border-radius:6px">฿</span>
+              <span style="font-size:11px;font-weight:600;color:var(--sub);padding:4px 9px">$</span>
+            </div>
+          </div>
+          <div style="font-family:'Newsreader',serif;font-size:42px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:8px;letter-spacing:-.5px">฿2,847,500</div>
+          <div style="font-size:14px;color:var(--sub);margin-top:3px">≈ $78,230.45</div>
+          <div style="display:flex;align-items:center;gap:9px;margin-top:14px">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:color-mix(in oklab,var(--up) 20%,transparent);color:var(--up);font-size:13px;font-weight:600">▲ ฿24,300 · +0.86%</span>
+            <span style="font-size:12.5px;color:var(--sub)">วันนี้</span>
+          </div>
+          <svg width="100%" height="62" viewBox="0 0 320 62" preserveAspectRatio="none" style="margin-top:14px;display:block"><path d="M0,48 C24,44 36,30 60,32 C88,34 96,46 124,40 C150,35 158,18 188,22 C214,25 224,34 250,28 C278,22 292,10 320,8" fill="none" stroke="var(--up)" stroke-width="2.2" stroke-linecap="round"></path><circle cx="320" cy="8" r="3.4" fill="var(--up)"></circle></svg>
+          <div style="display:flex;gap:6px;margin-top:14px">
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;width:34px;text-align:center">1ว</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;width:34px;text-align:center">1สั</span>
+            <span style="font-size:12px;font-weight:600;color:var(--gold);background:var(--goldsoft);border-radius:8px;padding:5px 0;width:34px;text-align:center">1ด</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;width:34px;text-align:center">3ด</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;width:34px;text-align:center">1ป</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;width:46px;text-align:center">ทั้งหมด</span>
+          </div>
+        </div>
+        <div style="margin:18px 16px 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+            <span style="font-size:14px;font-weight:600;color:var(--ink)">สัดส่วนการลงทุน</span>
+            <span style="font-size:12.5px;color:var(--gold);font-weight:600">ปรับสมดุล</span>
+          </div>
+          <div style="display:flex;height:11px;border-radius:6px;overflow:hidden;gap:2px">
+            <span style="width:42%;background:#cba35f"></span>
+            <span style="width:28%;background:#8aab7c"></span>
+            <span style="width:18%;background:#7d99b8"></span>
+            <span style="width:12%;background:#c9ab88"></span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;margin-top:13px">
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:#cba35f"></span><span style="font-size:12.5px;color:var(--sub);flex:1">หุ้นต่างประเทศ</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">42%</span></div>
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:#8aab7c"></span><span style="font-size:12.5px;color:var(--sub);flex:1">หุ้นไทย</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">28%</span></div>
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:#7d99b8"></span><span style="font-size:12.5px;color:var(--sub);flex:1">คริปโต</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">18%</span></div>
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:#c9ab88"></span><span style="font-size:12.5px;color:var(--sub);flex:1">เงินสด</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">12%</span></div>
+          </div>
+        </div>
+        <div style="margin:20px 16px 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+            <span style="font-size:14px;font-weight:600;color:var(--ink)">การถือครอง</span>
+            <span style="font-size:12.5px;color:var(--gold);font-weight:600">ดูทั้งหมด</span>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 16px">
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">AA</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">Apple</div><div style="font-size:12.5px;color:var(--sub)">AAPL · 25 หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">$5,335</div><div style="font-size:12.5px;font-weight:600;color:var(--up)">+1.35%</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">PT</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ปตท.</div><div style="font-size:12.5px;color:var(--sub)">PTT · 1,200 หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">฿39,600</div><div style="font-size:12.5px;font-weight:600;color:var(--up)">+0.46%</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:16px">₿</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">Bitcoin</div><div style="font-size:12.5px;color:var(--sub)">BTC · 0.08</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">฿198,400</div><div style="font-size:12.5px;font-weight:600;color:var(--down)">−2.10%</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">NV</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">Nvidia</div><div style="font-size:12.5px;color:var(--sub)">NVDA · 18 หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">$2,214</div><div style="font-size:12.5px;font-weight:600;color:var(--up)">+3.22%</div></div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:13px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2.2"></rect><rect x="13" y="3" width="8" height="5" rx="2.2"></rect><rect x="13" y="10" width="8" height="11" rx="2.2"></rect><rect x="3" y="13" width="8" height="8" rx="2.2"></rect></svg><span style="font-size:10.5px;color:var(--gold);font-weight:600">ภาพรวม</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16l5-6 4 3 6-8"></path><path d="M18 5h3v3"></path></svg><span style="font-size:10.5px;color:var(--faint)">ตลาด</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"></path></svg><span style="font-size:10.5px;color:var(--faint)">เฝ้าดู</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg><span style="font-size:10.5px;color:var(--faint)">ปันผล</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg><span style="font-size:10.5px;color:var(--faint)">บัญชี</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRAME: Stock Detail dark -->
+    <div style="display:flex;flex-direction:column;gap:14px;flex:none">
+      <span style="font-size:13px;color:#6f6a60;font-weight:500">รายละเอียดหุ้น</span>
+      <div style="--page:#161410;--card:#211d17;--card2:#1b1813;--ink:#f1ece0;--sub:#a39c8d;--faint:#6f6a5e;--line:#322d24;--gold:#cba35f;--goldsoft:#2b2519;--up:#74b08c;--down:#d98a70;width:390px;height:844px;border-radius:46px;background:var(--page);overflow:hidden;position:relative;box-shadow:0 22px 60px -18px rgba(20,16,8,.6);border:1px solid rgba(0,0,0,.4)">
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px">
+          <span style="font-size:15px;font-weight:600;color:var(--ink);letter-spacing:.3px">9:41</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="var(--ink)"></rect><rect x="5" y="4" width="3" height="7" rx="1" fill="var(--ink)"></rect><rect x="10" y="2" width="3" height="9" rx="1" fill="var(--ink)"></rect><rect x="15" y="0" width="3" height="11" rx="1" fill="var(--ink)" opacity=".3"></rect></svg>
+            <span style="font-size:12px;font-weight:600;color:var(--ink)">5G</span>
+            <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="var(--ink)" opacity=".4"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="var(--ink)"></rect><rect x="23" y="4" width="2" height="4" rx="1" fill="var(--ink)" opacity=".4"></rect></svg>
+          </div>
+        </div>
+        <div style="padding:6px 20px 4px;display:flex;align-items:center;justify-content:space-between">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+          <div style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--ink);letter-spacing:.5px">AAPL</div><div style="font-size:11.5px;color:var(--sub)">Apple Inc.</div></div>
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 21l-5.3 1 1.3-5.9-4.5-4 6-.6z"></path></svg>
+        </div>
+        <div style="padding:14px 24px 0">
+          <div style="font-size:12.5px;color:var(--sub)">NASDAQ · ดอลลาร์สหรัฐ</div>
+          <div style="font-family:'Newsreader',serif;font-size:44px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:4px;letter-spacing:-.5px">$213.40</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:color-mix(in oklab,var(--up) 20%,transparent);color:var(--up);font-size:13px;font-weight:600">▲ $2.85 · +1.35%</span>
+            <span style="font-size:13px;color:var(--sub)">≈ ฿7,768</span>
+          </div>
+        </div>
+        <div style="padding:18px 16px 0">
+          <svg width="100%" height="148" viewBox="0 0 358 148" preserveAspectRatio="none" style="display:block"><path d="M0,108 C30,100 44,118 74,110 C104,102 116,70 150,78 C184,86 196,58 230,52 C262,46 276,64 304,50 C330,38 344,26 358,22 L358,148 L0,148 Z" fill="color-mix(in oklab,var(--gold) 16%,transparent)"></path><path d="M0,108 C30,100 44,118 74,110 C104,102 116,70 150,78 C184,86 196,58 230,52 C262,46 276,64 304,50 C330,38 344,26 358,22" fill="none" stroke="var(--up)" stroke-width="2.4" stroke-linecap="round"></path><circle cx="358" cy="22" r="3.6" fill="var(--up)"></circle></svg>
+          <div style="display:flex;gap:6px;margin-top:10px;padding:0 6px">
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;flex:1;text-align:center">1ว</span>
+            <span style="font-size:12px;font-weight:600;color:var(--gold);background:var(--goldsoft);border-radius:8px;padding:5px 0;flex:1;text-align:center">1สั</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;flex:1;text-align:center">1ด</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;flex:1;text-align:center">3ด</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;flex:1;text-align:center">1ป</span>
+            <span style="font-size:12px;color:var(--sub);padding:5px 0;flex:1;text-align:center">สูงสุด</span>
+          </div>
+        </div>
+        <div style="margin:18px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px 12px">
+          <div><div style="font-size:11.5px;color:var(--sub)">เปิด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">211.20</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">สูงสุด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">214.85</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">ต่ำสุด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">210.90</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">มูลค่าตลาด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">3.27T</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">ปริมาณ</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">48.2M</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">P/E</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">32.6</div></div>
+        </div>
+        <div style="margin:14px 16px 0;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:16px 18px">
+          <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px">การถือครองของคุณ</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:9px"><span style="font-size:13px;color:var(--sub)">จำนวน</span><span style="font-size:13.5px;font-weight:600;color:var(--ink)">25 หุ้น · $5,335</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:9px"><span style="font-size:13px;color:var(--sub)">ต้นทุนเฉลี่ย</span><span style="font-size:13.5px;font-weight:600;color:var(--ink)">$176.20</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--sub)">กำไรที่ยังไม่รับรู้</span><span style="font-size:13.5px;font-weight:600;color:var(--up)">+$925 · +20.9%</span></div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:96px;background:var(--card);border-top:1px solid var(--line);display:flex;gap:12px;padding:14px 18px 0">
+          <div style="flex:1;height:52px;border-radius:15px;border:1.5px solid var(--down);color:var(--down);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600">ขาย</div>
+          <div style="flex:1;height:52px;border-radius:15px;background:var(--gold);color:#161410;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600">ซื้อ</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

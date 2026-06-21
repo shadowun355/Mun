@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0}
+  .scr::-webkit-scrollbar{display:none}
+  .scr{scrollbar-width:none}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:22px;padding:48px 24px;background:#e7e5df;font-family:'Anuphan',sans-serif">
+
+  <div style="text-align:center">
+    <div style="font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:#a8854a;font-weight:600">Mun · มั่น</div>
+    <div style="font-size:14px;color:#6f6a60;margin-top:6px">แตะแถบล่างสลับหน้า · แตะหุ้นดูรายละเอียด · สลับ ฿/$ · กรองรายการ · กดซื้อ/ขายได้จริง</div>
+  </div>
+
+  <!-- PHONE -->
+  <div style="{{ rootStyle }}">
+    <!-- status bar -->
+    <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px;flex:none">
+      <span style="font-size:15px;font-weight:600;color:var(--ink);letter-spacing:.3px">9:41</span>
+      <div style="display:flex;align-items:center;gap:7px">
+        <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="var(--ink)"></rect><rect x="5" y="4" width="3" height="7" rx="1" fill="var(--ink)"></rect><rect x="10" y="2" width="3" height="9" rx="1" fill="var(--ink)"></rect><rect x="15" y="0" width="3" height="11" rx="1" fill="var(--ink)" opacity=".3"></rect></svg>
+        <span style="font-size:12px;font-weight:600;color:var(--ink)">5G</span>
+        <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="var(--ink)" opacity=".4"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="var(--ink)"></rect><rect x="23" y="4" width="2" height="4" rx="1" fill="var(--ink)" opacity=".4"></rect></svg>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="scr" style="flex:1;overflow-y:auto;overflow-x:hidden">
+
+      <!-- ===== OVERVIEW ===== -->
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;color:var(--sub)">สวัสดีตอนเช้า</div>
+            <div style="font-size:19px;font-weight:600;color:var(--ink);letter-spacing:.2px">สมหญิง วัฒนกุล</div>
+          </div>
+          <div onClick="{{ goAccount }}" style="width:42px;height:42px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:600;font-size:15px;border:1px solid var(--line);cursor:pointer">สญ</div>
+        </div>
+        <div style="margin:12px 16px 0;padding:22px 22px 18px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:13px;color:var(--sub);letter-spacing:.3px">มูลค่าพอร์ตรวม</div>
+            <div style="display:flex;gap:4px;background:var(--card2);border-radius:8px;padding:3px">
+              <span onClick="{{ setThb }}" style="font-size:11px;font-weight:600;cursor:pointer;padding:4px 9px;border-radius:6px;background:{{ thbBg }};color:{{ thbCol }}">฿</span>
+              <span onClick="{{ setUsd }}" style="font-size:11px;font-weight:600;cursor:pointer;padding:4px 9px;border-radius:6px;background:{{ usdBg }};color:{{ usdCol }}">$</span>
+            </div>
+          </div>
+          <div style="font-family:'Newsreader',serif;font-size:42px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:8px;letter-spacing:-.5px">{{ totalMain }}</div>
+          <div style="font-size:14px;color:var(--sub);margin-top:3px">{{ totalAlt }}</div>
+          <div style="display:flex;align-items:center;gap:9px;margin-top:14px">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:{{ dayBg }};color:{{ dayCol }};font-size:13px;font-weight:600">{{ dayStr }}</span>
+            <span style="font-size:12.5px;color:var(--sub)">วันนี้</span>
+          </div>
+          <svg width="100%" height="62" viewBox="0 0 320 62" preserveAspectRatio="none" style="margin-top:14px;display:block"><path d="M0,48 C24,44 36,30 60,32 C88,34 96,46 124,40 C150,35 158,18 188,22 C214,25 224,34 250,28 C278,22 292,10 320,8" fill="none" stroke="var(--up)" stroke-width="2.2" stroke-linecap="round"></path><circle cx="320" cy="8" r="3.4" fill="var(--up)"></circle></svg>
+          <div style="display:flex;gap:6px;margin-top:14px">
+            <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="6">
+              <span onClick="{{ r.onClick }}" style="font-size:12px;font-weight:{{ r.weight }};cursor:pointer;border-radius:8px;padding:5px 0;width:38px;text-align:center;background:{{ r.bg }};color:{{ r.col }}">{{ r.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="margin:18px 16px 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+            <span style="font-size:14px;font-weight:600;color:var(--ink)">สัดส่วนการลงทุน</span>
+            <span style="font-size:12.5px;color:var(--gold);font-weight:600">ปรับสมดุล</span>
+          </div>
+          <div style="display:flex;height:11px;border-radius:6px;overflow:hidden;gap:2px">
+            <sc-for list="{{ alloc }}" as="a" hint-placeholder-count="4">
+              <span style="width:{{ a.pct }}%;background:{{ a.color }}"></span>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;margin-top:13px">
+            <sc-for list="{{ alloc }}" as="a" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:{{ a.color }}"></span><span style="font-size:12.5px;color:var(--sub);flex:1">{{ a.label }}</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">{{ a.pctLabel }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="margin:20px 16px 28px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+            <span style="font-size:14px;font-weight:600;color:var(--ink)">การถือครอง</span>
+            <span onClick="{{ goWatch }}" style="font-size:12.5px;color:var(--gold);font-weight:600;cursor:pointer">ดูทั้งหมด</span>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 16px">
+            <sc-for list="{{ holdings }}" as="h" hint-placeholder-count="4">
+              <div onClick="{{ h.onOpen }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer">
+                <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">{{ h.logo }}</div>
+                <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ h.name }}</div><div style="font-size:12.5px;color:var(--sub)">{{ h.holdSub }}</div></div>
+                <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ h.valStr }}</div><div style="font-size:12.5px;font-weight:600;color:{{ h.pctColor }}">{{ h.pct }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== DETAIL ===== -->
+      <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="padding:6px 20px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div onClick="{{ back }}" style="cursor:pointer;width:36px;height:36px;display:flex;align-items:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></div>
+          <div style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--ink);letter-spacing:.5px">{{ d.sym }}</div><div style="font-size:11.5px;color:var(--sub)">{{ d.name2 }}</div></div>
+          <div onClick="{{ toggleStar }}" style="cursor:pointer;width:30px;display:flex;justify-content:flex-end"><svg width="23" height="23" viewBox="0 0 24 24" fill="{{ d.starFill }}" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 21l-5.3 1 1.3-5.9-4.5-4 6-.6z"></path></svg></div>
+        </div>
+        <div style="padding:14px 24px 0">
+          <div style="font-size:12.5px;color:var(--sub)">{{ d.subline }}</div>
+          <div style="font-family:'Newsreader',serif;font-size:44px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:4px;letter-spacing:-.5px">{{ d.priceStr }}</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:{{ d.dayBg }};color:{{ d.dayCol }};font-size:13px;font-weight:600">{{ d.dayStr }}</span>
+            <span style="font-size:13px;color:var(--sub)">{{ d.priceAlt }}</span>
+          </div>
+        </div>
+        <div style="padding:18px 16px 0">
+          <svg width="100%" height="148" viewBox="0 0 358 148" preserveAspectRatio="none" style="display:block"><path d="{{ d.chartArea }}" fill="{{ d.areaFill }}"></path><path d="{{ d.chart }}" fill="none" stroke="{{ d.lineColor }}" stroke-width="2.4" stroke-linecap="round"></path></svg>
+          <div style="display:flex;gap:6px;margin-top:10px;padding:0 6px">
+            <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="6">
+              <span onClick="{{ r.onClick }}" style="font-size:12px;font-weight:{{ r.weight }};cursor:pointer;border-radius:8px;padding:5px 0;flex:1;text-align:center;background:{{ r.bg }};color:{{ r.col }}">{{ r.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="margin:18px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px 12px">
+          <div><div style="font-size:11.5px;color:var(--sub)">เปิด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.open }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">สูงสุด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.high }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">ต่ำสุด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.low }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">มูลค่าตลาด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.mcap }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">ปริมาณ</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.vol }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">P/E</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.pe }}</div></div>
+        </div>
+        <sc-if value="{{ d.held }}" hint-placeholder-val="{{ false }}">
+        <div style="margin:14px 16px 28px;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:16px 18px">
+          <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px">การถือครองของคุณ</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:9px"><span style="font-size:13px;color:var(--sub)">จำนวน</span><span style="font-size:13.5px;font-weight:600;color:var(--ink)">{{ d.posQty }}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:9px"><span style="font-size:13px;color:var(--sub)">ต้นทุนเฉลี่ย</span><span style="font-size:13.5px;font-weight:600;color:var(--ink)">{{ d.posAvg }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--sub)">กำไรที่ยังไม่รับรู้</span><span style="font-size:13.5px;font-weight:600;color:{{ d.gainCol }}">{{ d.posGain }}</span></div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ d.notHeld }}" hint-placeholder-val="{{ false }}">
+        <div style="margin:14px 16px 28px;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:18px;text-align:center">
+          <div style="font-size:13.5px;color:var(--sub)">คุณยังไม่ได้ถือครอง {{ d.sym }}</div>
+          <div style="font-size:12.5px;color:var(--faint);margin-top:4px">แตะ “ซื้อ” เพื่อเริ่มลงทุน</div>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- ===== WATCHLIST ===== -->
+      <sc-if value="{{ isWatch }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">เฝ้าดู</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+        </div>
+        <div style="display:flex;gap:7px;padding:12px 18px 0;overflow:hidden">
+          <sc-for list="{{ watchTabs }}" as="f" hint-placeholder-count="4">
+            <span onClick="{{ f.onClick }}" style="font-size:13px;font-weight:{{ f.weight }};white-space:nowrap;border-radius:10px;padding:8px 15px;background:{{ f.bg }};color:{{ f.col }};border:1px solid {{ f.bd }}">{{ f.label }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:11px;padding:16px 18px 0">
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 13px 11px">
+            <div style="font-size:12px;color:var(--sub);font-weight:600">SET</div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px">1,308.22</div>
+            <svg width="100%" height="20" viewBox="0 0 70 20" preserveAspectRatio="none" style="margin:5px 0 3px;display:block"><path d="M0,6 C12,4 18,12 30,11 C44,10 50,15 70,16" fill="none" stroke="var(--down)" stroke-width="1.8"></path></svg>
+            <div style="font-size:12px;font-weight:600;color:var(--down)">−0.32%</div>
+          </div>
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 13px 11px">
+            <div style="font-size:12px;color:var(--sub);font-weight:600">S&P 500</div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px">5,521.4</div>
+            <svg width="100%" height="20" viewBox="0 0 70 20" preserveAspectRatio="none" style="margin:5px 0 3px;display:block"><path d="M0,15 C14,14 20,8 34,9 C48,10 54,4 70,3" fill="none" stroke="var(--up)" stroke-width="1.8"></path></svg>
+            <div style="font-size:12px;font-weight:600;color:var(--up)">+0.41%</div>
+          </div>
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 13px 11px">
+            <div style="font-size:12px;color:var(--sub);font-weight:600">BTC</div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px">฿2.48M</div>
+            <svg width="100%" height="20" viewBox="0 0 70 20" preserveAspectRatio="none" style="margin:5px 0 3px;display:block"><path d="M0,4 C14,6 20,3 34,8 C48,13 54,11 70,16" fill="none" stroke="var(--down)" stroke-width="1.8"></path></svg>
+            <div style="font-size:12px;font-weight:600;color:var(--down)">−2.10%</div>
+          </div>
+        </div>
+        <div style="margin:16px 16px 28px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+          <sc-for list="{{ watchRows }}" as="w" hint-placeholder-count="5">
+            <div onClick="{{ w.onOpen }}" style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer">
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ w.sym }}</div><div style="font-size:12px;color:var(--sub)">{{ w.name2 }}</div></div>
+              <svg width="56" height="24" viewBox="0 0 56 24" preserveAspectRatio="none"><path d="{{ w.spark }}" fill="none" stroke="{{ w.pctColor }}" stroke-width="1.8"></path></svg>
+              <div style="text-align:right;min-width:74px"><div style="font-size:14.5px;font-weight:600;color:var(--ink)">{{ w.priceStr }}</div><div style="font-size:12px;font-weight:600;color:{{ w.pctColor }}">{{ w.pct }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== DIVIDENDS ===== -->
+      <sc-if value="{{ isDividends }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="padding:6px 22px 4px"><div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">เงินปันผล</div></div>
+        <div style="margin:12px 16px 0;padding:20px 22px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
+          <div style="font-size:13px;color:var(--sub)">รับแล้วในปีนี้</div>
+          <div style="font-family:'Newsreader',serif;font-size:38px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:6px;letter-spacing:-.5px">฿18,420</div>
+          <div style="display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
+            <div><div style="font-size:12px;color:var(--sub)">คาดทั้งปี</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">฿32,000</div></div>
+            <div><div style="font-size:12px;color:var(--sub)">อัตราผลตอบแทน</div><div style="font-size:16px;font-weight:600;color:var(--gold);margin-top:3px">3.20%</div></div>
+            <div><div style="font-size:12px;color:var(--sub)">รับ/เดือน</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">฿1,535</div></div>
+          </div>
+        </div>
+        <div style="margin:18px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:16px">ปันผลรายเดือน</div>
+          <div style="display:flex;align-items:flex-end;gap:8px;height:88px">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">ม.ค.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:52px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">ก.พ.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:26px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">มี.ค.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:64px;background:var(--gold);border-radius:5px"></div><span style="font-size:10.5px;color:var(--gold);font-weight:600">เม.ย.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:30px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">พ.ค.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:46px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">มิ.ย.</span></div>
+          </div>
+        </div>
+        <div style="margin:18px 16px 28px">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:9px">จ่ายเร็ว ๆ นี้</div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">PT</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ปตท.</div><div style="font-size:12.5px;color:var(--sub)">XD 25 มิ.ย. · ฿2.00/หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+฿2,400</div><div style="font-size:12px;color:var(--sub)">2 ก.ค.</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">KB</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">กสิกรไทย</div><div style="font-size:12.5px;color:var(--sub)">XD 28 มิ.ย. · ฿3.25/หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+฿1,625</div><div style="font-size:12px;color:var(--sub)">8 ก.ค.</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">AA</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">Apple</div><div style="font-size:12.5px;color:var(--sub)">XD 10 ก.ค. · $0.25/หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+$6.25</div><div style="font-size:12px;color:var(--sub)">17 ก.ค.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== TRANSACTIONS ===== -->
+      <sc-if value="{{ isTransactions }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">รายการซื้อขาย</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4" stroke-linecap="round"></path></svg></div>
+        </div>
+        <div style="display:flex;gap:7px;padding:12px 18px 0">
+          <sc-for list="{{ txnTabs }}" as="f" hint-placeholder-count="4">
+            <span onClick="{{ f.onClick }}" style="font-size:13px;font-weight:{{ f.weight }};border-radius:10px;padding:8px 15px;background:{{ f.bg }};color:{{ f.col }};border:1px solid {{ f.bd }}">{{ f.label }}</span>
+          </sc-for>
+        </div>
+        <sc-for list="{{ txnGroups }}" as="g" hint-placeholder-count="2">
+          <div>
+            <div style="padding:18px 22px 8px;font-size:12.5px;font-weight:600;color:var(--sub)">{{ g.date }}</div>
+            <div style="margin:0 16px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+              <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid {{ t.bb }}">
+                  <div style="width:40px;height:40px;border-radius:12px;background:{{ t.iconBg }};display:flex;align-items:center;justify-content:center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.iconStroke }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.iconPath }}"></path></svg>
+                  </div>
+                  <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ t.title }}</div><div style="font-size:12.5px;color:var(--sub)">{{ t.sub }}</div></div>
+                  <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:{{ t.amtCol }}">{{ t.amt }}</div><div style="font-size:12px;color:var(--sub)">{{ t.time }}</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div style="height:28px"></div>
+      </div>
+      </sc-if>
+
+      <!-- ===== ACCOUNT ===== -->
+      <sc-if value="{{ isAccount }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="padding:6px 22px 4px"><div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">บัญชี</div></div>
+        <div style="margin:14px 16px 0;display:flex;align-items:center;gap:15px;padding:18px 20px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:600;font-size:20px;border:1px solid var(--line)">สญ</div>
+          <div style="flex:1"><div style="font-size:18px;font-weight:600;color:var(--ink)">สมหญิง วัฒนกุล</div><div style="font-size:13px;color:var(--sub)">นักลงทุนระดับทอง · ตั้งแต่ 2563</div></div>
+        </div>
+        <div style="margin:18px 16px 0;font-size:12.5px;font-weight:600;color:var(--sub);padding-left:6px">การแสดงผล</div>
+        <div style="margin:9px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 18px">
+          <div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--line)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" stroke-linejoin="round"></path></svg>
+            <span style="flex:1;font-size:15px;color:var(--ink)">โหมดมืด</span>
+            <div onClick="{{ toggleDark }}" style="{{ darkTrack }}"><div style="{{ darkKnob }}"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:15px 0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg>
+            <span style="flex:1;font-size:15px;color:var(--ink)">สกุลเงินหลัก</span>
+            <div style="display:flex;gap:4px;background:var(--card2);border-radius:9px;padding:3px">
+              <span onClick="{{ setThb }}" style="font-size:13px;font-weight:600;cursor:pointer;padding:4px 12px;border-radius:6px;background:{{ thbBg }};color:{{ thbCol }}">฿ THB</span>
+              <span onClick="{{ setUsd }}" style="font-size:13px;font-weight:600;cursor:pointer;padding:4px 12px;border-radius:6px;background:{{ usdBg }};color:{{ usdCol }}">$ USD</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin:18px 16px 0;font-size:12.5px;font-weight:600;color:var(--sub);padding-left:6px">ทั่วไป</div>
+        <div style="margin:9px 16px 28px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 18px">
+          <div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--line)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 01-3.4 0"></path></svg>
+            <span style="flex:1;font-size:15px;color:var(--ink)">การแจ้งเตือนราคา</span>
+            <div onClick="{{ toggleNotif }}" style="{{ notifTrack }}"><div style="{{ notifKnob }}"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--line)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"></path></svg>
+            <span style="flex:1;font-size:15px;color:var(--ink)">ความปลอดภัย</span>
+            <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="var(--faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"></path></svg>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:15px 0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--down)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path><path d="M16 17l5-5-5-5M21 12H9"></path></svg>
+            <span style="flex:1;font-size:15px;color:var(--down)">ออกจากระบบ</span>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+
+    <!-- BOTTOM: tab bar -->
+    <sc-if value="{{ showTabs }}" hint-placeholder-val="{{ true }}">
+    <div style="height:84px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:13px;flex:none">
+      <div onClick="{{ goOverview }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.overview }}" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2.2"></rect><rect x="13" y="3" width="8" height="5" rx="2.2"></rect><rect x="13" y="10" width="8" height="11" rx="2.2"></rect><rect x="3" y="13" width="8" height="8" rx="2.2"></rect></svg><span style="font-size:10.5px;color:{{ c.overview }}">ภาพรวม</span></div>
+      <div onClick="{{ goWatch }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.watch }}" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"></path></svg><span style="font-size:10.5px;color:{{ c.watch }}">เฝ้าดู</span></div>
+      <div onClick="{{ goDividends }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.dividends }}" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg><span style="font-size:10.5px;color:{{ c.dividends }}">ปันผล</span></div>
+      <div onClick="{{ goTransactions }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.transactions }}" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg><span style="font-size:10.5px;color:{{ c.transactions }}">รายการ</span></div>
+      <div onClick="{{ goAccount }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.account }}" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg><span style="font-size:10.5px;color:{{ c.account }}">บัญชี</span></div>
+    </div>
+    </sc-if>
+
+    <!-- BOTTOM: action bar (detail) -->
+    <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+    <div style="height:96px;background:var(--card);border-top:1px solid var(--line);display:flex;gap:12px;padding:14px 18px 0;flex:none">
+      <div onClick="{{ openSell }}" style="flex:1;height:52px;border-radius:15px;border:1.5px solid var(--down);color:var(--down);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;cursor:pointer">ขาย</div>
+      <div onClick="{{ openBuy }}" style="flex:1;height:52px;border-radius:15px;background:var(--gold);color:var(--ongold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;cursor:pointer">ซื้อ</div>
+    </div>
+    </sc-if>
+
+    <!-- ORDER TICKET SHEET -->
+    <sc-if value="{{ showTicket }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:20">
+      <div onClick="{{ closeTicket }}" style="position:absolute;inset:0;background:rgba(20,16,8,.42)"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:28px 28px 0 0;border-top:1px solid var(--line);padding:10px 22px 30px">
+        <div style="width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 16px"></div>
+        <div style="display:flex;align-items:center;gap:13px;margin-bottom:20px">
+          <div style="width:44px;height:44px;border-radius:13px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:15px">{{ tk.logo }}</div>
+          <div style="flex:1"><div style="font-size:17px;font-weight:700;color:var(--ink)">{{ tk.title }}</div><div style="font-size:12.5px;color:var(--sub)">{{ tk.sub }}</div></div>
+          <div style="text-align:right"><div style="font-size:16px;font-weight:600;color:var(--ink)">{{ tk.priceStr }}</div><div style="font-size:12px;color:{{ tk.pctColor }};font-weight:600">{{ tk.pct }}</div></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin-bottom:14px">
+          <span style="font-size:14px;color:var(--sub)">จำนวน</span>
+          <div style="display:flex;align-items:center;gap:18px">
+            <div onClick="{{ ticketDec }}" style="width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></div>
+            <span style="font-size:20px;font-weight:700;color:var(--ink);min-width:42px;text-align:center">{{ tk.qty }}</span>
+            <div onClick="{{ ticketInc }}" style="width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 4px 18px">
+          <span style="font-size:14px;color:var(--sub)">ยอดรวมโดยประมาณ</span>
+          <span style="font-family:'Newsreader',serif;font-size:24px;font-weight:500;color:var(--ink)">{{ tk.total }}</span>
+        </div>
+        <div onClick="{{ confirmTicket }}" style="height:54px;border-radius:16px;background:{{ tk.btnBg }};color:{{ tk.btnCol }};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;cursor:pointer">{{ tk.btnLabel }}</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- TOAST -->
+    <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:50%;bottom:108px;transform:translateX(-50%);z-index:30;background:var(--ink);color:var(--page);font-size:13.5px;font-weight:600;padding:11px 20px;border-radius:13px;box-shadow:0 10px 30px -8px rgba(0,0,0,.5);white-space:nowrap">{{ toastMsg }}</div>
+    </sc-if>
+
+  </div>
+
+  <template id="__bundler_thumbnail" data-bg-color="#f4f1ea">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <rect x="470" y="170" width="260" height="500" rx="46" fill="#fffdf8" stroke="#e8e2d5" stroke-width="3"></rect>
+      <rect x="500" y="250" width="200" height="150" rx="20" fill="#efe6d2"></rect>
+      <path d="M510 360 C540 350 560 320 590 326 C625 333 640 300 675 305" fill="none" stroke="#a8854a" stroke-width="6" stroke-linecap="round"></path>
+      <rect x="500" y="430" width="200" height="34" rx="10" fill="#f6f2e9"></rect>
+      <rect x="500" y="486" width="200" height="34" rx="10" fill="#f6f2e9"></rect>
+      <rect x="500" y="542" width="200" height="34" rx="10" fill="#f6f2e9"></rect>
+    </svg>
+  </template>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
+    range: '1d', watchFilter: 'all', txnFilter: 'all',
+    selected: 'AAPL', starred: { AAPL: true, BTC: true }, notif: true,
+    ticket: null, extraTxns: [], toast: ''
+  };
+
+  RATE = 36.4;
+
+  UP = "M0,108 C30,100 44,118 74,110 C104,102 116,70 150,78 C184,86 196,58 230,52 C262,46 276,64 304,50 C330,38 344,26 358,22";
+  DN = "M0,30 C30,40 44,28 74,46 C104,64 116,58 150,74 C184,90 196,86 230,100 C262,112 276,104 304,118 C330,130 344,126 358,134";
+  USPARK = "M0,18 C12,16 18,9 28,11 C40,13 46,5 56,4";
+  DSPARK = "M0,6 C12,8 18,5 28,10 C40,15 46,13 56,18";
+
+  data = {
+    AAPL: { sym:'AAPL', name:'Apple', name2:'Apple Inc.', logo:'AA', exch:'NASDAQ', native:'usd', cat:'foreign', kind:'stock', price:213.40, dayPct:1.35, shares:125, avg:176.20, open:211.20, high:214.85, low:210.90, mcap:'3.27T', vol:'48.2M', pe:'32.6' },
+    PTT:  { sym:'PTT', name:'ปตท.', name2:'บมจ. ปตท.', logo:'PT', exch:'SET', native:'thb', cat:'thai', kind:'stock', price:0.906, dayPct:0.46, shares:6000, avg:0.85, open:0.90, high:0.92, low:0.89, mcap:'1.03T฿', vol:'22.1M', pe:'9.8' },
+    BTC:  { sym:'BTC', name:'Bitcoin', name2:'Bitcoin', logo:'₿', exch:'Crypto', native:'usd', cat:'crypto', kind:'crypto', price:68131, dayPct:-2.10, shares:0.4, avg:55000, open:69500, high:69900, low:67200, mcap:'1.34T', vol:'฿42B', pe:'—' },
+    NVDA: { sym:'NVDA', name:'Nvidia', name2:'Nvidia Corp.', logo:'NV', exch:'NASDAQ', native:'usd', cat:'foreign', kind:'stock', price:123.04, dayPct:3.22, shares:90, avg:98.00, open:119.40, high:124.10, low:118.90, mcap:'3.02T', vol:'310M', pe:'58.1' },
+    TSLA: { sym:'TSLA', name:'Tesla', name2:'Tesla Inc.', logo:'TS', exch:'NASDAQ', native:'usd', cat:'foreign', kind:'stock', price:248.50, dayPct:2.10, shares:0, avg:0, open:244.0, high:250.2, low:243.1, mcap:'792B', vol:'98M', pe:'71.4' },
+    CPALL:{ sym:'CPALL', name:'ซีพี ออลล์', name2:'ซีพี ออลล์', logo:'CP', exch:'SET', native:'thb', cat:'thai', kind:'stock', price:1.60, dayPct:-0.43, shares:0, avg:0, open:1.61, high:1.62, low:1.59, mcap:'524B฿', vol:'31M', pe:'18.2' },
+    KBANK:{ sym:'KBANK', name:'กสิกรไทย', name2:'กสิกรไทย', logo:'KB', exch:'SET', native:'thb', cat:'thai', kind:'stock', price:3.64, dayPct:0.76, shares:0, avg:0, open:3.61, high:3.66, low:3.60, mcap:'344B฿', vol:'14M', pe:'7.1' },
+    ETH:  { sym:'ETH', name:'Ethereum', name2:'Ethereum', logo:'Ξ', exch:'Crypto', native:'usd', cat:'crypto', kind:'crypto', price:2261, dayPct:-1.40, shares:0, avg:0, open:2295, high:2310, low:2240, mcap:'272B', vol:'฿18B', pe:'—' }
+  };
+
+  holdingList = ['AAPL', 'PTT', 'BTC', 'NVDA'];
+  watchList = ['TSLA', 'CPALL', 'NVDA', 'KBANK', 'ETH'];
+  cashUsd = 10000;
+
+  baseTxns = [
+    { date:'20 มิถุนายน 2568', items: [
+      { type:'buy', title:'ซื้อ NVDA', sub:'5 หุ้น · $122.40', amt:'−$612.00', time:'10:24' },
+      { type:'sell', title:'ขาย CPALL', sub:'300 หุ้น · ฿58.50', amt:'+฿17,550', time:'09:48' }
+    ]},
+    { date:'19 มิถุนายน 2568', items: [
+      { type:'buy', title:'ซื้อ AAPL', sub:'10 หุ้น · $210.80', amt:'−$2,108.00', time:'15:02' },
+      { type:'dividend', title:'ปันผล ปตท.', sub:'1,200 หุ้น · ฿1.50', amt:'+฿1,800', time:'11:30' },
+      { type:'sell', title:'ขาย BTC', sub:'0.02 · ฿2.51M', amt:'+฿50,200', time:'08:15' }
+    ]}
+  ];
+
+  nf(n, d) { return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  // price-level value in current currency
+  price(usd) {
+    if (this.state.cur === 'thb') { const v = usd * this.RATE; return '฿' + this.nf(v, v >= 1000 ? 0 : 2); }
+    return '$' + this.nf(usd, 2);
+  }
+  // aggregate value in current currency
+  val(usd) {
+    if (this.state.cur === 'thb') return '฿' + this.nf(Math.round(usd * this.RATE), 0);
+    return '$' + this.nf(usd, usd >= 10000 ? 0 : 2);
+  }
+  // value in opposite currency (for the secondary line)
+  altVal(usd) {
+    if (this.state.cur === 'thb') return '≈ $' + this.nf(usd, 2);
+    return '≈ ฿' + this.nf(Math.round(usd * this.RATE), 0);
+  }
+  qtyLabel(s) {
+    return s.kind === 'crypto'
+      ? this.nf(s.shares, s.shares < 1 ? 2 : 2) + ' ' + s.sym
+      : this.nf(s.shares, 0) + ' หุ้น';
+  }
+  pctStr(p) { return (p >= 0 ? '+' : '−') + Math.abs(p).toFixed(2) + '%'; }
+
+  open(sym) { this.setState(st => ({ prevScreen: st.screen === 'detail' ? st.prevScreen : st.screen, screen: 'detail', selected: sym })); }
+
+  renderVals() {
+    const S = this.state;
+    const themes = {
+      light: { page:'#f4f1ea', card:'#fffdf8', card2:'#f6f2e9', ink:'#2a2723', sub:'#8f897e', faint:'#b8b2a6', line:'#e8e2d5', gold:'#a8854a', goldsoft:'#efe6d2', up:'#4f8a6b', down:'#c0664f', ongold:'#fffdf8', csage:'#7d9b6f', cblue:'#6f8aa8', cclay:'#bfa07f' },
+      dark:  { page:'#161410', card:'#211d17', card2:'#1b1813', ink:'#f1ece0', sub:'#a39c8d', faint:'#6f6a5e', line:'#322d24', gold:'#cba35f', goldsoft:'#2b2519', up:'#74b08c', down:'#d98a70', ongold:'#161410', csage:'#8aab7c', cblue:'#7d99b8', cclay:'#c9ab88' }
+    };
+    const t = S.dark ? themes.dark : themes.light;
+    const scr = S.screen;
+
+    const rootStyle = {
+      '--page': t.page, '--card': t.card, '--card2': t.card2, '--ink': t.ink,
+      '--sub': t.sub, '--faint': t.faint, '--line': t.line, '--gold': t.gold,
+      '--goldsoft': t.goldsoft, '--up': t.up, '--down': t.down, '--ongold': t.ongold,
+      '--c-sage': t.csage, '--c-blue': t.cblue, '--c-clay': t.cclay,
+      width: '390px', height: '844px', borderRadius: '46px', background: t.page,
+      overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column',
+      boxShadow: S.dark ? '0 22px 60px -18px rgba(20,16,8,.6)' : '0 22px 60px -18px rgba(60,52,38,.4)',
+      border: S.dark ? '1px solid rgba(0,0,0,.4)' : '1px solid rgba(0,0,0,.06)'
+    };
+
+    const ac = (n) => (scr === n ? t.gold : t.faint);
+    const c = { overview: ac('overview'), watch: ac('watch'), dividends: ac('dividends'), transactions: ac('transactions'), account: ac('account') };
+
+    // currency pill
+    const onSeg = S.cur === 'thb';
+    const thbBg = onSeg ? t.gold : 'transparent', thbCol = onSeg ? t.ongold : t.sub;
+    const usdBg = !onSeg ? t.gold : 'transparent', usdCol = !onSeg ? t.ongold : t.sub;
+
+    // switches
+    const mkTrack = (on) => ({ width:'46px', height:'28px', borderRadius:'16px', cursor:'pointer', background: on ? t.gold : t.faint, position:'relative', flex:'none', transition:'background .2s ease' });
+    const mkKnob = (on) => ({ position:'absolute', top:'3px', left:'3px', width:'22px', height:'22px', borderRadius:'50%', background:'#fff', transform: on ? 'translateX(18px)' : 'translateX(0)', transition:'transform .2s ease', boxShadow:'0 1px 3px rgba(0,0,0,.25)' });
+
+    // range chips
+    const rangeDefs = [['1d','1ว'],['1w','1สั'],['1m','1ด'],['3m','3ด'],['1y','1ป'],['all','ทั้งหมด']];
+    const ranges = rangeDefs.map(([k, label]) => {
+      const on = S.range === k;
+      return { label, weight: on ? '600' : '400', bg: on ? t.goldsoft : 'transparent', col: on ? t.gold : t.sub, onClick: () => this.setState({ range: k }) };
+    });
+
+    // holdings
+    const holdings = this.holdingList.map(sym => {
+      const s = this.data[sym]; const v = s.shares * s.price;
+      return { logo: s.logo, name: s.name, holdSub: s.sym + ' · ' + this.qtyLabel(s), valStr: this.val(v), pct: this.pctStr(s.dayPct), pctColor: s.dayPct >= 0 ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
+    });
+
+    // totals
+    let totalUsd = this.cashUsd, dayAbsUsd = 0;
+    this.holdingList.forEach(sym => { const s = this.data[sym]; const v = s.shares * s.price; totalUsd += v; dayAbsUsd += v * s.dayPct / 100; });
+    const dayPct = dayAbsUsd / totalUsd * 100;
+    const dayUp = dayAbsUsd >= 0;
+    const dayStr = (dayUp ? '▲ ' : '▼ ') + this.val(Math.abs(dayAbsUsd)) + ' · ' + this.pctStr(dayPct);
+
+    // allocation (computed)
+    const catUsd = { foreign:0, thai:0, crypto:0 };
+    this.holdingList.forEach(sym => { const s = this.data[sym]; catUsd[s.cat] += s.shares * s.price; });
+    const allocRaw = [
+      { label:'หุ้นต่างประเทศ', color:'var(--gold)', usd: catUsd.foreign },
+      { label:'หุ้นไทย', color:'var(--c-sage)', usd: catUsd.thai },
+      { label:'คริปโต', color:'var(--c-blue)', usd: catUsd.crypto },
+      { label:'เงินสด', color:'var(--c-clay)', usd: this.cashUsd }
+    ];
+    const alloc = allocRaw.map(a => { const p = Math.round(a.usd / totalUsd * 100); return { label: a.label, color: a.color, pct: p, pctLabel: p + '%' }; });
+
+    // detail (selected)
+    const sel = this.data[S.selected]; const selVal = sel.shares * sel.price;
+    const gainUsd = (sel.price - sel.avg) * sel.shares; const gainPct = sel.avg ? (sel.price / sel.avg - 1) * 100 : 0;
+    const dDayUp = sel.dayPct >= 0;
+    const d = {
+      sym: sel.sym, name2: sel.name2,
+      subline: sel.exch + ' · ' + (sel.native === 'usd' ? 'ดอลลาร์สหรัฐ' : 'บาท'),
+      priceStr: this.price(sel.price), priceAlt: this.altVal(sel.price),
+      dayStr: (dDayUp ? '▲ ' : '▼ ') + this.pctStr(sel.dayPct), dayBg: dDayUp ? 'color-mix(in oklab,var(--up) 16%,transparent)' : 'color-mix(in oklab,var(--down) 16%,transparent)', dayCol: dDayUp ? 'var(--up)' : 'var(--down)',
+      chart: dDayUp ? this.UP : this.DN, chartArea: (dDayUp ? this.UP : this.DN) + ' L358,148 L0,148 Z',
+      areaFill: 'color-mix(in oklab,var(--gold) 14%,transparent)', lineColor: dDayUp ? 'var(--up)' : 'var(--down)',
+      open: this.price(sel.open), high: this.price(sel.high), low: this.price(sel.low), mcap: sel.mcap, vol: sel.vol, pe: sel.pe,
+      held: sel.shares > 0, notHeld: sel.shares <= 0,
+      posQty: this.qtyLabel(sel) + ' · ' + this.val(selVal), posAvg: this.price(sel.avg),
+      posGain: (gainUsd >= 0 ? '+' : '−') + this.val(Math.abs(gainUsd)) + ' · ' + this.pctStr(gainPct),
+      gainCol: gainUsd >= 0 ? 'var(--up)' : 'var(--down)',
+      starFill: S.starred[sel.sym] ? 'var(--gold)' : 'none'
+    };
+
+    // watch filter tabs
+    const wfDefs = [['all','ทั้งหมด'],['thai','หุ้นไทย'],['foreign','ต่างประเทศ'],['crypto','คริปโต']];
+    const watchTabs = wfDefs.map(([k, label]) => { const on = S.watchFilter === k; return { label, weight: on ? '600' : '400', bg: on ? t.gold : t.card, col: on ? t.ongold : t.sub, bd: on ? t.gold : t.line, onClick: () => this.setState({ watchFilter: k }) }; });
+    const watchRows = this.watchList.filter(sym => S.watchFilter === 'all' || this.data[sym].cat === S.watchFilter).map(sym => {
+      const s = this.data[sym]; const up = s.dayPct >= 0;
+      return { sym: s.sym, name2: s.name2, priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: up ? 'var(--up)' : 'var(--down)', spark: up ? this.USPARK : this.DSPARK, onOpen: () => this.open(sym) };
+    });
+
+    // txn filter tabs + groups
+    const tfDefs = [['all','ทั้งหมด'],['buy','ซื้อ'],['sell','ขาย'],['dividend','ปันผล']];
+    const txnTabs = tfDefs.map(([k, label]) => { const on = S.txnFilter === k; return { label, weight: on ? '600' : '400', bg: on ? t.gold : t.card, col: on ? t.ongold : t.sub, bd: on ? t.gold : t.line, onClick: () => this.setState({ txnFilter: k }) }; });
+    const icon = (type) => {
+      if (type === 'buy') return { iconBg:'color-mix(in oklab,var(--up) 16%,transparent)', iconStroke:'var(--up)', iconPath:'M12 5v14M5 12l7 7 7-7' };
+      if (type === 'sell') return { iconBg:'color-mix(in oklab,var(--down) 16%,transparent)', iconStroke:'var(--down)', iconPath:'M12 19V5M5 12l7-7 7 7' };
+      return { iconBg:'var(--goldsoft)', iconStroke:'var(--gold)', iconPath:'M12 7v10M9.5 9.5h5M9.5 14.5h5' };
+    };
+    const allGroups = JSON.parse(JSON.stringify(this.baseTxns));
+    if (S.extraTxns.length) allGroups[0].items = [...S.extraTxns, ...allGroups[0].items];
+    const txnGroups = allGroups.map(g => {
+      const items = g.items.filter(it => S.txnFilter === 'all' || it.type === S.txnFilter).map((it, i, arr) => {
+        const ic = icon(it.type);
+        return { ...it, ...ic, amtCol: it.type === 'dividend' ? 'var(--up)' : 'var(--ink)', bb: i === arr.length - 1 ? 'transparent' : 'var(--line)' };
+      });
+      return { date: g.date, items };
+    }).filter(g => g.items.length);
+
+    // ticket
+    const tkState = S.ticket; let tk = {}, showTicket = false;
+    if (tkState) {
+      showTicket = true; const s = this.data[tkState.sym]; const buy = tkState.mode === 'buy';
+      const totalUsd2 = tkState.qty * s.price;
+      tk = {
+        logo: s.logo, title: (buy ? 'ซื้อ ' : 'ขาย ') + s.sym, sub: s.name2,
+        priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: s.dayPct >= 0 ? 'var(--up)' : 'var(--down)',
+        qty: tkState.qty, total: this.val(totalUsd2),
+        btnBg: buy ? t.gold : t.down, btnCol: buy ? t.ongold : '#fff', btnLabel: buy ? 'ยืนยันการซื้อ' : 'ยืนยันการขาย'
+      };
+    }
+
+    return {
+      rootStyle, c,
+      isOverview: scr === 'overview', isDetail: scr === 'detail', isWatch: scr === 'watch',
+      isDividends: scr === 'dividends', isTransactions: scr === 'transactions', isAccount: scr === 'account',
+      showTabs: scr !== 'detail',
+      thbBg, thbCol, usdBg, usdCol,
+      darkTrack: mkTrack(S.dark), darkKnob: mkKnob(S.dark),
+      notifTrack: mkTrack(S.notif), notifKnob: mkKnob(S.notif),
+      ranges, holdings, alloc, d, watchTabs, watchRows, txnTabs, txnGroups,
+      totalMain: this.val(totalUsd), totalAlt: this.altVal(totalUsd),
+      dayStr, dayBg: dayUp ? 'color-mix(in oklab,var(--up) 16%,transparent)' : 'color-mix(in oklab,var(--down) 16%,transparent)', dayCol: dayUp ? 'var(--up)' : 'var(--down)',
+      showTicket, tk, showToast: !!S.toast, toastMsg: S.toast,
+      goOverview: () => this.setState({ screen: 'overview' }),
+      goWatch: () => this.setState({ screen: 'watch' }),
+      goDividends: () => this.setState({ screen: 'dividends' }),
+      goTransactions: () => this.setState({ screen: 'transactions' }),
+      goAccount: () => this.setState({ screen: 'account' }),
+      back: () => this.setState(st => ({ screen: st.prevScreen || 'overview' })),
+      toggleDark: () => this.setState(st => ({ dark: !st.dark })),
+      toggleNotif: () => this.setState(st => ({ notif: !st.notif })),
+      setThb: () => this.setState({ cur: 'thb' }),
+      setUsd: () => this.setState({ cur: 'usd' }),
+      toggleStar: () => this.setState(st => ({ starred: { ...st.starred, [st.selected]: !st.starred[st.selected] } })),
+      openBuy: () => this.setState(st => ({ ticket: { mode: 'buy', sym: st.selected, qty: 1 } })),
+      openSell: () => this.setState(st => ({ ticket: { mode: 'sell', sym: st.selected, qty: 1 } })),
+      closeTicket: () => this.setState({ ticket: null }),
+      ticketInc: () => this.setState(st => ({ ticket: { ...st.ticket, qty: st.ticket.qty + 1 } })),
+      ticketDec: () => this.setState(st => ({ ticket: { ...st.ticket, qty: Math.max(1, st.ticket.qty - 1) } })),
+      confirmTicket: () => this.confirmTicket()
+    };
+  }
+
+  confirmTicket() {
+    const tk = this.state.ticket; if (!tk) return;
+    const s = this.data[tk.sym]; const buy = tk.mode === 'buy';
+    const totalUsd = tk.qty * s.price;
+    const amt = (buy ? '−' : '+') + this.val(totalUsd);
+    const sub = this.nf(tk.qty, 0) + (s.kind === 'crypto' ? ' ' + s.sym : ' หุ้น') + ' · ' + this.price(s.price);
+    const entry = { type: buy ? 'buy' : 'sell', title: (buy ? 'ซื้อ ' : 'ขาย ') + s.sym, sub, amt, time: 'เมื่อสักครู่' };
+    this.setState(st => ({ ticket: null, extraTxns: [entry, ...st.extraTxns], screen: 'transactions', toast: (buy ? 'ซื้อ ' : 'ขาย ') + s.sym + ' สำเร็จ' }));
+    clearTimeout(this._toastT);
+    this._toastT = setTimeout(() => this.setState({ toast: '' }), 2200);
+  }
+}
+</script>
+</body>
+</html>
