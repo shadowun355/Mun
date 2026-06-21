@@ -3,16 +3,26 @@ import SwiftUI
 final class Store: ObservableObject {
     // ---- state (mirrors the prototype's logic class) ----
     @Published var tab = 0
-    @Published var dark = false
-    @Published var cur = "thb"               // thb | usd
+    @Published var dark = UserDefaults.standard.bool(forKey: "dark") { didSet { UserDefaults.standard.set(dark, forKey: "dark") } }
+    @Published var cur = UserDefaults.standard.string(forKey: "cur") ?? "thb" { didSet { UserDefaults.standard.set(cur, forKey: "cur") } }  // thb | usd
     @Published var range = "1d"
     @Published var watchFilter = "all"       // all | thai | foreign | crypto
     @Published var txnFilter = "all"         // all | buy | sell | dividend
-    @Published var starred: Set<String> = ["AAPL", "BTC"]
-    @Published var notif = true
-    @Published var extraTxns: [Txn] = []
+    @Published var starred: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "starred") ?? ["AAPL", "BTC"]) { didSet { UserDefaults.standard.set(Array(starred), forKey: "starred") } }
+    @Published var notif = (UserDefaults.standard.object(forKey: "notif") as? Bool) ?? true { didSet { UserDefaults.standard.set(notif, forKey: "notif") } }
+    @Published var extraTxns: [Txn] = Store.loadTxns() { didSet { Store.saveTxns(extraTxns) } }
     @Published var toast: String?
     @Published var ticket: Ticket?
+
+    // ---- persistence helpers (extraTxns is the only Codable blob) ----
+    static func loadTxns() -> [Txn] {
+        guard let d = UserDefaults.standard.data(forKey: "extraTxns"),
+              let t = try? JSONDecoder().decode([Txn].self, from: d) else { return [] }
+        return t
+    }
+    static func saveTxns(_ t: [Txn]) {
+        UserDefaults.standard.set(try? JSONEncoder().encode(t), forKey: "extraTxns")
+    }
 
     let RATE = 36.4
     var theme: Theme { dark ? .dark : .light }

@@ -16,9 +16,14 @@ runs on mock data. No backend, no persistence. ~1,160 lines Swift across `Mun/`.
 ## Work in progress
 None. Last state is a clean, building UI on mock data.
 
+## Completed since
+- Persistence: `dark`, `cur`, `notif`, `starred`, `extraTxns` survive relaunch via
+  `UserDefaults` (`didSet` write + default-expr load in `Store.swift`). `Txn` made
+  `Codable`. Ephemeral state (`tab`, `range`, filters, `toast`, `ticket`) not
+  persisted by design. Unverified — no full Xcode on this machine; confirm with ⌘R.
+
 ## Next steps (not started — see `Mun/BUILD.md` "What's mock vs real")
 - Replace `Store.data` + `RATE` with a market-data / FX API.
-- Persist `starred`, `extraTxns`, `notif`, `dark`, `cur` (e.g. `@AppStorage` / file).
 - Wire order ticket to a real brokerage.
 - Add `Mun/Assets.xcassets` + `AppIcon` before shipping.
 - Set signing Team + unique `PRODUCT_BUNDLE_IDENTIFIER` (currently `com.mun.app`).
@@ -31,7 +36,6 @@ None. Last state is a clean, building UI on mock data.
 
 ## Known issues
 - All data is mock (`Store.swift`, `Charts.swift`); `RATE` is hardcoded.
-- No persistence — state resets on relaunch.
 - No app icon / asset catalog yet (`Assets.xcassets` missing).
 - Signing not configured for distribution.
 

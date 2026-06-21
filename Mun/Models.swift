@@ -10,7 +10,7 @@ struct Instrument: Identifiable {
     var id: String { sym }
 }
 
-struct Txn: Identifiable {
+struct Txn: Identifiable, Codable {
     let id = UUID()
     let type: String                        // buy | sell | dividend
     let title, sub, amt, time: String
