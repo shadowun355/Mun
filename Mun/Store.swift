@@ -24,14 +24,14 @@ final class Store: ObservableObject {
         UserDefaults.standard.set(try? JSONEncoder().encode(t), forKey: "extraTxns")
     }
 
-    let RATE = 36.4
+    @Published var rate = 36.4               // live USD→THB, refreshed by MarketAPI; seed is fallback
     var theme: Theme { dark ? .dark : .light }
 
     let holdingList = ["AAPL", "PTT", "BTC", "NVDA"]
     let watchList = ["TSLA", "CPALL", "NVDA", "KBANK", "ETH"]
     let cashUsd = 10000.0
 
-    let data: [String: Instrument] = [
+    @Published var data: [String: Instrument] = [   // seed = offline fallback; live fields patched by MarketAPI
         "AAPL": Instrument(sym: "AAPL", name: "Apple", name2: "Apple Inc.", logo: "AA", exch: "NASDAQ", native: "usd", cat: "foreign", kind: "stock", price: 213.40, dayPct: 1.35, shares: 125, avg: 176.20, open: 211.20, high: 214.85, low: 210.90, mcap: "3.27T", vol: "48.2M", pe: "32.6"),
         "PTT": Instrument(sym: "PTT", name: "ปตท.", name2: "บมจ. ปตท.", logo: "PT", exch: "SET", native: "thb", cat: "thai", kind: "stock", price: 0.906, dayPct: 0.46, shares: 6000, avg: 0.85, open: 0.90, high: 0.92, low: 0.89, mcap: "1.03T฿", vol: "22.1M", pe: "9.8"),
         "BTC": Instrument(sym: "BTC", name: "Bitcoin", name2: "Bitcoin", logo: "₿", exch: "Crypto", native: "usd", cat: "crypto", kind: "crypto", price: 68131, dayPct: -2.10, shares: 0.4, avg: 55000, open: 69500, high: 69900, low: 67200, mcap: "1.34T", vol: "฿42B", pe: "—"),
@@ -65,16 +65,16 @@ final class Store: ObservableObject {
         return f.string(from: NSNumber(value: n)) ?? ""
     }
     func price(_ usd: Double) -> String {
-        if cur == "thb" { let v = usd * RATE; return "฿" + nf(v, v >= 1000 ? 0 : 2) }
+        if cur == "thb" { let v = usd * rate; return "฿" + nf(v, v >= 1000 ? 0 : 2) }
         return "$" + nf(usd, 2)
     }
     func val(_ usd: Double) -> String {
-        if cur == "thb" { return "฿" + nf((usd * RATE).rounded(), 0) }
+        if cur == "thb" { return "฿" + nf((usd * rate).rounded(), 0) }
         return "$" + nf(usd, usd >= 10000 ? 0 : 2)
     }
     func altVal(_ usd: Double) -> String {
         if cur == "thb" { return "≈ $" + nf(usd, 2) }
-        return "≈ ฿" + nf((usd * RATE).rounded(), 0)
+        return "≈ ฿" + nf((usd * rate).rounded(), 0)
     }
     func qtyLabel(_ s: Instrument) -> String {
         s.kind == "crypto" ? nf(s.shares, 2) + " " + s.sym : nf(s.shares, 0) + " หุ้น"
@@ -133,5 +133,18 @@ final class Store: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) { [weak self] in
             if self?.toast != nil { self?.toast = nil }
         }
+    }
+
+    // ---- live data (rungs 1+2: crypto+FX no-key, US via optional Finnhub key) ----
+    func refresh() async { await MarketAPI.refresh(self) }
+
+    // Patch only the live numeric fields; static fields + holdings keep their seed.
+    func patch(_ sym: String, price: Double, dayPct: Double, open: Double? = nil, high: Double? = nil, low: Double? = nil) {
+        guard var s = data[sym] else { return }
+        s.price = price; s.dayPct = dayPct
+        if let open { s.open = open }
+        if let high { s.high = high }
+        if let low { s.low = low }
+        data[sym] = s
     }
 }

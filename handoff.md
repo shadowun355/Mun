@@ -20,10 +20,28 @@ None. Last state is a clean, building UI on mock data.
 - Persistence: `dark`, `cur`, `notif`, `starred`, `extraTxns` survive relaunch via
   `UserDefaults` (`didSet` write + default-expr load in `Store.swift`). `Txn` made
   `Codable`. Ephemeral state (`tab`, `range`, filters, `toast`, `ticket`) not
-  persisted by design. Unverified — no full Xcode on this machine; confirm with ⌘R.
+  persisted by design.
+- Live data (rungs 1+2), new `Mun/MarketAPI.swift`: real **crypto** (CoinGecko)
+  and **FX USD→THB** (Frankfurter) with no API key; real **US stocks** (Finnhub)
+  when a free key is pasted into `MarketAPI.finnhubKey` (empty = US stays seed).
+  `Store.rate` + `Store.data` are now `@Published`, seeded with the old mock as an
+  offline fallback; `MarketAPI.refresh` patches only live numeric fields
+  (`price`/`dayPct`/OHLC) and runs on launch via `.task` in `RootView`. FX fetched
+  first (USD view + future Thai normalization depend on it). Each source fails
+  silently back to seed. `Instrument` price/dayPct/OHLC are now `var`.
+  API JSON shapes verified live with curl; full app run unverified — no Xcode here.
+
+## Design decisions (live data)
+- Internal model stays USD-canonical; only numeric fields are patched, static
+  fields + holdings (`shares`/`avg`) keep their seed.
+- Rung 3 (Thai SET stocks) deliberately deferred — no free API covers SET. Plan:
+  a localhost FastAPI proxy wrapping the `UncleEngineer/ThaiStock` scraper, hit
+  behind a `GET /quote?sym=` contract. Thai stays mock until then.
 
 ## Next steps (not started — see `Mun/BUILD.md` "What's mock vs real")
-- Replace `Store.data` + `RATE` with a market-data / FX API.
+- Paste a free Finnhub key into `MarketAPI.finnhubKey` to enable US stocks.
+- Rung 3: ThaiStock localhost proxy for real SET prices (PTT/CPALL/KBANK).
+- Add periodic / foreground refresh (currently launch-only).
 - Wire order ticket to a real brokerage.
 - Add `Mun/Assets.xcassets` + `AppIcon` before shipping.
 - Set signing Team + unique `PRODUCT_BUNDLE_IDENTIFIER` (currently `com.mun.app`).
@@ -35,7 +53,8 @@ None. Last state is a clean, building UI on mock data.
 - File-system synchronized group: new `.swift` under `Mun/` compiles automatically.
 
 ## Known issues
-- All data is mock (`Store.swift`, `Charts.swift`); `RATE` is hardcoded.
+- Thai SET stocks (PTT/CPALL/KBANK) still mock; US stocks mock until a Finnhub
+  key is set. Crypto + FX are live. `Charts.swift` still canned.
 - No app icon / asset catalog yet (`Assets.xcassets` missing).
 - Signing not configured for distribution.
 

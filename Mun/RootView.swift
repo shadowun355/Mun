@@ -28,6 +28,7 @@ struct RootView: View {
             }
         }
         .animation(.easeOut(duration: 0.25), value: store.toast)
+        .task { await store.refresh() }
         .preferredColorScheme(store.dark ? .dark : .light)
         .sheet(isPresented: ticketPresented) {
             if store.ticket != nil { OrderTicketView(ticket: Binding($store.ticket)!) }

@@ -5,7 +5,8 @@ import SwiftUI
 struct Instrument: Identifiable {
     let sym, name, name2, logo, exch: String
     let native, cat, kind: String          // native: usd|thb · cat: foreign|thai|crypto · kind: stock|crypto
-    let price, dayPct, shares, avg, open, high, low: Double
+    var price, dayPct, open, high, low: Double  // live fields, patched by MarketAPI
+    let shares, avg: Double                 // user holdings, stay local
     let mcap, vol, pe: String
     var id: String { sym }
 }
