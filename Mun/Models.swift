@@ -16,6 +16,8 @@ struct Txn: Identifiable, Codable {
     let id = UUID()
     let type: String                        // buy | sell | dividend
     let title, sub, amt, time: String
+    // id is local-only (Identifiable); a fresh UUID is fine on decode.
+    enum CodingKeys: String, CodingKey { case type, title, sub, amt, time }
 }
 
 struct TxnGroup: Identifiable {
