@@ -25,8 +25,13 @@ mock data, no backend. ~1,160 lines across `Mun/`.
 - `Theme.swift` — `Theme` light/dark token sets, `Color(hex:)`, `mono()` serif font.
 
 ## Services
-- None. No API client, repository, manager, or persistence layer.
-- `Store` (`Store.swift`) is the only stateful object: an `ObservableObject` holding all state, mock `data`/`baseTxns`, formatters, derived portfolio math, and actions (`toggleStar`, `confirmTicket`). FX is a hardcoded `RATE`.
+- `MarketAPI` (`MarketAPI.swift`) — dependency-free live data: crypto (CoinGecko),
+  FX USD→THB (Frankfurter), US stocks (Finnhub, optional key). Patches `Store` on
+  launch; fails silently back to the seed. See `SCOPE.md` for asset-class coverage.
+- `Broker` (`Broker.swift`) — order-execution seam; `MockBroker` simulates fills
+  (no real execution). Swap point at `Store.broker`.
+- Persistence: `UserDefaults` (no DB yet) for `dark`/`cur`/`notif`/`starred`/`extraTxns`.
+- `Store` (`Store.swift`) is the only stateful object: an `ObservableObject` holding all state, seeded `data`/`baseTxns`, formatters, derived portfolio math, and actions (`toggleStar`, async `confirmTicket`). FX `rate` and `data` are now `@Published`, refreshed by `MarketAPI`.
 
 ## Data Flow
 - `MunApp` creates one `Store` as `@StateObject`, injects via `.environmentObject`.

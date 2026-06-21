@@ -11,14 +11,17 @@
 - Shared UI kit: Card, ChangePill, LogoChip, CurrencySegment, RangeChips, FilterChip, headers.
 
 ## In Progress
-- None. Last state: clean UI building on mock data.
+- None. See `SCOPE.md` for pinned scope + roadmap.
+
+## Done (this session)
+- Persist `starred`, `extraTxns`, `notif`, `dark`, `cur` via `UserDefaults`.
+- Live market data + FX (`MarketAPI`): crypto + FX (no key), US (Finnhub key).
+- Broker abstraction + `MockBroker`; async `confirmTicket` (no real execution).
 
 ## Backlog
-- Replace `Store.data` + `RATE` with live market-data / FX API.
-- Persist `starred`, `extraTxns`, `notif`, `dark`, `cur` (e.g. `@AppStorage`).
-- Wire order ticket to a real brokerage.
-- Real chart series + smoothing (`Charts.Series` is canned).
-- Time range chips (`RangeChips`) are visual only — make `Store.range` drive data.
-- Add `Mun/Assets.xcassets` + `AppIcon`.
-- Configure signing Team + unique bundle id (currently `com.mun.app`).
+- Market-data expansion: ThaiStock localhost proxy (live SET) + ETF symbols.
+- Freemium / StoreKit 2: real-time-data gate, 5-holding cap, advanced features.
+- Auth + DB (replace `UserDefaults`).
+- Real chart series + smoothing (`Charts.Series` is canned); make `Store.range` drive data.
+- Add `Mun/Assets.xcassets` + `AppIcon`; signing Team + unique bundle id.
 - Bundle Anuphan/Newsreader fonts, switch `mono()`/headers to `.custom()`.

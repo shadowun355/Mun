@@ -1,8 +1,9 @@
 # Handoff
 
 ## Current status
-Mun (มั่น) — native iOS SwiftUI app, port of the design handoff. UI complete,
-runs on mock data. No backend, no persistence. ~1,160 lines Swift across `Mun/`.
+Mun (มั่น) — native iOS SwiftUI app. **Evolved scope is pinned in `SCOPE.md`**
+(portfolio tracker, no real execution, freemium subscription planned). UI complete;
+crypto+FX+US data live; orders simulated via `MockBroker`. Read `SCOPE.md` first.
 
 ## Completed features
 - 5 tabs: ภาพรวม (Overview), เฝ้าดู (Watchlist), ปันผล (Dividends), รายการ (Transactions), บัญชี (Account).
@@ -30,21 +31,33 @@ None. Last state is a clean, building UI on mock data.
   first (USD view + future Thai normalization depend on it). Each source fails
   silently back to seed. `Instrument` price/dayPct/OHLC are now `var`.
   API JSON shapes verified live with curl; full app run unverified — no Xcode here.
+- Broker abstraction, new `Mun/Broker.swift`: `Broker` protocol + `Order`/`Fill`/
+  `Side`/`OrderError` + `MockBroker` (simulated ~400ms fill, no real execution).
+  `Store.confirmTicket()` is now `async @MainActor`, routes through `store.broker`,
+  shows a "ส่งคำสั่ง…" submitting state (`Store.submitting`), and on the `Fill`
+  does what it did before (prepend `Txn`, tab→3, success toast); broker error →
+  "คำสั่งไม่สำเร็จ" toast. Toast logic extracted to `Store.showToast`.
+  `OrderTicketView` confirm button wraps the call in a `Task` and disables while
+  submitting. Swap point for a real broker is `Store.broker`.
 
-## Design decisions (live data)
-- Internal model stays USD-canonical; only numeric fields are patched, static
-  fields + holdings (`shares`/`avg`) keep their seed.
-- Rung 3 (Thai SET stocks) deliberately deferred — no free API covers SET. Plan:
-  a localhost FastAPI proxy wrapping the `UncleEngineer/ThaiStock` scraper, hit
-  behind a `GET /quote?sym=` contract. Thai stays mock until then.
+## Design decisions
+- Single source of truth = `SCOPE.md`. Internal model stays USD-canonical; only
+  numeric fields are patched, static fields + holdings keep their seed.
+- Rung 3 (Thai SET) now **in scope** via a localhost FastAPI proxy wrapping
+  `UncleEngineer/ThaiStock`, behind a `GET /quote?sym=` contract. Still to build.
+- Forex is **display-only** (the ฿/$ rate, already live) — no tradeable instrument.
 
-## Next steps (not started — see `Mun/BUILD.md` "What's mock vs real")
+## Roadmap (see `SCOPE.md`)
+✅ persistence · ✅ live data 1+2 · ✅ broker abstraction (MockBroker) ·
+▶ market-data expansion (ThaiStock proxy + ETF symbols) ·
+freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth + DB.
+
+## Next steps
 - Paste a free Finnhub key into `MarketAPI.finnhubKey` to enable US stocks.
-- Rung 3: ThaiStock localhost proxy for real SET prices (PTT/CPALL/KBANK).
+- Build the ThaiStock localhost proxy + iOS client for live SET prices.
+- Add ETF symbols to the seed + UI.
 - Add periodic / foreground refresh (currently launch-only).
-- Wire order ticket to a real brokerage.
-- Add `Mun/Assets.xcassets` + `AppIcon` before shipping.
-- Set signing Team + unique `PRODUCT_BUNDLE_IDENTIFIER` (currently `com.mun.app`).
+- Add `Mun/Assets.xcassets` + `AppIcon`; set signing Team + unique bundle id.
 
 ## Commands to run
 - Open: `open Mun.xcodeproj`

@@ -13,6 +13,9 @@ final class Store: ObservableObject {
     @Published var extraTxns: [Txn] = Store.loadTxns() { didSet { Store.saveTxns(extraTxns) } }
     @Published var toast: String?
     @Published var ticket: Ticket?
+    @Published var submitting = false        // order in flight via broker
+
+    let broker: Broker = MockBroker()        // swap point for a real broker later
 
     // ---- persistence helpers (extraTxns is the only Codable blob) ----
     static func loadTxns() -> [Txn] {
@@ -120,16 +123,29 @@ final class Store: ObservableObject {
         if starred.contains(sym) { starred.remove(sym) } else { starred.insert(sym) }
     }
 
-    func confirmTicket() {
+    @MainActor
+    func confirmTicket() async {
         guard let tk = ticket, let s = data[tk.sym] else { return }
-        let buy = tk.mode == "buy"
-        let amt = (buy ? "−" : "+") + val(tk.qty * s.price)
-        let sub = nf(tk.qty, 0) + (s.kind == "crypto" ? " " + s.sym : " หุ้น") + " · " + price(s.price)
-        let entry = Txn(type: buy ? "buy" : "sell", title: (buy ? "ซื้อ " : "ขาย ") + s.sym, sub: sub, amt: amt, time: "เมื่อสักครู่")
-        extraTxns.insert(entry, at: 0)
-        ticket = nil
-        tab = 3
-        toast = (buy ? "ซื้อ " : "ขาย ") + s.sym + " สำเร็จ"
+        let order = Order(sym: tk.sym, side: tk.mode == "buy" ? .buy : .sell, qty: tk.qty)
+        submitting = true
+        defer { submitting = false }
+        do {
+            let fill = try await broker.submit(order, at: s.price)
+            let buy = order.side == .buy
+            let amt = (buy ? "−" : "+") + val(order.qty * fill.price)
+            let sub = nf(order.qty, 0) + (s.kind == "crypto" ? " " + s.sym : " หุ้น") + " · " + price(fill.price)
+            let entry = Txn(type: buy ? "buy" : "sell", title: (buy ? "ซื้อ " : "ขาย ") + s.sym, sub: sub, amt: amt, time: "เมื่อสักครู่")
+            extraTxns.insert(entry, at: 0)
+            ticket = nil
+            tab = 3
+            showToast((buy ? "ซื้อ " : "ขาย ") + s.sym + " สำเร็จ")
+        } catch {
+            showToast("คำสั่งไม่สำเร็จ")   // order rejected by broker
+        }
+    }
+
+    func showToast(_ msg: String) {
+        toast = msg
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) { [weak self] in
             if self?.toast != nil { self?.toast = nil }
         }

@@ -50,14 +50,15 @@ struct OrderTicketView: View {
                 Text(store.val(ticket.qty * s.price)).font(mono(24)).foregroundColor(t.ink)
             }.padding(.horizontal, 4).padding(.bottom, 18)
 
-            Button { store.confirmTicket() } label: {
-                Text(buy ? "ยืนยันการซื้อ" : "ยืนยันการขาย")
+            Button { Task { await store.confirmTicket() } } label: {
+                Text(store.submitting ? "ส่งคำสั่ง…" : (buy ? "ยืนยันการซื้อ" : "ยืนยันการขาย"))
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(buy ? t.ongold : .white)
                     .frame(maxWidth: .infinity, minHeight: 54)
-                    .background(buy ? t.gold : t.down)
+                    .background((buy ? t.gold : t.down).opacity(store.submitting ? 0.6 : 1))
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
+            .disabled(store.submitting)
         }
         .padding(.horizontal, 22).padding(.bottom, 30)
         .background(t.card)
