@@ -15,7 +15,7 @@ enum MarketAPI {
     // Local dev default. For TestFlight/App Store builds, set this to the deployed
     // HTTPS proxy URL (e.g. "https://mun-proxy.onrender.com") so testers get live SET
     // data — localhost only reaches your own Mac. Off/unreachable = Thai stays seed.
-    static let proxyBase = "http://127.0.0.1:8000"
+    static let proxyBase = "https://mun-re6q.onrender.com"
 
     static func refresh(_ store: Store) async {
         // FX first: USD↔THB display and Thai normalization depend on a fresh rate.
