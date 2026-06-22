@@ -29,10 +29,14 @@ Parity-first static site rebuilding the iOS app for the browser. Plan:
   (engine + Component + iOS deltas: SPY/QQQ ETFs, `etf` chip, localStorage persist
   mirroring UserDefaults keys, 60s + visibilitychange refresh, submitting state),
   `web/marketapi.js` (FX+crypto direct; US+Thai via proxy; THB÷rate USD-canonical).
-- **UI:** removed the iPhone device frame (bezel, 9:41 status bar) → responsive
-  full-height column, max-width 480, bottom nav pinned. Verified in a real browser
-  (Puppeteer): all tabs render, ฿/$ toggle, filters, tab nav, txn list all work;
-  CoinGecko/Frankfurter load live; proxy sources fall back to seed (no crash).
+- **UI:** removed the iPhone device frame (bezel, 9:41 status bar). Shell is now a
+  fluid full-height column that fills the **entire browser width** on desktop (no
+  max-width cap) and stays full-width on phones — one responsive codebase, no
+  separate mobile folder (iOS design lives in the `.dc.html` prototype + Swift app).
+  Verified in a real browser (Puppeteer): shell width == viewport width; all tabs
+  render, ฿/$ toggle, filters, tab nav, txn list all work; CoinGecko/Frankfurter
+  load live; proxy sources fall back to seed (no crash). Possible follow-up: center
+  content / desktop multi-column if the stretched single column reads too airy.
 - **Proxy:** `proxy/app.py` gained `CORSMiddleware` (REQUIRED — browsers were blocked;
   native iOS had no CORS) + `GET /us?sym=` (Finnhub, key from `FINNHUB_KEY` env, not
   in client JS). `render.yaml` adds a `mun-web` static site (`rootDir: web`).

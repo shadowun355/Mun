@@ -193,9 +193,9 @@ class Component {
       '--sub': t.sub, '--faint': t.faint, '--line': t.line, '--gold': t.gold,
       '--goldsoft': t.goldsoft, '--up': t.up, '--down': t.down, '--ongold': t.ongold,
       '--c-sage': t.csage, '--c-blue': t.cblue, '--c-clay': t.cclay,
-      // Responsive web shell: full-height column, max-width for readable line length
-      // on desktop, no phone bezel / status bar.
-      width: '100%', maxWidth: '480px', height: '100vh', background: t.page,
+      // Fluid web shell: fills the full browser width on desktop, full-width column
+      // on phones. No phone bezel / status bar, no max-width cap.
+      width: '100%', height: '100vh', background: t.page,
       overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column'
     };
 
