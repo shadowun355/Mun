@@ -10,7 +10,7 @@ enum MarketAPI {
     static let finnhubKey = ""
 
     static let cryptoIds = ["BTC": "bitcoin", "ETH": "ethereum"]   // app sym → CoinGecko id
-    static let usSyms = ["AAPL", "NVDA", "TSLA"]
+    static let usSyms = ["AAPL", "NVDA", "TSLA", "SPY", "QQQ"]   // ETFs use the same Finnhub /quote path
     static let thaiSyms = ["PTT", "CPALL", "KBANK"]               // served by the localhost proxy
     static let proxyBase = "http://127.0.0.1:8000"               // proxy/ FastAPI; off = Thai stays seed
 

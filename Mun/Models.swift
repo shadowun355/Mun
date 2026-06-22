@@ -4,7 +4,7 @@ import SwiftUI
 // and RATE with a live FX rate. Canonical price is stored in USD.
 struct Instrument: Identifiable {
     let sym, name, name2, logo, exch: String
-    let native, cat, kind: String          // native: usd|thb · cat: foreign|thai|crypto · kind: stock|crypto
+    let native, cat, kind: String          // native: usd|thb · cat: foreign|thai|crypto|etf · kind: stock|crypto
     var price, dayPct: Double               // live, patched by MarketAPI
     let shares, avg: Double                 // user holdings, stay local
     var open, high, low: Double             // live, patched by MarketAPI (order preserved for memberwise init)

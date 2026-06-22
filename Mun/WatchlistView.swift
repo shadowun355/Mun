@@ -2,7 +2,7 @@ import SwiftUI
 
 struct WatchlistView: View {
     @EnvironmentObject var store: Store
-    private let filters: [(String, String)] = [("all", "ทั้งหมด"), ("thai", "หุ้นไทย"), ("foreign", "ต่างประเทศ"), ("crypto", "คริปโต")]
+    private let filters: [(String, String)] = [("all", "ทั้งหมด"), ("thai", "หุ้นไทย"), ("foreign", "ต่างประเทศ"), ("crypto", "คริปโต"), ("etf", "กองทุน")]
     private let indices: [(String, String, Bool, String)] = [
         ("SET", "1,308.22", false, "−0.32%"),
         ("S&P 500", "5,521.4", true, "+0.41%"),

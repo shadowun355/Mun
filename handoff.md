@@ -53,8 +53,7 @@ None. Last state is a clean, building UI on mock data.
 freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth + DB.
 
 ## Next steps
-- Add ETF symbols to the seed + UI.
-- Paste a free Finnhub key into `MarketAPI.finnhubKey` to enable US stocks.
+- Paste a free Finnhub key into `MarketAPI.finnhubKey` to enable US stocks + ETFs.
 - Add `Mun/Assets.xcassets` + `AppIcon`; set signing Team + unique bundle id.
 
 ### Done this session
@@ -71,6 +70,11 @@ freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth +
   ATS: new `Mun/Info.plist` (`NSAllowsLocalNetworking`) wired via `INFOPLIST_FILE`
   in both build configs so localhost http is allowed. **Start the proxy before
   running the app** to see live SET data (see `proxy/README.md`).
+- ✅ ETF symbols. Seeded SPY + QQQ (`cat: "etf"`, `kind: "stock"`, USD) in
+  `Store.swift`, added to `watchList` and to `MarketAPI.usSyms` so they patch live
+  via the same Finnhub `/quote` path (need the key). New `กองทุน` (ETF) filter chip
+  in `WatchlistView`. ETFs are watchlist-only (not in `holdingList`), so `alloc`/pie
+  untouched — add an `etf` slice when an ETF first enters holdings.
 
 ## Commands to run
 - Open: `open Mun.xcodeproj`

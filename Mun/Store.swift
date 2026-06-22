@@ -31,7 +31,7 @@ final class Store: ObservableObject {
     var theme: Theme { dark ? .dark : .light }
 
     let holdingList = ["AAPL", "PTT", "BTC", "NVDA"]
-    let watchList = ["TSLA", "CPALL", "NVDA", "KBANK", "ETH"]
+    let watchList = ["TSLA", "CPALL", "NVDA", "KBANK", "ETH", "SPY", "QQQ"]
     let cashUsd = 10000.0
 
     @Published var data: [String: Instrument] = [   // seed = offline fallback; live fields patched by MarketAPI
@@ -42,7 +42,10 @@ final class Store: ObservableObject {
         "TSLA": Instrument(sym: "TSLA", name: "Tesla", name2: "Tesla Inc.", logo: "TS", exch: "NASDAQ", native: "usd", cat: "foreign", kind: "stock", price: 248.50, dayPct: 2.10, shares: 0, avg: 0, open: 244.0, high: 250.2, low: 243.1, mcap: "792B", vol: "98M", pe: "71.4"),
         "CPALL": Instrument(sym: "CPALL", name: "ซีพี ออลล์", name2: "ซีพี ออลล์", logo: "CP", exch: "SET", native: "thb", cat: "thai", kind: "stock", price: 1.60, dayPct: -0.43, shares: 0, avg: 0, open: 1.61, high: 1.62, low: 1.59, mcap: "524B฿", vol: "31M", pe: "18.2"),
         "KBANK": Instrument(sym: "KBANK", name: "กสิกรไทย", name2: "กสิกรไทย", logo: "KB", exch: "SET", native: "thb", cat: "thai", kind: "stock", price: 3.64, dayPct: 0.76, shares: 0, avg: 0, open: 3.61, high: 3.66, low: 3.60, mcap: "344B฿", vol: "14M", pe: "7.1"),
-        "ETH": Instrument(sym: "ETH", name: "Ethereum", name2: "Ethereum", logo: "Ξ", exch: "Crypto", native: "usd", cat: "crypto", kind: "crypto", price: 2261, dayPct: -1.40, shares: 0, avg: 0, open: 2295, high: 2310, low: 2240, mcap: "272B", vol: "฿18B", pe: "—")
+        "ETH": Instrument(sym: "ETH", name: "Ethereum", name2: "Ethereum", logo: "Ξ", exch: "Crypto", native: "usd", cat: "crypto", kind: "crypto", price: 2261, dayPct: -1.40, shares: 0, avg: 0, open: 2295, high: 2310, low: 2240, mcap: "272B", vol: "฿18B", pe: "—"),
+        // ETFs — live via Finnhub (same /quote path as US stocks); seed is offline fallback.
+        "SPY": Instrument(sym: "SPY", name: "S&P 500 ETF", name2: "SPDR S&P 500 ETF Trust", logo: "SP", exch: "NYSE", native: "usd", cat: "etf", kind: "stock", price: 545.0, dayPct: 0.62, shares: 0, avg: 0, open: 543.1, high: 546.4, low: 542.2, mcap: "560B", vol: "62M", pe: "—"),
+        "QQQ": Instrument(sym: "QQQ", name: "Nasdaq 100 ETF", name2: "Invesco QQQ Trust", logo: "QQ", exch: "NASDAQ", native: "usd", cat: "etf", kind: "stock", price: 478.0, dayPct: 0.88, shares: 0, avg: 0, open: 475.0, high: 479.5, low: 474.3, mcap: "300B", vol: "40M", pe: "—")
     ]
 
     let baseTxns: [TxnGroup] = [
