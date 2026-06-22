@@ -15,7 +15,41 @@ crypto+FX+US data live; orders simulated via `MockBroker`. Read `SCOPE.md` first
 - Portfolio math: total value, day P/L, allocation slices (all in-memory).
 
 ## Work in progress
-None. Last state is a clean, building UI on mock data.
+**iOS app PAUSED 2026-06-22** (Apple $99/yr fee deferred). Pivoted to a **web port**
+to ship for free — Swift left untouched, not deleted. See `web/` + `SCOPE.md`.
+
+### Web port (branch `web-port`, started 2026-06-22)
+Parity-first static site rebuilding the iOS app for the browser. Plan:
+`~/.claude/plans/since-i-know-that-glowing-wigderson.md`.
+- **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
+  vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
+  into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line
+  shim (`{{ }}` / `<sc-if>` / `<sc-for>` / `onClick`) in `web/app.js`.
+- **Files:** `web/index.html` (markup template + outer shell), `web/app.js`
+  (engine + Component + iOS deltas: SPY/QQQ ETFs, `etf` chip, localStorage persist
+  mirroring UserDefaults keys, 60s + visibilitychange refresh, submitting state),
+  `web/marketapi.js` (FX+crypto direct; US+Thai via proxy; THB÷rate USD-canonical).
+- **UI:** removed the iPhone device frame (bezel, 9:41 status bar) → responsive
+  full-height column, max-width 480, bottom nav pinned. Verified in a real browser
+  (Puppeteer): all tabs render, ฿/$ toggle, filters, tab nav, txn list all work;
+  CoinGecko/Frankfurter load live; proxy sources fall back to seed (no crash).
+- **Proxy:** `proxy/app.py` gained `CORSMiddleware` (REQUIRED — browsers were blocked;
+  native iOS had no CORS) + `GET /us?sym=` (Finnhub, key from `FINNHUB_KEY` env, not
+  in client JS). `render.yaml` adds a `mun-web` static site (`rootDir: web`).
+- **NEXT (blocking before web is live):** redeploy the proxy (CORS + /us are local
+  only) and set `FINNHUB_KEY` in the Render dashboard, then verify
+  `curl -I -H "Origin: https://x.com" https://mun-re6q.onrender.com/quote?sym=PTT`
+  shows the CORS header. Then deploy `web/` (Render Blueprint picks up `mun-web`).
+- **Security:** Finnhub key now server-side only. Still in git history at `72dba5c` —
+  rotate before/with going public.
+
+GitHub: https://github.com/shadowun355/Mun.
+**Proxy is LIVE on Render:** https://mun-re6q.onrender.com (`render.yaml` blueprint
+pins `rootDir: proxy`). Verified: `/` → `{"ok":true}`, `/quote?sym=PTT` → live THB.
+`MarketAPI.proxyBase` already set to it, so Thai/SET prices now work for any build
+(incl. TestFlight). Note: Render free tier sleeps after 15min idle → first request
+after idle takes ~50s (proxy returns seed-fallback meanwhile, no crash).
+**Resume:** ready for TestFlight — Archive in Xcode → upload → add testers.
 
 ## Completed since
 - Persistence: `dark`, `cur`, `notif`, `starred`, `extraTxns` survive relaunch via

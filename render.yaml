@@ -9,3 +9,12 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     healthCheckPath: /        # GET / returns {"ok": true}
+    envVars:
+      - key: FINNHUB_KEY      # set in Render dashboard (Secret) — powers GET /us
+        sync: false
+
+  - type: web                 # static site: the web client
+    name: mun-web
+    runtime: static
+    rootDir: web
+    staticPublishPath: .      # web/ is already the built site (no build step)

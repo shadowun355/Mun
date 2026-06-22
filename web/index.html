@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mun · มั่น</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0}
+  .scr::-webkit-scrollbar{display:none}
+  .scr{scrollbar-width:none}
+</style>
+</head>
+<body>
+
+<div id="app" style="min-height:100vh;display:flex;justify-content:center;background:#e7e5df;font-family:'Anuphan',sans-serif"></div>
+
+<!-- Phone markup, lifted from the design prototype. Bound by the engine in app.js:
+     {{ expr }} interpolation, <sc-if>, <sc-for as=>, onClick. -->
+<template id="tpl">
+  <!-- App shell (responsive column, no device frame) -->
+  <div style="{{ rootStyle }}">
+    <div style="height:18px;flex:none"></div>
+
+    <!-- CONTENT -->
+    <div class="scr" style="flex:1;overflow-y:auto;overflow-x:hidden">
+
+      <!-- ===== OVERVIEW ===== -->
+      <sc-if value="{{ isOverview }}">
+      <div>
+        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;color:var(--sub)">สวัสดีตอนเช้า</div>
+            <div style="font-size:19px;font-weight:600;color:var(--ink);letter-spacing:.2px">สมหญิง วัฒนกุล</div>
+          </div>
+          <div onClick="{{ goAccount }}" style="width:42px;height:42px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:600;font-size:15px;border:1px solid var(--line);cursor:pointer">สญ</div>
+        </div>
+        <div style="margin:12px 16px 0;padding:22px 22px 18px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:13px;color:var(--sub);letter-spacing:.3px">มูลค่าพอร์ตรวม</div>
+            <div style="display:flex;gap:4px;background:var(--card2);border-radius:8px;padding:3px">
+              <span onClick="{{ setThb }}" style="font-size:11px;font-weight:600;cursor:pointer;padding:4px 9px;border-radius:6px;background:{{ thbBg }};color:{{ thbCol }}">฿</span>
+              <span onClick="{{ setUsd }}" style="font-size:11px;font-weight:600;cursor:pointer;padding:4px 9px;border-radius:6px;background:{{ usdBg }};color:{{ usdCol }}">$</span>
+            </div>
+          </div>
+          <div style="font-family:'Newsreader',serif;font-size:42px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:8px;letter-spacing:-.5px">{{ totalMain }}</div>
+          <div style="font-size:14px;color:var(--sub);margin-top:3px">{{ totalAlt }}</div>
+          <div style="display:flex;align-items:center;gap:9px;margin-top:14px">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:{{ dayBg }};color:{{ dayCol }};font-size:13px;font-weight:600">{{ dayStr }}</span>
+            <span style="font-size:12.5px;color:var(--sub)">วันนี้</span>
+          </div>
+          <svg width="100%" height="62" viewBox="0 0 320 62" preserveAspectRatio="none" style="margin-top:14px;display:block"><path d="M0,48 C24,44 36,30 60,32 C88,34 96,46 124,40 C150,35 158,18 188,22 C214,25 224,34 250,28 C278,22 292,10 320,8" fill="none" stroke="var(--up)" stroke-width="2.2" stroke-linecap="round"></path><circle cx="320" cy="8" r="3.4" fill="var(--up)"></circle></svg>
+          <div style="display:flex;gap:6px;margin-top:14px">
+            <sc-for list="{{ ranges }}" as="r">
+              <span onClick="{{ r.onClick }}" style="font-size:12px;font-weight:{{ r.weight }};cursor:pointer;border-radius:8px;padding:5px 0;width:38px;text-align:center;background:{{ r.bg }};color:{{ r.col }}">{{ r.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="margin:18px 16px 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+            <span style="font-size:14px;font-weight:600;color:var(--ink)">สัดส่วนการลงทุน</span>
+            <span style="font-size:12.5px;color:var(--gold);font-weight:600">ปรับสมดุล</span>
+          </div>
+          <div style="display:flex;height:11px;border-radius:6px;overflow:hidden;gap:2px">
+            <sc-for list="{{ alloc }}" as="a">
+              <span style="width:{{ a.pct }}%;background:{{ a.color }}"></span>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;margin-top:13px">
+            <sc-for list="{{ alloc }}" as="a">
+              <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:{{ a.color }}"></span><span style="font-size:12.5px;color:var(--sub);flex:1">{{ a.label }}</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">{{ a.pctLabel }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="margin:20px 16px 28px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+            <span style="font-size:14px;font-weight:600;color:var(--ink)">การถือครอง</span>
+            <span onClick="{{ goWatch }}" style="font-size:12.5px;color:var(--gold);font-weight:600;cursor:pointer">ดูทั้งหมด</span>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 16px">
+            <sc-for list="{{ holdings }}" as="h">
+              <div onClick="{{ h.onOpen }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer">
+                <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">{{ h.logo }}</div>
+                <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ h.name }}</div><div style="font-size:12.5px;color:var(--sub)">{{ h.holdSub }}</div></div>
+                <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ h.valStr }}</div><div style="font-size:12.5px;font-weight:600;color:{{ h.pctColor }}">{{ h.pct }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== DETAIL ===== -->
+      <sc-if value="{{ isDetail }}">
+      <div>
+        <div style="padding:6px 20px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div onClick="{{ back }}" style="cursor:pointer;width:36px;height:36px;display:flex;align-items:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></div>
+          <div style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--ink);letter-spacing:.5px">{{ d.sym }}</div><div style="font-size:11.5px;color:var(--sub)">{{ d.name2 }}</div></div>
+          <div onClick="{{ toggleStar }}" style="cursor:pointer;width:30px;display:flex;justify-content:flex-end"><svg width="23" height="23" viewBox="0 0 24 24" fill="{{ d.starFill }}" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 21l-5.3 1 1.3-5.9-4.5-4 6-.6z"></path></svg></div>
+        </div>
+        <div style="padding:14px 24px 0">
+          <div style="font-size:12.5px;color:var(--sub)">{{ d.subline }}</div>
+          <div style="font-family:'Newsreader',serif;font-size:44px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:4px;letter-spacing:-.5px">{{ d.priceStr }}</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:{{ d.dayBg }};color:{{ d.dayCol }};font-size:13px;font-weight:600">{{ d.dayStr }}</span>
+            <span style="font-size:13px;color:var(--sub)">{{ d.priceAlt }}</span>
+          </div>
+        </div>
+        <div style="padding:18px 16px 0">
+          <svg width="100%" height="148" viewBox="0 0 358 148" preserveAspectRatio="none" style="display:block"><path d="{{ d.chartArea }}" fill="{{ d.areaFill }}"></path><path d="{{ d.chart }}" fill="none" stroke="{{ d.lineColor }}" stroke-width="2.4" stroke-linecap="round"></path></svg>
+          <div style="display:flex;gap:6px;margin-top:10px;padding:0 6px">
+            <sc-for list="{{ ranges }}" as="r">
+              <span onClick="{{ r.onClick }}" style="font-size:12px;font-weight:{{ r.weight }};cursor:pointer;border-radius:8px;padding:5px 0;flex:1;text-align:center;background:{{ r.bg }};color:{{ r.col }}">{{ r.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="margin:18px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px 12px">
+          <div><div style="font-size:11.5px;color:var(--sub)">เปิด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.open }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">สูงสุด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.high }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">ต่ำสุด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.low }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">มูลค่าตลาด</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.mcap }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">ปริมาณ</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.vol }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--sub)">P/E</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">{{ d.pe }}</div></div>
+        </div>
+        <sc-if value="{{ d.held }}">
+        <div style="margin:14px 16px 28px;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:16px 18px">
+          <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px">การถือครองของคุณ</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:9px"><span style="font-size:13px;color:var(--sub)">จำนวน</span><span style="font-size:13.5px;font-weight:600;color:var(--ink)">{{ d.posQty }}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:9px"><span style="font-size:13px;color:var(--sub)">ต้นทุนเฉลี่ย</span><span style="font-size:13.5px;font-weight:600;color:var(--ink)">{{ d.posAvg }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--sub)">กำไรที่ยังไม่รับรู้</span><span style="font-size:13.5px;font-weight:600;color:{{ d.gainCol }}">{{ d.posGain }}</span></div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ d.notHeld }}">
+        <div style="margin:14px 16px 28px;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:18px;text-align:center">
+          <div style="font-size:13.5px;color:var(--sub)">คุณยังไม่ได้ถือครอง {{ d.sym }}</div>
+          <div style="font-size:12.5px;color:var(--faint);margin-top:4px">แตะ “ซื้อ” เพื่อเริ่มลงทุน</div>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- ===== WATCHLIST ===== -->
+      <sc-if value="{{ isWatch }}">
+      <div>
+        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">เฝ้าดู</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+        </div>
+        <div style="display:flex;gap:7px;padding:12px 18px 0;overflow:hidden">
+          <sc-for list="{{ watchTabs }}" as="f">
+            <span onClick="{{ f.onClick }}" style="font-size:13px;font-weight:{{ f.weight }};white-space:nowrap;border-radius:10px;padding:8px 15px;background:{{ f.bg }};color:{{ f.col }};border:1px solid {{ f.bd }}">{{ f.label }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:11px;padding:16px 18px 0">
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 13px 11px">
+            <div style="font-size:12px;color:var(--sub);font-weight:600">SET</div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px">1,308.22</div>
+            <svg width="100%" height="20" viewBox="0 0 70 20" preserveAspectRatio="none" style="margin:5px 0 3px;display:block"><path d="M0,6 C12,4 18,12 30,11 C44,10 50,15 70,16" fill="none" stroke="var(--down)" stroke-width="1.8"></path></svg>
+            <div style="font-size:12px;font-weight:600;color:var(--down)">−0.32%</div>
+          </div>
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 13px 11px">
+            <div style="font-size:12px;color:var(--sub);font-weight:600">S&P 500</div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px">5,521.4</div>
+            <svg width="100%" height="20" viewBox="0 0 70 20" preserveAspectRatio="none" style="margin:5px 0 3px;display:block"><path d="M0,15 C14,14 20,8 34,9 C48,10 54,4 70,3" fill="none" stroke="var(--up)" stroke-width="1.8"></path></svg>
+            <div style="font-size:12px;font-weight:600;color:var(--up)">+0.41%</div>
+          </div>
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 13px 11px">
+            <div style="font-size:12px;color:var(--sub);font-weight:600">BTC</div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px">฿2.48M</div>
+            <svg width="100%" height="20" viewBox="0 0 70 20" preserveAspectRatio="none" style="margin:5px 0 3px;display:block"><path d="M0,4 C14,6 20,3 34,8 C48,13 54,11 70,16" fill="none" stroke="var(--down)" stroke-width="1.8"></path></svg>
+            <div style="font-size:12px;font-weight:600;color:var(--down)">−2.10%</div>
+          </div>
+        </div>
+        <div style="margin:16px 16px 28px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+          <sc-for list="{{ watchRows }}" as="w">
+            <div onClick="{{ w.onOpen }}" style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer">
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ w.sym }}</div><div style="font-size:12px;color:var(--sub)">{{ w.name2 }}</div></div>
+              <svg width="56" height="24" viewBox="0 0 56 24" preserveAspectRatio="none"><path d="{{ w.spark }}" fill="none" stroke="{{ w.pctColor }}" stroke-width="1.8"></path></svg>
+              <div style="text-align:right;min-width:74px"><div style="font-size:14.5px;font-weight:600;color:var(--ink)">{{ w.priceStr }}</div><div style="font-size:12px;font-weight:600;color:{{ w.pctColor }}">{{ w.pct }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== DIVIDENDS (static showcase, parity with iOS) ===== -->
+      <sc-if value="{{ isDividends }}">
+      <div>
+        <div style="padding:6px 22px 4px"><div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">เงินปันผล</div></div>
+        <div style="margin:12px 16px 0;padding:20px 22px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
+          <div style="font-size:13px;color:var(--sub)">รับแล้วในปีนี้</div>
+          <div style="font-family:'Newsreader',serif;font-size:38px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:6px;letter-spacing:-.5px">฿18,420</div>
+          <div style="display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
+            <div><div style="font-size:12px;color:var(--sub)">คาดทั้งปี</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">฿32,000</div></div>
+            <div><div style="font-size:12px;color:var(--sub)">อัตราผลตอบแทน</div><div style="font-size:16px;font-weight:600;color:var(--gold);margin-top:3px">3.20%</div></div>
+            <div><div style="font-size:12px;color:var(--sub)">รับ/เดือน</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">฿1,535</div></div>
+          </div>
+        </div>
+        <div style="margin:18px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:16px">ปันผลรายเดือน</div>
+          <div style="display:flex;align-items:flex-end;gap:8px;height:88px">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">ม.ค.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:52px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">ก.พ.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:26px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">มี.ค.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:64px;background:var(--gold);border-radius:5px"></div><span style="font-size:10.5px;color:var(--gold);font-weight:600">เม.ย.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:30px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">พ.ค.</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:46px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">มิ.ย.</span></div>
+          </div>
+        </div>
+        <div style="margin:18px 16px 28px">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:9px">จ่ายเร็ว ๆ นี้</div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">PT</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ปตท.</div><div style="font-size:12.5px;color:var(--sub)">XD 25 มิ.ย. · ฿2.00/หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+฿2,400</div><div style="font-size:12px;color:var(--sub)">2 ก.ค.</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">KB</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">กสิกรไทย</div><div style="font-size:12.5px;color:var(--sub)">XD 28 มิ.ย. · ฿3.25/หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+฿1,625</div><div style="font-size:12px;color:var(--sub)">8 ก.ค.</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 0">
+              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">AA</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">Apple</div><div style="font-size:12.5px;color:var(--sub)">XD 10 ก.ค. · $0.25/หุ้น</div></div>
+              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+$6.25</div><div style="font-size:12px;color:var(--sub)">17 ก.ค.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== TRANSACTIONS ===== -->
+      <sc-if value="{{ isTransactions }}">
+      <div>
+        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">รายการซื้อขาย</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4" stroke-linecap="round"></path></svg></div>
+        </div>
+        <div style="display:flex;gap:7px;padding:12px 18px 0">
+          <sc-for list="{{ txnTabs }}" as="f">
+            <span onClick="{{ f.onClick }}" style="font-size:13px;font-weight:{{ f.weight }};border-radius:10px;padding:8px 15px;background:{{ f.bg }};color:{{ f.col }};border:1px solid {{ f.bd }}">{{ f.label }}</span>
+          </sc-for>
+        </div>
+        <sc-for list="{{ txnGroups }}" as="g">
+          <div>
+            <div style="padding:18px 22px 8px;font-size:12.5px;font-weight:600;color:var(--sub)">{{ g.date }}</div>
+            <div style="margin:0 16px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+              <sc-for list="{{ g.items }}" as="t">
+                <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid {{ t.bb }}">
+                  <div style="width:40px;height:40px;border-radius:12px;background:{{ t.iconBg }};display:flex;align-items:center;justify-content:center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.iconStroke }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.iconPath }}"></path></svg>
+                  </div>
+                  <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ t.title }}</div><div style="font-size:12.5px;color:var(--sub)">{{ t.sub }}</div></div>
+                  <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:{{ t.amtCol }}">{{ t.amt }}</div><div style="font-size:12px;color:var(--sub)">{{ t.time }}</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div style="height:28px"></div>
+      </div>
+      </sc-if>
+
+      <!-- ===== ACCOUNT ===== -->
+      <sc-if value="{{ isAccount }}">
+      <div>
+        <div style="padding:6px 22px 4px"><div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">บัญชี</div></div>
+        <div style="margin:14px 16px 0;display:flex;align-items:center;gap:15px;padding:18px 20px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:600;font-size:20px;border:1px solid var(--line)">สญ</div>
+          <div style="flex:1"><div style="font-size:18px;font-weight:600;color:var(--ink)">สมหญิง วัฒนกุล</div><div style="font-size:13px;color:var(--sub)">นักลงทุนระดับทอง · ตั้งแต่ 2563</div></div>
+        </div>
+        <div style="margin:18px 16px 0;font-size:12.5px;font-weight:600;color:var(--sub);padding-left:6px">การแสดงผล</div>
+        <div style="margin:9px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 18px">
+          <div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--line)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" stroke-linejoin="round"></path></svg>
+            <span style="flex:1;font-size:15px;color:var(--ink)">โหมดมืด</span>
+            <div onClick="{{ toggleDark }}" style="{{ darkTrack }}"><div style="{{ darkKnob }}"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:15px 0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg>
+            <span style="flex:1;font-size:15px;color:var(--ink)">สกุลเงินหลัก</span>
+            <div style="display:flex;gap:4px;background:var(--card2);border-radius:9px;padding:3px">
+              <span onClick="{{ setThb }}" style="font-size:13px;font-weight:600;cursor:pointer;padding:4px 12px;border-radius:6px;background:{{ thbBg }};color:{{ thbCol }}">฿ THB</span>
+              <span onClick="{{ setUsd }}" style="font-size:13px;font-weight:600;cursor:pointer;padding:4px 12px;border-radius:6px;background:{{ usdBg }};color:{{ usdCol }}">$ USD</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin:18px 16px 0;font-size:12.5px;font-weight:600;color:var(--sub);padding-left:6px">ทั่วไป</div>
+        <div style="margin:9px 16px 28px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 18px">
+          <div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--line)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 01-3.4 0"></path></svg>
+            <span style="flex:1;font-size:15px;color:var(--ink)">การแจ้งเตือนราคา</span>
+            <div onClick="{{ toggleNotif }}" style="{{ notifTrack }}"><div style="{{ notifKnob }}"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--line)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"></path></svg>
+            <span style="flex:1;font-size:15px;color:var(--ink)">ความปลอดภัย</span>
+            <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="var(--faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"></path></svg>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:15px 0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--down)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path><path d="M16 17l5-5-5-5M21 12H9"></path></svg>
+            <span style="flex:1;font-size:15px;color:var(--down)">ออกจากระบบ</span>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+
+    <!-- BOTTOM: tab bar -->
+    <sc-if value="{{ showTabs }}">
+    <div style="height:84px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:13px;flex:none">
+      <div onClick="{{ goOverview }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.overview }}" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2.2"></rect><rect x="13" y="3" width="8" height="5" rx="2.2"></rect><rect x="13" y="10" width="8" height="11" rx="2.2"></rect><rect x="3" y="13" width="8" height="8" rx="2.2"></rect></svg><span style="font-size:10.5px;color:{{ c.overview }}">ภาพรวม</span></div>
+      <div onClick="{{ goWatch }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.watch }}" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"></path></svg><span style="font-size:10.5px;color:{{ c.watch }}">เฝ้าดู</span></div>
+      <div onClick="{{ goDividends }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.dividends }}" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg><span style="font-size:10.5px;color:{{ c.dividends }}">ปันผล</span></div>
+      <div onClick="{{ goTransactions }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.transactions }}" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg><span style="font-size:10.5px;color:{{ c.transactions }}">รายการ</span></div>
+      <div onClick="{{ goAccount }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.account }}" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg><span style="font-size:10.5px;color:{{ c.account }}">บัญชี</span></div>
+    </div>
+    </sc-if>
+
+    <!-- BOTTOM: action bar (detail) -->
+    <sc-if value="{{ isDetail }}">
+    <div style="height:96px;background:var(--card);border-top:1px solid var(--line);display:flex;gap:12px;padding:14px 18px 0;flex:none">
+      <div onClick="{{ openSell }}" style="flex:1;height:52px;border-radius:15px;border:1.5px solid var(--down);color:var(--down);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;cursor:pointer">ขาย</div>
+      <div onClick="{{ openBuy }}" style="flex:1;height:52px;border-radius:15px;background:var(--gold);color:var(--ongold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;cursor:pointer">ซื้อ</div>
+    </div>
+    </sc-if>
+
+    <!-- ORDER TICKET SHEET -->
+    <sc-if value="{{ showTicket }}">
+    <div style="position:absolute;inset:0;z-index:20">
+      <div onClick="{{ closeTicket }}" style="position:absolute;inset:0;background:rgba(20,16,8,.42)"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:28px 28px 0 0;border-top:1px solid var(--line);padding:10px 22px 30px">
+        <div style="width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 16px"></div>
+        <div style="display:flex;align-items:center;gap:13px;margin-bottom:20px">
+          <div style="width:44px;height:44px;border-radius:13px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:15px">{{ tk.logo }}</div>
+          <div style="flex:1"><div style="font-size:17px;font-weight:700;color:var(--ink)">{{ tk.title }}</div><div style="font-size:12.5px;color:var(--sub)">{{ tk.sub }}</div></div>
+          <div style="text-align:right"><div style="font-size:16px;font-weight:600;color:var(--ink)">{{ tk.priceStr }}</div><div style="font-size:12px;color:{{ tk.pctColor }};font-weight:600">{{ tk.pct }}</div></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin-bottom:14px">
+          <span style="font-size:14px;color:var(--sub)">จำนวน</span>
+          <div style="display:flex;align-items:center;gap:18px">
+            <div onClick="{{ ticketDec }}" style="width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></div>
+            <span style="font-size:20px;font-weight:700;color:var(--ink);min-width:42px;text-align:center">{{ tk.qty }}</span>
+            <div onClick="{{ ticketInc }}" style="width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 4px 18px">
+          <span style="font-size:14px;color:var(--sub)">ยอดรวมโดยประมาณ</span>
+          <span style="font-family:'Newsreader',serif;font-size:24px;font-weight:500;color:var(--ink)">{{ tk.total }}</span>
+        </div>
+        <div onClick="{{ confirmTicket }}" style="height:54px;border-radius:16px;background:{{ tk.btnBg }};color:{{ tk.btnCol }};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;cursor:pointer">{{ tk.btnLabel }}</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- TOAST -->
+    <sc-if value="{{ showToast }}">
+    <div style="position:absolute;left:50%;bottom:108px;transform:translateX(-50%);z-index:30;background:var(--ink);color:var(--page);font-size:13.5px;font-weight:600;padding:11px 20px;border-radius:13px;box-shadow:0 10px 30px -8px rgba(0,0,0,.5);white-space:nowrap">{{ toastMsg }}</div>
+    </sc-if>
+
+  </div>
+</template>
+
+<script src="marketapi.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
