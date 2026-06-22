@@ -53,7 +53,10 @@ None. Last state is a clean, building UI on mock data.
 freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth + DB.
 
 ## Next steps
-- Add `Mun/Assets.xcassets` + `AppIcon`; set signing Team + unique bundle id.
+- Set signing `DEVELOPMENT_TEAM` (your Apple Team ID) + unique reverse-domain
+  bundle id (currently `com.mun.app`) in Xcode → target → Signing & Capabilities.
+- Replace the placeholder solid-gold app icon with real 1024 art
+  (`Mun/Assets.xcassets/AppIcon.appiconset/icon-1024.png`).
 - Move `MarketAPI.finnhubKey` out of source (xcconfig/env) before any public repo.
 
 ### Done this session
@@ -79,6 +82,12 @@ freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth +
   US stocks (AAPL/NVDA/TSLA) + ETFs (SPY/QQQ) now patch live. **Key is hardcoded
   in committed source** — free read-only tier, low risk, but move to xcconfig/env
   and gitignore before publishing the repo or rotating the key.
+- ✅ Asset catalog + AppIcon. New `Mun/Assets.xcassets` (auto-included by the
+  file-system synchronized group) with a single-size 1024 `AppIcon` — currently a
+  placeholder solid brand-gold PNG (generated via stdlib, no real art yet).
+  `ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon` wired in both build configs;
+  `plutil -lint` passes. Signing still **not** done — needs your Apple Team ID
+  (`DEVELOPMENT_TEAM`); `CODE_SIGN_STYLE` stays Automatic, bundle id `com.mun.app`.
 
 ## Commands to run
 - Open: `open Mun.xcodeproj`
@@ -89,8 +98,8 @@ freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth +
 ## Known issues
 - Thai SET stocks (PTT/CPALL/KBANK) still mock; US stocks mock until a Finnhub
   key is set. Crypto + FX are live. `Charts.swift` still canned.
-- No app icon / asset catalog yet (`Assets.xcassets` missing).
-- Signing not configured for distribution.
+- App icon is a placeholder solid-gold square; needs real 1024 art.
+- Signing not configured for distribution (no `DEVELOPMENT_TEAM` set).
 
 ## Resume instructions
 1. Read this file and `Mun/BUILD.md`.
