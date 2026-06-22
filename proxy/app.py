@@ -42,6 +42,11 @@ def fetch(sym: str) -> dict:
     }
 
 
+@app.get("/")
+def health():
+    return {"ok": True}  # host healthcheck pings this
+
+
 @app.get("/quote")
 def quote(sym: str):
     try:

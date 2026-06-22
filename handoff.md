@@ -53,6 +53,8 @@ None. Last state is a clean, building UI on mock data.
 freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth + DB.
 
 ## Next steps
+- Deploy `proxy/` (Dockerfile ready) to Render/Fly, then set `MarketAPI.proxyBase`
+  to the HTTPS URL so TestFlight users get live SET data.
 - Set signing `DEVELOPMENT_TEAM` (your Apple Team ID) + unique reverse-domain
   bundle id (currently `com.mun.app`) in Xcode → target → Signing & Capabilities.
 - Replace the placeholder solid-gold app icon with real 1024 art
