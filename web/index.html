@@ -9,9 +9,32 @@
 <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
-  body{margin:0}
+  html,body{margin:0;height:100%}
   .scr::-webkit-scrollbar{display:none}
   .scr{scrollbar-width:none}
+
+  /* App shell: column (mobile) → row (desktop). Layout here so it can be responsive;
+     the inline style on the element only carries the dynamic theme vars + bg. */
+  .shell{position:relative;overflow:hidden;width:100%;height:100vh;display:flex;flex-direction:column}
+  .main{order:1;flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+
+  /* Nav: bottom tab bar on mobile. DOM order puts it first, order:2 drops it to the bottom. */
+  .nav{order:2;flex:none;background:var(--card);display:flex;flex-direction:row;justify-content:space-around;align-items:center;height:84px;padding-top:13px;border-top:1px solid var(--line)}
+  .navitem{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+  .navitem span{font-size:10.5px}
+  .brand{display:none}
+
+  /* Desktop: nav becomes a left sidebar; main panel fills the rest. */
+  @media (min-width:760px){
+    .shell{flex-direction:row}
+    .nav{order:-1;flex-direction:column;justify-content:flex-start;align-items:stretch;height:100vh;width:232px;padding:26px 16px;gap:4px;border-top:none;border-right:1px solid var(--line)}
+    .navitem{flex-direction:row;justify-content:flex-start;gap:14px;padding:12px 14px;border-radius:12px}
+    .navitem span{font-size:14.5px}
+    .navitem:hover{background:var(--card2)}
+    .brand{display:block;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:700;padding:6px 14px 22px}
+    /* Content fills the panel but stays readable — centered, not stretched edge-to-edge. */
+    .scr>div{max-width:1040px;margin:0 auto;width:100%}
+  }
 </style>
 </head>
 <body>
@@ -21,8 +44,23 @@
 <!-- Phone markup, lifted from the design prototype. Bound by the engine in app.js:
      {{ expr }} interpolation, <sc-if>, <sc-for as=>, onClick. -->
 <template id="tpl">
-  <!-- App shell (responsive column, no device frame) -->
-  <div style="{{ rootStyle }}">
+  <!-- App shell. Layout via .shell CSS; inline style = dynamic theme vars + bg only. -->
+  <div class="shell" style="{{ rootStyle }}">
+
+    <!-- NAV: left sidebar on desktop, bottom tab bar on mobile -->
+    <sc-if value="{{ showTabs }}">
+    <div class="nav">
+      <div class="brand">Mun · มั่น</div>
+      <div class="navitem" onClick="{{ goOverview }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.overview }}" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2.2"></rect><rect x="13" y="3" width="8" height="5" rx="2.2"></rect><rect x="13" y="10" width="8" height="11" rx="2.2"></rect><rect x="3" y="13" width="8" height="8" rx="2.2"></rect></svg><span style="color:{{ c.overview }}">ภาพรวม</span></div>
+      <div class="navitem" onClick="{{ goWatch }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.watch }}" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"></path></svg><span style="color:{{ c.watch }}">เฝ้าดู</span></div>
+      <div class="navitem" onClick="{{ goDividends }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.dividends }}" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg><span style="color:{{ c.dividends }}">ปันผล</span></div>
+      <div class="navitem" onClick="{{ goTransactions }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.transactions }}" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg><span style="color:{{ c.transactions }}">รายการ</span></div>
+      <div class="navitem" onClick="{{ goAccount }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.account }}" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg><span style="color:{{ c.account }}">บัญชี</span></div>
+    </div>
+    </sc-if>
+
+    <!-- MAIN PANEL -->
+    <div class="main">
     <div style="height:18px;flex:none"></div>
 
     <!-- CONTENT -->
@@ -311,24 +349,14 @@
 
     </div>
 
-    <!-- BOTTOM: tab bar -->
-    <sc-if value="{{ showTabs }}">
-    <div style="height:84px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:13px;flex:none">
-      <div onClick="{{ goOverview }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.overview }}" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2.2"></rect><rect x="13" y="3" width="8" height="5" rx="2.2"></rect><rect x="13" y="10" width="8" height="11" rx="2.2"></rect><rect x="3" y="13" width="8" height="8" rx="2.2"></rect></svg><span style="font-size:10.5px;color:{{ c.overview }}">ภาพรวม</span></div>
-      <div onClick="{{ goWatch }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.watch }}" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"></path></svg><span style="font-size:10.5px;color:{{ c.watch }}">เฝ้าดู</span></div>
-      <div onClick="{{ goDividends }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.dividends }}" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg><span style="font-size:10.5px;color:{{ c.dividends }}">ปันผล</span></div>
-      <div onClick="{{ goTransactions }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.transactions }}" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg><span style="font-size:10.5px;color:{{ c.transactions }}">รายการ</span></div>
-      <div onClick="{{ goAccount }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.account }}" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg><span style="font-size:10.5px;color:{{ c.account }}">บัญชี</span></div>
-    </div>
-    </sc-if>
-
-    <!-- BOTTOM: action bar (detail) -->
+    <!-- ACTION BAR (detail) — stays at the bottom of the main panel -->
     <sc-if value="{{ isDetail }}">
     <div style="height:96px;background:var(--card);border-top:1px solid var(--line);display:flex;gap:12px;padding:14px 18px 0;flex:none">
       <div onClick="{{ openSell }}" style="flex:1;height:52px;border-radius:15px;border:1.5px solid var(--down);color:var(--down);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;cursor:pointer">ขาย</div>
       <div onClick="{{ openBuy }}" style="flex:1;height:52px;border-radius:15px;background:var(--gold);color:var(--ongold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;cursor:pointer">ซื้อ</div>
     </div>
     </sc-if>
+    </div><!-- /.main -->
 
     <!-- ORDER TICKET SHEET -->
     <sc-if value="{{ showTicket }}">

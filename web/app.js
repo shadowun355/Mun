@@ -193,11 +193,10 @@ class Component {
       '--sub': t.sub, '--faint': t.faint, '--line': t.line, '--gold': t.gold,
       '--goldsoft': t.goldsoft, '--up': t.up, '--down': t.down, '--ongold': t.ongold,
       '--c-sage': t.csage, '--c-blue': t.cblue, '--c-clay': t.cclay,
-      // Fluid web shell: fills the full browser width on desktop, full-width column
-      // on phones. No phone bezel / status bar, no max-width cap.
-      width: '100%', height: '100vh', background: t.page,
-      overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column'
+      // Layout lives in CSS (.shell, responsive). Inline = dynamic theme only.
+      background: t.page
     };
+    document.body.style.background = t.page; // fill the whole window incl. overscroll
 
     const ac = (n) => (scr === n ? t.gold : t.faint);
     const c = { overview: ac('overview'), watch: ac('watch'), dividends: ac('dividends'), transactions: ac('transactions'), account: ac('account') };

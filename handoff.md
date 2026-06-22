@@ -29,14 +29,17 @@ Parity-first static site rebuilding the iOS app for the browser. Plan:
   (engine + Component + iOS deltas: SPY/QQQ ETFs, `etf` chip, localStorage persist
   mirroring UserDefaults keys, 60s + visibilitychange refresh, submitting state),
   `web/marketapi.js` (FX+crypto direct; US+Thai via proxy; THB÷rate USD-canonical).
-- **UI:** removed the iPhone device frame (bezel, 9:41 status bar). Shell is now a
-  fluid full-height column that fills the **entire browser width** on desktop (no
-  max-width cap) and stays full-width on phones — one responsive codebase, no
-  separate mobile folder (iOS design lives in the `.dc.html` prototype + Swift app).
-  Verified in a real browser (Puppeteer): shell width == viewport width; all tabs
-  render, ฿/$ toggle, filters, tab nav, txn list all work; CoinGecko/Frankfurter
-  load live; proxy sources fall back to seed (no crash). Possible follow-up: center
-  content / desktop multi-column if the stretched single column reads too airy.
+- **UI:** removed the iPhone device frame. **Responsive layout (one codebase, CSS
+  media query at 760px):** desktop (≥760px) = left sidebar nav (`.nav`, 232px, brand
+  + vertical items) + main panel (`.main`) filling the rest, content centered at
+  max-width 1040 so it's not stretched edge-to-edge; phones (<760px) = the original
+  bottom tab bar. Layout lives in `index.html` `<style>` classes (`.shell/.nav/
+  .navitem/.main`); the inline `rootStyle` carries only the dynamic theme vars + bg.
+  `document.body.style.background` is set per-theme so the page fills the whole
+  window. No separate mobile folder — iOS design stays in the `.dc.html` prototype +
+  Swift app. Verified in a real browser (Puppeteer): at 1200px sidebar is left/full-
+  height and main fills to the right edge; at 390px nav is a full-width bottom bar;
+  all tabs/toggle/filters/txn list work; CoinGecko/Frankfurter live; proxy → seed.
 - **Proxy:** `proxy/app.py` gained `CORSMiddleware` (REQUIRED — browsers were blocked;
   native iOS had no CORS) + `GET /us?sym=` (Finnhub, key from `FINNHUB_KEY` env, not
   in client JS). `render.yaml` adds a `mun-web` static site (`rootDir: web`).
