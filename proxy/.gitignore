@@ -2,3 +2,5 @@
 # Python proxy
 proxy/.venv/
 proxy/__pycache__/
+__pycache__/
+*.pyc
