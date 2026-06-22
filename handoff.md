@@ -53,8 +53,8 @@ None. Last state is a clean, building UI on mock data.
 freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth + DB.
 
 ## Next steps
-- Paste a free Finnhub key into `MarketAPI.finnhubKey` to enable US stocks + ETFs.
 - Add `Mun/Assets.xcassets` + `AppIcon`; set signing Team + unique bundle id.
+- Move `MarketAPI.finnhubKey` out of source (xcconfig/env) before any public repo.
 
 ### Done this session
 - ✅ Periodic + foreground refresh (`RootView.swift`): `.task` now loops
@@ -75,6 +75,10 @@ freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth +
   via the same Finnhub `/quote` path (need the key). New `กองทุน` (ETF) filter chip
   in `WatchlistView`. ETFs are watchlist-only (not in `holdingList`), so `alloc`/pie
   untouched — add an `etf` slice when an ETF first enters holdings.
+- ✅ Finnhub key set in `MarketAPI.finnhubKey` (verified live: AAPL/SPY quotes).
+  US stocks (AAPL/NVDA/TSLA) + ETFs (SPY/QQQ) now patch live. **Key is hardcoded
+  in committed source** — free read-only tier, low risk, but move to xcconfig/env
+  and gitignore before publishing the repo or rotating the key.
 
 ## Commands to run
 - Open: `open Mun.xcodeproj`

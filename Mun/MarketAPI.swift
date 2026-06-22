@@ -7,7 +7,7 @@ import Foundation
 // Every source fails independently back to the seed; nothing throws to the UI.
 enum MarketAPI {
     // Paste a free key from https://finnhub.io to light up US stocks; "" = US stays mock.
-    static let finnhubKey = ""
+    static let finnhubKey = "d8ervjpr01qub7keho10d8ervjpr01qub7keho1g"
 
     static let cryptoIds = ["BTC": "bitcoin", "ETH": "ethereum"]   // app sym → CoinGecko id
     static let usSyms = ["AAPL", "NVDA", "TSLA", "SPY", "QQQ"]   // ETFs use the same Finnhub /quote path
