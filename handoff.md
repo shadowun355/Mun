@@ -53,7 +53,6 @@ None. Last state is a clean, building UI on mock data.
 freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth + DB.
 
 ## Next steps
-- Build the ThaiStock localhost proxy + iOS client for live SET prices.
 - Add ETF symbols to the seed + UI.
 - Paste a free Finnhub key into `MarketAPI.finnhubKey` to enable US stocks.
 - Add `Mun/Assets.xcassets` + `AppIcon`; set signing Team + unique bundle id.
@@ -62,6 +61,16 @@ freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth +
 - ✅ Periodic + foreground refresh (`RootView.swift`): `.task` now loops
   `refresh()` every 60s (was launch-only); `scenePhase == .active` triggers an
   immediate refresh on return to foreground.
+- ✅ ThaiStock proxy + iOS client. New `proxy/` FastAPI (`app.py`,
+  `requirements.txt`, `README.md`): `GET /quote?sym=PTT` → THB OHLC.
+  **Source deviation from SCOPE:** uses Yahoo Finance `<sym>.BK` (keyless,
+  reliable, returns OHLC) instead of scraping UncleEngineer/ThaiStock — verified
+  live (PTT 35.5 THB). Swap `fetch()` body if SET-direct ever needed.
+  iOS: `MarketAPI.fetchThai(rate:)` hits `http://127.0.0.1:8000`, divides THB by
+  the live FX rate (USD-canonical), patches PTT/CPALL/KBANK; proxy down → seed.
+  ATS: new `Mun/Info.plist` (`NSAllowsLocalNetworking`) wired via `INFOPLIST_FILE`
+  in both build configs so localhost http is allowed. **Start the proxy before
+  running the app** to see live SET data (see `proxy/README.md`).
 
 ## Commands to run
 - Open: `open Mun.xcodeproj`

@@ -2,7 +2,8 @@ import Foundation
 
 // Live market data, rungs 1+2. No third-party deps — URLSession + JSONSerialization.
 // Crypto (CoinGecko) and FX (Frankfurter) need no key. US stocks need a free Finnhub
-// key — leave it empty and US silently stays on seed values. Thai stocks stay mock.
+// key — leave it empty and US silently stays on seed values. Thai (SET) stocks come
+// from the localhost proxy in proxy/ (off = Thai stays seed).
 // Every source fails independently back to the seed; nothing throws to the UI.
 enum MarketAPI {
     // Paste a free key from https://finnhub.io to light up US stocks; "" = US stays mock.
@@ -10,19 +11,41 @@ enum MarketAPI {
 
     static let cryptoIds = ["BTC": "bitcoin", "ETH": "ethereum"]   // app sym → CoinGecko id
     static let usSyms = ["AAPL", "NVDA", "TSLA"]
+    static let thaiSyms = ["PTT", "CPALL", "KBANK"]               // served by the localhost proxy
+    static let proxyBase = "http://127.0.0.1:8000"               // proxy/ FastAPI; off = Thai stays seed
 
     static func refresh(_ store: Store) async {
-        // FX first: USD↔THB display and (later) Thai normalization depend on a fresh rate.
+        // FX first: USD↔THB display and Thai normalization depend on a fresh rate.
         if let r = await fetchFX() { await MainActor.run { store.rate = r } }
+        let rate = await MainActor.run { store.rate }
 
         async let crypto = fetchCrypto()
         async let us = fetchUS()
-        let (c, u) = await (crypto, us)
+        async let thai = fetchThai(rate: rate)
+        let (c, u, t) = await (crypto, us, thai)
 
         await MainActor.run {
             for (sym, q) in c { store.patch(sym, price: q.price, dayPct: q.dayPct) }
             for (sym, q) in u { store.patch(sym, price: q.price, dayPct: q.dayPct, open: q.open, high: q.high, low: q.low) }
+            for (sym, q) in t { store.patch(sym, price: q.price, dayPct: q.dayPct, open: q.open, high: q.high, low: q.low) }
         }
+    }
+
+    // Live SET prices via the localhost proxy (THB). Normalize THB→USD by the FX
+    // rate to keep the USD-canonical model. Proxy down / 404 → symbol stays on seed.
+    static func fetchThai(rate: Double) async -> [String: (price: Double, dayPct: Double, open: Double, high: Double, low: Double)] {
+        guard rate > 0 else { return [:] }
+        var out: [String: (price: Double, dayPct: Double, open: Double, high: Double, low: Double)] = [:]
+        // ponytail: sequential — 3 symbols, not worth a task group.
+        for sym in thaiSyms {
+            guard let j = await getJSON("\(proxyBase)/quote?sym=\(sym)"),
+                  let thb = j["price"] as? Double, thb > 0 else { continue }
+            out[sym] = (thb / rate, j["dayPct"] as? Double ?? 0,
+                        (j["open"] as? Double ?? thb) / rate,
+                        (j["high"] as? Double ?? thb) / rate,
+                        (j["low"]  as? Double ?? thb) / rate)
+        }
+        return out
     }
 
     // ---- sources ----
