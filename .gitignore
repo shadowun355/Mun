@@ -1,3 +1,6 @@
 .DS_Store
 xcuserdata/
 *.xcuserstate
+
+# Secrets (never commit real keys)
+Mun/Secrets/
