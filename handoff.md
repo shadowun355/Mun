@@ -57,7 +57,8 @@ freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth +
   bundle id (currently `com.mun.app`) in Xcode → target → Signing & Capabilities.
 - Replace the placeholder solid-gold app icon with real 1024 art
   (`Mun/Assets.xcassets/AppIcon.appiconset/icon-1024.png`).
-- Move `MarketAPI.finnhubKey` out of source (xcconfig/env) before any public repo.
+- Rotate the Finnhub key (it remains in git history at commit `72dba5c`) or scrub
+  history before making the repo public.
 
 ### Done this session
 - ✅ Periodic + foreground refresh (`RootView.swift`): `.task` now loops
@@ -82,6 +83,9 @@ freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth +
   US stocks (AAPL/NVDA/TSLA) + ETFs (SPY/QQQ) now patch live. **Key is hardcoded
   in committed source** — free read-only tier, low risk, but move to xcconfig/env
   and gitignore before publishing the repo or rotating the key.
+  **Done:** key now lives in gitignored `Mun/Secrets/Secrets.swift`
+  (`MarketAPI.finnhubKey = Secrets.finnhubKey`); template at root
+  `Secrets.example.swift`. Still in git history at `72dba5c` — rotate before public.
 - ✅ Asset catalog + AppIcon. New `Mun/Assets.xcassets` (auto-included by the
   file-system synchronized group) with a single-size 1024 `AppIcon` — currently a
   placeholder solid brand-gold PNG (generated via stdlib, no real art yet).
