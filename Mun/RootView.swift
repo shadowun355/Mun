@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject var store: Store
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         let t = store.theme
@@ -28,7 +29,16 @@ struct RootView: View {
             }
         }
         .animation(.easeOut(duration: 0.25), value: store.toast)
-        .task { await store.refresh() }
+        .task {
+            // ponytail: 60s poll, no backoff/jitter; add if rate limits bite
+            while !Task.isCancelled {
+                await store.refresh()
+                try? await Task.sleep(for: .seconds(60))
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await store.refresh() } }
+        }
         .preferredColorScheme(store.dark ? .dark : .light)
         .sheet(isPresented: ticketPresented) {
             if store.ticket != nil { OrderTicketView(ticket: Binding($store.ticket)!) }

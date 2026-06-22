@@ -53,11 +53,15 @@ None. Last state is a clean, building UI on mock data.
 freemium/StoreKit 2 (real-time gate, 5-holding cap, advanced features) · Auth + DB.
 
 ## Next steps
-- Paste a free Finnhub key into `MarketAPI.finnhubKey` to enable US stocks.
 - Build the ThaiStock localhost proxy + iOS client for live SET prices.
 - Add ETF symbols to the seed + UI.
-- Add periodic / foreground refresh (currently launch-only).
+- Paste a free Finnhub key into `MarketAPI.finnhubKey` to enable US stocks.
 - Add `Mun/Assets.xcassets` + `AppIcon`; set signing Team + unique bundle id.
+
+### Done this session
+- ✅ Periodic + foreground refresh (`RootView.swift`): `.task` now loops
+  `refresh()` every 60s (was launch-only); `scenePhase == .active` triggers an
+  immediate refresh on return to foreground.
 
 ## Commands to run
 - Open: `open Mun.xcodeproj`
