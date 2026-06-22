@@ -1,0 +1,11 @@
+# Render Blueprint — deploy the ThaiStock proxy without manual Root Directory setup.
+# New on Render: New → Blueprint → pick this repo. (Existing service: just set
+# Root Directory = proxy in its settings instead.)
+services:
+  - type: web
+    name: mun-proxy
+    runtime: docker
+    rootDir: proxy            # Dockerfile + app.py live here, not repo root
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /        # GET / returns {"ok": true}
