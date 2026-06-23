@@ -148,22 +148,47 @@ class Component {
 
   // Holdings are derived from the transaction log: net qty per symbol, and a
   // buy-weighted average cost. Only positive net positions count as holdings.
-  deriveHoldings(txns) {
-    const acc = {};
+  // FIFO pass over the ledger (Phase 2). Matches each sell against the oldest open buy
+  // lots → realized gain/loss per sale; the lots left over ARE the current holdings, so
+  // their remaining cost is the correct (post-sale) average. Fees: a buy fee raises the
+  // lot's per-share cost, a sell fee lowers the per-share proceeds. Dividends ignored here.
+  // Returns { holdings: {sym:{qty,avg}}, realizedUsd, sales:[{date,sym,qty,proceeds,cost,gain}] }.
+  fifo(txns) {
+    const bySym = {};
     for (const tx of txns) {
-      if (tx.side === 'dividend') continue;   // income, not a position change
-      const m = acc[tx.sym] || (acc[tx.sym] = { qty: 0, buyQty: 0, buyCost: 0 });
-      const q = Number(tx.qty), pr = Number(tx.price_usd), fee = Number(tx.fee) || 0;
-      if (tx.side === 'buy') { m.qty += q; m.buyQty += q; m.buyCost += q * pr + fee; }  // fee into cost basis
-      else { m.qty -= q; }
+      if (tx.side === 'dividend') continue;
+      (bySym[tx.sym] || (bySym[tx.sym] = [])).push(tx);
     }
-    const out = {};
-    for (const sym in acc) {
-      const m = acc[sym];
-      if (m.qty > 1e-9) out[sym] = { qty: m.qty, avg: m.buyQty ? m.buyCost / m.buyQty : 0 };
+    const holdings = {}, sales = [];
+    let realizedUsd = 0;
+    for (const sym in bySym) {
+      const rows = bySym[sym].slice().sort((a, b) => new Date(a.ts) - new Date(b.ts)); // oldest first
+      const lots = [];  // FIFO queue: {qty, cost} cost = per-share incl. fee
+      for (const tx of rows) {
+        const q = Number(tx.qty), pr = Number(tx.price_usd), fee = Number(tx.fee) || 0;
+        if (q <= 0) continue;
+        if (tx.side === 'buy') { lots.push({ qty: q, cost: pr + fee / q }); continue; }
+        // sell: consume oldest lots first
+        let remaining = q, qtyConsumed = 0, costConsumed = 0;
+        const perShareProceeds = pr - fee / q;
+        while (remaining > 1e-9 && lots.length) {
+          const lot = lots[0], take = Math.min(remaining, lot.qty);
+          costConsumed += take * lot.cost; qtyConsumed += take;
+          lot.qty -= take; remaining -= take;
+          if (lot.qty <= 1e-9) lots.shift();
+        }
+        if (qtyConsumed > 0) {
+          const proceeds = qtyConsumed * perShareProceeds, gain = proceeds - costConsumed;
+          realizedUsd += gain;
+          sales.push({ date: tx.ts, sym, qty: qtyConsumed, proceeds, cost: costConsumed, gain });
+        }
+      }
+      const qty = lots.reduce((a, l) => a + l.qty, 0);
+      if (qty > 1e-9) holdings[sym] = { qty, avg: lots.reduce((a, l) => a + l.qty * l.cost, 0) / qty };
     }
-    return out;
+    return { holdings, realizedUsd, sales };
   }
+  deriveHoldings(txns) { return this.fifo(txns).holdings; }   // back-compat shim
 
   // ---- transaction ledger (Phase 1): manual add / edit / delete -----------
   // The sheet is plain DOM (#txnsheet) so the 60s live-data re-render can't wipe
@@ -236,6 +261,17 @@ class Component {
     this.state.txns.forEach(t => lines.push([t.ts, t.sym, t.side, t.qty, t.price_usd, t.fee || 0].join(',')));
     const url = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
     const a = document.createElement('a'); a.href = url; a.download = 'mun-transactions.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // FIFO realized-gains tax report → CSV (one row per matched sale).
+  exportTax() {
+    const { sales } = this.fifo(this.state.txns);
+    const r2 = n => (Math.round(n * 100) / 100);
+    const lines = ['date,sym,qty,proceeds_usd,cost_usd,gain_usd'];
+    sales.forEach(s => lines.push([s.date, s.sym, r2(s.qty), r2(s.proceeds), r2(s.cost), r2(s.gain)].join(',')));
+    const url = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'mun-tax-fifo.csv'; a.click();
     URL.revokeObjectURL(url);
   }
 
@@ -312,7 +348,8 @@ class Component {
       return { label, weight: on ? '600' : '400', bg: on ? t.goldsoft : 'transparent', col: on ? t.gold : t.sub, onClick: () => { this.setState({ range: k }); this.loadCandles(this.state.selected, k); } };
     });
 
-    const H = this.deriveHoldings(S.txns);   // sym -> {qty, avg}, only positive positions
+    const F = this.fifo(S.txns);             // FIFO: holdings + realized P/L + sales
+    const H = F.holdings;                     // sym -> {qty, avg} (remaining-lot cost)
     const heldSyms = Object.keys(H);
 
     const holdings = heldSyms.map(sym => {
@@ -339,6 +376,7 @@ class Component {
     const selQty = H[sel.sym] ? H[sel.sym].qty : 0, selAvg = H[sel.sym] ? H[sel.sym].avg : 0;
     const selVal = selQty * sel.price;
     const gainUsd = (sel.price - selAvg) * selQty; const gainPct = selAvg ? (sel.price / selAvg - 1) * 100 : 0;
+    const selRealized = F.sales.filter(s => s.sym === sel.sym).reduce((a, s) => a + s.gain, 0);
     const dDayUp = sel.dayPct >= 0;
 
     // Candlestick geometry over the 358x148 viewBox. Empty until bars load → svg blank.
@@ -368,6 +406,9 @@ class Component {
       posQty: this.qtyLabel(sel, selQty) + ' · ' + this.val(selVal), posAvg: this.price(selAvg),
       posGain: (gainUsd >= 0 ? '+' : '−') + this.val(Math.abs(gainUsd)) + ' · ' + this.pctStr(gainPct),
       gainCol: gainUsd >= 0 ? 'var(--up)' : 'var(--down)',
+      hasRealized: Math.abs(selRealized) > 1e-9,
+      realizedStr: (selRealized >= 0 ? '+' : '−') + this.val(Math.abs(selRealized)),
+      realizedCol: selRealized >= 0 ? 'var(--up)' : 'var(--down)',
       starFill: S.starred[sel.sym] ? 'var(--gold)' : 'none'
     };
 
@@ -434,8 +475,12 @@ class Component {
       notifTrack: mkTrack(S.notif), notifKnob: mkKnob(S.notif),
       ranges, holdings, alloc, d, watchTabs, watchRows, txnTabs, txnGroups, txnEmpty,
       divReceived: this.val(divUsd),
+      realizedStr: (F.realizedUsd >= 0 ? '+' : '−') + this.val(Math.abs(F.realizedUsd)),
+      realizedCol: F.realizedUsd >= 0 ? 'var(--up)' : 'var(--down)',
+      hasRealized: Math.abs(F.realizedUsd) > 1e-9,
       addTxn: () => this.openTxnForm(null),
       exportCSV: () => this.exportCSV(),
+      exportTax: () => this.exportTax(),
       userEmail: (this.user && this.user.email) || '',
       userName: (this.user && (this.user.email || '').split('@')[0]) || 'นักลงทุน',
       userInitial: (this.user && (this.user.email || 'M')[0].toUpperCase()) || 'M',
