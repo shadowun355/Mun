@@ -47,11 +47,16 @@ https://mun-re6q.onrender.com. `FINNHUB_KEY` set in Render → `/us` live. Favic
   wired. New accounts start empty.
   - Supabase project: URL `https://livhijcgkielwrkdqtbm.supabase.co`, anon key in
     `web/supabase.js`. Auth health 200.
-  - **BLOCKING NEXT:** user must run the SQL in `web/SUPABASE_SETUP.md` §2 (tables +
-    RLS) — tables still 404 as of this writing. Then turn off Email "Confirm email" for
-    testing + add site URL to Auth → URL Configuration. THEN verify end-to-end (signup →
-    buy → holdings derive → 2nd-browser cloud sync → logout). Google OAuth optional (§4).
+  - ✅ **VERIFIED LIVE 2026-06-24.** SQL run (tables 200, RLS on), Email "Confirm email"
+    off. Browser flow all pass: signup→session, empty account ฿0, buy 5 AAPL→Supabase txn
+    row + holdings derive (qty5 @$299.25), sell 2→qty3, reload reloads session+holdings
+    from cloud, currency+star sync survive reload, logout clears session, 0 console errors.
+  - Email gotcha: Supabase rejects `@example.com` as invalid — use a real domain.
   - Skipped (YAGNI): localStorage→cloud migration, magic-link/Apple, portfolio snapshots.
+  - **Not yet done:** Google OAuth (needs Google Cloud client — `SUPABASE_SETUP.md` §4);
+    the Google button is wired but errors until that's configured. Rotate old Finnhub key
+    in git history (`72dba5c`). Optional: wrap gate inputs in a `<form>` to clear a verbose
+    Chrome DOM hint (not an error).
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line
