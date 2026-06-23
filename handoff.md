@@ -77,7 +77,16 @@ gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 
   Theme vars mirrored to `:root` so the sheet themes in dark. `© 2026 Mun` footer.
   Migration applied: `transactions += fee`, `side` widened to allow `dividend`. Verified:
   add w/ fee→avg incl fee, custom date, dividend→income+qty unchanged, edit, delete, CSV.
-- ▶ **Phase 2 (NEXT): FIFO cost basis & tax report.** See roadmap file.
+- ✅ **Phase 2 — FIFO cost basis & tax report, VERIFIED LIVE 2026-06-24 (commit `7b36020`).**
+  `fifo()` = one chronological pass per symbol: sells consume oldest buy lots → realized
+  gain/loss per sale; leftover lots are the holdings, so their cost = correct post-sale
+  average (replaced lifetime-buy-avg). Buy fee raises lot cost/share, sell fee lowers
+  proceeds/share. `deriveHoldings` delegates to `fifo().holdings`. UI: detail card realized
+  P/L row, Transactions realized summary + "ภาษี" button → FIFO tax CSV
+  (date,sym,qty,proceeds,cost,gain). Pure client, no migration. Verified live: buy10@100 +
+  buy10@200 + sell15@300 → realized $2500, remaining 5@$200, tax CSV correct.
+- ▶ **Phase 3 (NEXT): gold asset class + market overview/news.** Needs a gold price source
+  (Yahoo `GC=F` via the candles/quote proxy path, or a metals API). See roadmap file.
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line

@@ -25,12 +25,12 @@ Make Transactions a real editable ledger, not just buy-ticket output.
 - Supabase migration: `transactions` gains `fee numeric default 0`; `side`→ allow
   `dividend`; `ts` becomes user-chosen date.
 
-### Phase 2 — FIFO cost basis & tax report ◀ NEXT
+### Phase 2 — FIFO cost basis & tax report ✅ DONE + VERIFIED 2026-06-24 (commit 7b36020)
 - FIFO matching of sells against buys → realized gain/loss per lot.
 - Per-position unrealized vs realized P/L.
 - Tax report export (FIFO) → CSV.
 
-### Phase 3 — Gold + market overview
+### Phase 3 — Gold + market overview ◀ NEXT
 - Add **gold** (ทองคำ) asset class (XAU price via FX/metal API or Yahoo `GC=F`).
 - Market overview strip (indices/crypto/gold tickers) + simple news list.
 
