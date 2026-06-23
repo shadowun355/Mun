@@ -34,10 +34,24 @@ https://mun-re6q.onrender.com. `FINNHUB_KEY` set in Render → `/us` live. Favic
   `index.html` detail chart = `<sc-for>` of `<line>`+`<rect>`. Old canned line path removed.
   Verified live: AAPL 12 candles @1d, 252 @1y (131 green/121 red), range switch rescales,
   0 console errors.
-- ▶ **Part B — Supabase login + per-user portfolio (NEXT).** Real accounts (email/pw +
-  Google) + cloud sync; holdings derived from transactions, no cash. Needs a Supabase
-  project (user creates; SQL + steps to be provided). Then auth gate, portfolio engine
-  rewrite, transactions as real records. See plan file.
+- ⏳ **Part B — Supabase login + per-user portfolio (CODE SHIPPED, awaiting SQL).**
+  Commit `2647a43`. Real accounts via Supabase (email/pw + Google) gate the app: static
+  `#gate` login UI in `index.html` wired by plain DOM in `app.js` (engine has no input
+  binding), shown until a session exists. `web/supabase.js` = client + `Auth` helpers
+  (anon key public by design; RLS protects rows). Per-user `transactions`/`watchlist`/
+  `prefs` in Supabase. **Portfolio rewritten**: `deriveHoldings(txns)` → net qty +
+  buy-weighted avg per sym; overview total / day P/L / alloc + detail position all from
+  derived holdings; **cash removed**. Buy/sell inserts a real `transactions` row (after
+  ~400ms MockBroker sim) → holdings re-derive. Txn screen + empty state from structured
+  rows. Settings/currency/star sync to Supabase. Account shows signed-in email; logout
+  wired. New accounts start empty.
+  - Supabase project: URL `https://livhijcgkielwrkdqtbm.supabase.co`, anon key in
+    `web/supabase.js`. Auth health 200.
+  - **BLOCKING NEXT:** user must run the SQL in `web/SUPABASE_SETUP.md` §2 (tables +
+    RLS) — tables still 404 as of this writing. Then turn off Email "Confirm email" for
+    testing + add site URL to Auth → URL Configuration. THEN verify end-to-end (signup →
+    buy → holdings derive → 2nd-browser cloud sync → logout). Google OAuth optional (§4).
+  - Skipped (YAGNI): localStorage→cloud migration, magic-link/Apple, portfolio snapshots.
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line
