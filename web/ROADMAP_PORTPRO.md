@@ -14,7 +14,7 @@ candlestick detail charts, watchlist, allocation pie, dark mode, ฿/$ toggle, m
 
 ## Phases
 
-### Phase 1 — Transactions ledger (the pointed-at page) ◀ START HERE
+### Phase 1 — Transactions ledger ✅ DONE + VERIFIED 2026-06-24 (commit 5083b6b)
 Make Transactions a real editable ledger, not just buy-ticket output.
 - Manual **add** transaction: asset picker, type (buy / sell / dividend), qty, price
   (prefilled live), **date** (native `<input type=date>`), fee.
@@ -25,7 +25,7 @@ Make Transactions a real editable ledger, not just buy-ticket output.
 - Supabase migration: `transactions` gains `fee numeric default 0`; `side`→ allow
   `dividend`; `ts` becomes user-chosen date.
 
-### Phase 2 — FIFO cost basis & tax report
+### Phase 2 — FIFO cost basis & tax report ◀ NEXT
 - FIFO matching of sells against buys → realized gain/loss per lot.
 - Per-position unrealized vs realized P/L.
 - Tax report export (FIFO) → CSV.

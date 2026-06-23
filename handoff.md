@@ -60,9 +60,24 @@ https://mun-re6q.onrender.com. `FINNHUB_KEY` set in Render → `/us` live. Favic
     Consent→callback→session is standard Supabase (couldn't complete actual Google login in
     automation — needs real credentials). NOTE: Google consent screen may be in **Testing**
     mode → only added test users can complete login until **Published**.
-  - **Not yet done:** Rotate old Finnhub key in git history (`72dba5c`). Optional: wrap gate
-    inputs in a `<form>` to clear a verbose Chrome DOM hint (not an error). Turn Email
-    "Confirm email" back ON for real users (off for testing).
+  - Finnhub key rotated + Google OAuth tested working (user, 2026-06-24).
+  - Optional: wrap gate/sheet inputs in a `<form>` to clear a verbose Chrome DOM hint (not
+    an error); turn Email "Confirm email" back ON for real users (off for testing).
+
+#### PortPro feature-parity milestone (plan `web/ROADMAP_PORTPRO.md`)
+8-phase clean-room push to match portpro.app capabilities (NOT its look — Mun keeps its
+gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 Buy Planner ·
+5 Dividend Calendar · 6 alerts · 7 analytics · 8 freemium+payment.
+- ✅ **Phase 1 — Transactions ledger, VERIFIED LIVE 2026-06-24 (commit `5083b6b`).**
+  Transactions screen is now an editable ledger. `#txnsheet` (plain DOM, outside the
+  reactive template so the 60s tick can't wipe inputs) = add/edit form: asset picker,
+  buy/sell/dividend, qty, price (prefilled live), fee, native date. Tap a row to edit;
+  delete from the sheet. `deriveHoldings` folds fee into cost basis; dividends are income
+  (excluded from qty). Dividends "received" sums real dividend rows. CSV export (blob).
+  Theme vars mirrored to `:root` so the sheet themes in dark. `© 2026 Mun` footer.
+  Migration applied: `transactions += fee`, `side` widened to allow `dividend`. Verified:
+  add w/ fee→avg incl fee, custom date, dividend→income+qty unchanged, edit, delete, CSV.
+- ▶ **Phase 2 (NEXT): FIFO cost basis & tax report.** See roadmap file.
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line
