@@ -75,20 +75,18 @@ function childrenBuilt(node, bag, locals) {
 }
 
 // ---- Component (lifted from the prototype + iOS deltas) ------------------
-const PKEYS = ['dark', 'cur', 'notif', 'starred', 'extraTxns']; // persisted (mirror UserDefaults)
-
 class Component {
   constructor() {
     this.state = {
       screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
       range: '1d', watchFilter: 'all', txnFilter: 'all',
-      selected: 'AAPL', starred: { AAPL: true, BTC: true }, notif: true,
-      ticket: null, extraTxns: [], toast: '', submitting: false, candles: []
+      selected: 'AAPL', starred: {}, notif: true,
+      ticket: null, txns: [], toast: '', submitting: false, candles: []
     };
-    this.loadPersisted();
   }
 
-  candleCache = {}; // 'sym|range' -> bars[], avoids refetch on chip re-toggle
+  user = null;       // Supabase auth user, set at boot
+  candleCache = {};  // 'sym|range' -> bars[], avoids refetch on chip re-toggle
 
   RATE = 36.4; // USD->THB fallback; replaced live by MarketAPI
 
@@ -109,27 +107,13 @@ class Component {
     QQQ:  { sym:'QQQ', name:'Nasdaq 100 ETF', name2:'Invesco QQQ Trust', logo:'QQ', exch:'NASDAQ', native:'usd', cat:'etf', kind:'stock', price:478.0, dayPct:0.88, shares:0, avg:0, open:475.0, high:479.5, low:474.3, mcap:'300B', vol:'40M', pe:'—' }
   };
 
-  holdingList = ['AAPL', 'PTT', 'BTC', 'NVDA'];
-  watchList = ['TSLA', 'CPALL', 'NVDA', 'KBANK', 'ETH', 'SPY', 'QQQ']; // iOS delta: + SPY, QQQ
-  cashUsd = 10000;
-
-  baseTxns = [
-    { date:'20 มิถุนายน 2568', items: [
-      { type:'buy', title:'ซื้อ NVDA', sub:'5 หุ้น · $122.40', amt:'−$612.00', time:'10:24' },
-      { type:'sell', title:'ขาย CPALL', sub:'300 หุ้น · ฿58.50', amt:'+฿17,550', time:'09:48' }
-    ]},
-    { date:'19 มิถุนายน 2568', items: [
-      { type:'buy', title:'ซื้อ AAPL', sub:'10 หุ้น · $210.80', amt:'−$2,108.00', time:'15:02' },
-      { type:'dividend', title:'ปันผล ปตท.', sub:'1,200 หุ้น · ฿1.50', amt:'+฿1,800', time:'11:30' },
-      { type:'sell', title:'ขาย BTC', sub:'0.02 · ฿2.51M', amt:'+฿50,200', time:'08:15' }
-    ]}
-  ];
+  // Universe of watchable symbols (the catalog). Which are *held* is derived from txns.
+  watchList = ['TSLA', 'CPALL', 'NVDA', 'KBANK', 'ETH', 'SPY', 'QQQ'];
 
   // ---- reactive runtime (replaces DCLogic) ----
   setState(p) {
     const patch = typeof p === 'function' ? p(this.state) : p;
     this.state = Object.assign({}, this.state, patch);
-    if (PKEYS.some(k => k in patch)) this.persist();
     this.render();
   }
   render() {
@@ -137,25 +121,47 @@ class Component {
     APP.replaceChildren(...build(TPL, bag, null));
   }
 
-  // ---- persistence (mirror iOS UserDefaults keys) ----
-  loadPersisted() {
-    try {
-      const s = this.state;
-      if (localStorage.dark != null) s.dark = localStorage.dark === 'true';
-      if (localStorage.notif != null) s.notif = localStorage.notif === 'true';
-      if (localStorage.cur) s.cur = localStorage.cur;
-      if (localStorage.starred) {
-        s.starred = {};
-        JSON.parse(localStorage.starred).forEach(sym => { s.starred[sym] = true; });
-      }
-      if (localStorage.extraTxns) s.extraTxns = JSON.parse(localStorage.extraTxns);
-    } catch (e) { /* corrupt storage → keep defaults */ }
+  // ---- Supabase data layer (per-user; RLS scopes every row to this.user) ----
+  async loadUserData() {
+    const [tx, wl, pf] = await Promise.all([
+      SB.from('transactions').select('*').order('ts', { ascending: false }),
+      SB.from('watchlist').select('sym'),
+      SB.from('prefs').select('*').maybeSingle()
+    ]);
+    const starred = {}; (wl.data || []).forEach(r => { starred[r.sym] = true; });
+    const p = pf.data;
+    this.setState(Object.assign({ txns: tx.data || [], starred },
+      p ? { dark: p.dark, cur: p.cur, notif: p.notif } : {}));
   }
-  persist() {
-    const s = this.state;
-    localStorage.dark = s.dark; localStorage.notif = s.notif; localStorage.cur = s.cur;
-    localStorage.starred = JSON.stringify(Object.keys(s.starred).filter(k => s.starred[k]));
-    localStorage.extraTxns = JSON.stringify(s.extraTxns);
+  async loadTxns() {
+    const { data } = await SB.from('transactions').select('*').order('ts', { ascending: false });
+    this.setState({ txns: data || [] });
+  }
+  savePrefs() {
+    const { dark, cur, notif } = this.state;
+    SB.from('prefs').upsert({ user_id: this.user.id, dark, cur, notif }).then(() => {});
+  }
+  saveStar(sym, on) {
+    if (on) SB.from('watchlist').insert({ user_id: this.user.id, sym }).then(() => {});
+    else SB.from('watchlist').delete().eq('sym', sym).then(() => {});
+  }
+
+  // Holdings are derived from the transaction log: net qty per symbol, and a
+  // buy-weighted average cost. Only positive net positions count as holdings.
+  deriveHoldings(txns) {
+    const acc = {};
+    for (const tx of txns) {
+      const m = acc[tx.sym] || (acc[tx.sym] = { qty: 0, buyQty: 0, buyCost: 0 });
+      const q = Number(tx.qty), pr = Number(tx.price_usd);
+      if (tx.side === 'buy') { m.qty += q; m.buyQty += q; m.buyCost += q * pr; }
+      else { m.qty -= q; }
+    }
+    const out = {};
+    for (const sym in acc) {
+      const m = acc[sym];
+      if (m.qty > 1e-9) out[sym] = { qty: m.qty, avg: m.buyQty ? m.buyCost / m.buyQty : 0 };
+    }
+    return out;
   }
 
   // ---- formatters / math (verbatim from prototype; RATE now live) ----
@@ -172,8 +178,8 @@ class Component {
     if (this.state.cur === 'thb') return '≈ $' + this.nf(usd, 2);
     return '≈ ฿' + this.nf(Math.round(usd * this.RATE), 0);
   }
-  qtyLabel(s) {
-    return s.kind === 'crypto' ? this.nf(s.shares, 2) + ' ' + s.sym : this.nf(s.shares, 0) + ' หุ้น';
+  qtyLabel(s, qty) {
+    return s.kind === 'crypto' ? this.nf(qty, 2) + ' ' + s.sym : this.nf(qty, 0) + ' หุ้น';
   }
   pctStr(p) { return (p >= 0 ? '+' : '−') + Math.abs(p).toFixed(2) + '%'; }
 
@@ -228,29 +234,33 @@ class Component {
       return { label, weight: on ? '600' : '400', bg: on ? t.goldsoft : 'transparent', col: on ? t.gold : t.sub, onClick: () => { this.setState({ range: k }); this.loadCandles(this.state.selected, k); } };
     });
 
-    const holdings = this.holdingList.map(sym => {
-      const s = this.data[sym]; const v = s.shares * s.price;
-      return { logo: s.logo, name: s.name, holdSub: s.sym + ' · ' + this.qtyLabel(s), valStr: this.val(v), pct: this.pctStr(s.dayPct), pctColor: s.dayPct >= 0 ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
+    const H = this.deriveHoldings(S.txns);   // sym -> {qty, avg}, only positive positions
+    const heldSyms = Object.keys(H);
+
+    const holdings = heldSyms.map(sym => {
+      const s = this.data[sym]; const qty = H[sym].qty; const v = qty * s.price;
+      return { logo: s.logo, name: s.name, holdSub: s.sym + ' · ' + this.qtyLabel(s, qty), valStr: this.val(v), pct: this.pctStr(s.dayPct), pctColor: s.dayPct >= 0 ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
     });
 
-    let totalUsd = this.cashUsd, dayAbsUsd = 0;
-    this.holdingList.forEach(sym => { const s = this.data[sym]; const v = s.shares * s.price; totalUsd += v; dayAbsUsd += v * s.dayPct / 100; });
-    const dayPct = dayAbsUsd / totalUsd * 100;
+    let totalUsd = 0, dayAbsUsd = 0;   // no cash — total is the sum of holdings
+    heldSyms.forEach(sym => { const s = this.data[sym]; const v = H[sym].qty * s.price; totalUsd += v; dayAbsUsd += v * s.dayPct / 100; });
+    const dayPct = totalUsd ? dayAbsUsd / totalUsd * 100 : 0;
     const dayUp = dayAbsUsd >= 0;
     const dayStr = (dayUp ? '▲ ' : '▼ ') + this.val(Math.abs(dayAbsUsd)) + ' · ' + this.pctStr(dayPct);
 
-    const catUsd = { foreign:0, thai:0, crypto:0 };
-    this.holdingList.forEach(sym => { const s = this.data[sym]; catUsd[s.cat] += s.shares * s.price; });
+    const catUsd = { foreign:0, thai:0, crypto:0, etf:0 };
+    heldSyms.forEach(sym => { const s = this.data[sym]; catUsd[s.cat] += H[sym].qty * s.price; });
     const allocRaw = [
-      { label:'หุ้นต่างประเทศ', color:'var(--gold)', usd: catUsd.foreign },
+      { label:'หุ้นต่างประเทศ', color:'var(--gold)', usd: catUsd.foreign + catUsd.etf },
       { label:'หุ้นไทย', color:'var(--c-sage)', usd: catUsd.thai },
-      { label:'คริปโต', color:'var(--c-blue)', usd: catUsd.crypto },
-      { label:'เงินสด', color:'var(--c-clay)', usd: this.cashUsd }
+      { label:'คริปโต', color:'var(--c-blue)', usd: catUsd.crypto }
     ];
-    const alloc = allocRaw.map(a => { const p = Math.round(a.usd / totalUsd * 100); return { label: a.label, color: a.color, pct: p, pctLabel: p + '%' }; });
+    const alloc = allocRaw.map(a => { const p = totalUsd ? Math.round(a.usd / totalUsd * 100) : 0; return { label: a.label, color: a.color, pct: p, pctLabel: p + '%' }; });
 
-    const sel = this.data[S.selected]; const selVal = sel.shares * sel.price;
-    const gainUsd = (sel.price - sel.avg) * sel.shares; const gainPct = sel.avg ? (sel.price / sel.avg - 1) * 100 : 0;
+    const sel = this.data[S.selected];
+    const selQty = H[sel.sym] ? H[sel.sym].qty : 0, selAvg = H[sel.sym] ? H[sel.sym].avg : 0;
+    const selVal = selQty * sel.price;
+    const gainUsd = (sel.price - selAvg) * selQty; const gainPct = selAvg ? (sel.price / selAvg - 1) * 100 : 0;
     const dDayUp = sel.dayPct >= 0;
 
     // Candlestick geometry over the 358x148 viewBox. Empty until bars load → svg blank.
@@ -276,8 +286,8 @@ class Component {
       dayStr: (dDayUp ? '▲ ' : '▼ ') + this.pctStr(sel.dayPct), dayBg: dDayUp ? 'color-mix(in oklab,var(--up) 16%,transparent)' : 'color-mix(in oklab,var(--down) 16%,transparent)', dayCol: dDayUp ? 'var(--up)' : 'var(--down)',
       candles,
       open: this.price(sel.open), high: this.price(sel.high), low: this.price(sel.low), mcap: sel.mcap, vol: sel.vol, pe: sel.pe,
-      held: sel.shares > 0, notHeld: sel.shares <= 0,
-      posQty: this.qtyLabel(sel) + ' · ' + this.val(selVal), posAvg: this.price(sel.avg),
+      held: selQty > 0, notHeld: selQty <= 0,
+      posQty: this.qtyLabel(sel, selQty) + ' · ' + this.val(selVal), posAvg: this.price(selAvg),
       posGain: (gainUsd >= 0 ? '+' : '−') + this.val(Math.abs(gainUsd)) + ' · ' + this.pctStr(gainPct),
       gainCol: gainUsd >= 0 ? 'var(--up)' : 'var(--down)',
       starFill: S.starred[sel.sym] ? 'var(--gold)' : 'none'
@@ -298,15 +308,25 @@ class Component {
       if (type === 'sell') return { iconBg:'color-mix(in oklab,var(--down) 16%,transparent)', iconStroke:'var(--down)', iconPath:'M12 19V5M5 12l7-7 7 7' };
       return { iconBg:'var(--goldsoft)', iconStroke:'var(--gold)', iconPath:'M12 7v10M9.5 9.5h5M9.5 14.5h5' };
     };
-    const allGroups = JSON.parse(JSON.stringify(this.baseTxns));
-    if (S.extraTxns.length) allGroups[0].items = [...S.extraTxns, ...allGroups[0].items];
-    const txnGroups = allGroups.map(g => {
-      const items = g.items.filter(it => S.txnFilter === 'all' || it.type === S.txnFilter).map((it, i, arr) => {
-        const ic = icon(it.type);
-        return Object.assign({}, it, ic, { amtCol: it.type === 'dividend' ? 'var(--up)' : 'var(--ink)', bb: i === arr.length - 1 ? 'transparent' : 'var(--line)' });
-      });
-      return { date: g.date, items };
-    }).filter(g => g.items.length);
+    // Build the transactions screen from the real (Supabase) transaction log,
+    // grouped by Thai date. S.txns is already newest-first from the query.
+    const txnByDate = [], txnIdx = {};
+    S.txns.filter(tx => S.txnFilter === 'all' || tx.side === S.txnFilter).forEach(tx => {
+      const dt = new Date(tx.ts);
+      const date = dt.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
+      const time = dt.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      const s = this.data[tx.sym] || { kind: 'stock', sym: tx.sym };
+      const buy = tx.side === 'buy'; const q = Number(tx.qty), pr = Number(tx.price_usd);
+      const item = Object.assign({
+        type: tx.side, title: (buy ? 'ซื้อ ' : 'ขาย ') + tx.sym,
+        sub: this.qtyLabel(s, q) + ' · ' + this.price(pr),
+        amt: (buy ? '−' : '+') + this.val(q * pr), time
+      }, icon(tx.side), { amtCol: 'var(--ink)' });
+      if (txnIdx[date] == null) { txnIdx[date] = txnByDate.length; txnByDate.push({ date, items: [] }); }
+      txnByDate[txnIdx[date]].items.push(item);
+    });
+    txnByDate.forEach(g => g.items.forEach((it, i, arr) => { it.bb = i === arr.length - 1 ? 'transparent' : 'var(--line)'; }));
+    const txnGroups = txnByDate, txnEmpty = !txnGroups.length;
 
     const tkState = S.ticket; let tk = {}, showTicket = false;
     if (tkState) {
@@ -330,7 +350,10 @@ class Component {
       thbBg, thbCol, usdBg, usdCol,
       darkTrack: mkTrack(S.dark), darkKnob: mkKnob(S.dark),
       notifTrack: mkTrack(S.notif), notifKnob: mkKnob(S.notif),
-      ranges, holdings, alloc, d, watchTabs, watchRows, txnTabs, txnGroups,
+      ranges, holdings, alloc, d, watchTabs, watchRows, txnTabs, txnGroups, txnEmpty,
+      userEmail: (this.user && this.user.email) || '',
+      userName: (this.user && (this.user.email || '').split('@')[0]) || 'นักลงทุน',
+      userInitial: (this.user && (this.user.email || 'M')[0].toUpperCase()) || 'M',
       totalMain: this.val(totalUsd), totalAlt: this.altVal(totalUsd),
       dayStr, dayBg: dayUp ? 'color-mix(in oklab,var(--up) 16%,transparent)' : 'color-mix(in oklab,var(--down) 16%,transparent)', dayCol: dayUp ? 'var(--up)' : 'var(--down)',
       showTicket, tk, showToast: !!S.toast, toastMsg: S.toast,
@@ -340,11 +363,12 @@ class Component {
       goTransactions: () => this.setState({ screen: 'transactions' }),
       goAccount: () => this.setState({ screen: 'account' }),
       back: () => this.setState(st => ({ screen: st.prevScreen || 'overview' })),
-      toggleDark: () => this.setState(st => ({ dark: !st.dark })),
-      toggleNotif: () => this.setState(st => ({ notif: !st.notif })),
-      setThb: () => this.setState({ cur: 'thb' }),
-      setUsd: () => this.setState({ cur: 'usd' }),
-      toggleStar: () => this.setState(st => ({ starred: Object.assign({}, st.starred, { [st.selected]: !st.starred[st.selected] }) })),
+      toggleDark: () => { this.setState(st => ({ dark: !st.dark })); this.savePrefs(); },
+      toggleNotif: () => { this.setState(st => ({ notif: !st.notif })); this.savePrefs(); },
+      setThb: () => { this.setState({ cur: 'thb' }); this.savePrefs(); },
+      setUsd: () => { this.setState({ cur: 'usd' }); this.savePrefs(); },
+      toggleStar: () => { const sym = S.selected; const on = !S.starred[sym]; this.setState(st => ({ starred: Object.assign({}, st.starred, { [sym]: on }) })); this.saveStar(sym, on); },
+      signOut: () => Auth.signOut().then(() => location.reload()),
       openBuy: () => this.setState(st => ({ ticket: { mode: 'buy', sym: st.selected, qty: 1 } })),
       openSell: () => this.setState(st => ({ ticket: { mode: 'sell', sym: st.selected, qty: 1 } })),
       closeTicket: () => this.setState({ ticket: null }),
@@ -354,30 +378,93 @@ class Component {
     };
   }
 
-  // iOS delta: route through a simulated ~400ms MockBroker fill (submitting guard).
+  showToast(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._toastT);
+    this._toastT = setTimeout(() => this.setState({ toast: '' }), 2200);
+  }
+
+  // Simulated ~400ms MockBroker fill, then record a real transaction in Supabase.
+  // Holdings re-derive from the refreshed log; the swap point for a live broker is here.
   confirmTicket() {
     const tk = this.state.ticket;
     if (!tk || this.state.submitting) return;
     this.setState({ submitting: true });
-    setTimeout(() => {
+    setTimeout(async () => {
       const s = this.data[tk.sym]; const buy = tk.mode === 'buy';
-      const totalUsd = tk.qty * s.price;
-      const amt = (buy ? '−' : '+') + this.val(totalUsd);
-      const sub = this.nf(tk.qty, 0) + (s.kind === 'crypto' ? ' ' + s.sym : ' หุ้น') + ' · ' + this.price(s.price);
-      const entry = { type: buy ? 'buy' : 'sell', title: (buy ? 'ซื้อ ' : 'ขาย ') + s.sym, sub, amt, time: 'เมื่อสักครู่' };
-      this.setState(st => ({ ticket: null, submitting: false, extraTxns: [entry, ...st.extraTxns], screen: 'transactions', toast: (buy ? 'ซื้อ ' : 'ขาย ') + s.sym + ' สำเร็จ' }));
-      clearTimeout(this._toastT);
-      this._toastT = setTimeout(() => this.setState({ toast: '' }), 2200);
+      try {
+        const { error } = await SB.from('transactions').insert({
+          user_id: this.user.id, sym: tk.sym, side: buy ? 'buy' : 'sell',
+          qty: tk.qty, price_usd: s.price
+        });
+        if (error) throw error;
+        await this.loadTxns();
+        this.setState({ ticket: null, submitting: false, screen: 'transactions' });
+        this.showToast((buy ? 'ซื้อ ' : 'ขาย ') + s.sym + ' สำเร็จ');
+      } catch (e) {
+        this.setState({ ticket: null, submitting: false });
+        this.showToast('คำสั่งไม่สำเร็จ');
+      }
     }, 400);
   }
 }
 
-// ---- bootstrap ----------------------------------------------------------
-const app = new Component();
-app.render();
+// ---- bootstrap: auth gate → app ----------------------------------------
+let app = null, gateMode = 'login';
 
-// iOS delta: live data on load + every 60s + on tab refocus.
+let booting = false;
+async function boot() {
+  if (app || booting) return;      // guard double-fire (onChange + initial call)
+  booting = true;
+  const session = await Auth.session();
+  if (!session) { booting = false; showGate(); return; }
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  app = new Component();
+  app.user = session.user;
+  app.render();
+  await app.loadUserData();        // pull txns / watchlist / prefs, then re-render
+  tick(); setInterval(tick, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+}
+
+function showGate() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('gate').style.display = 'flex';
+  wireGate();
+}
+
+function wireGate() {
+  const $ = id => document.getElementById(id);
+  const submit = $('gate-submit');
+  if (submit._wired) return; submit._wired = true;   // idempotent
+  const email = $('gate-email'), pw = $('gate-pw'), err = $('gate-err');
+  const showErr = m => { err.textContent = m; err.style.display = 'block'; };
+  const labelFor = () => gateMode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
+
+  submit.addEventListener('click', async () => {
+    err.style.display = 'none';
+    const e = email.value.trim(), p = pw.value;
+    if (!e || !p) return showErr('กรอกอีเมลและรหัสผ่าน');
+    submit.disabled = true; submit.textContent = '…';
+    const { data, error } = gateMode === 'login' ? await Auth.signIn(e, p) : await Auth.signUp(e, p);
+    submit.disabled = false; submit.textContent = labelFor();
+    if (error) return showErr(error.message);
+    if (gateMode === 'signup' && !data.session) return showErr('สมัครสำเร็จ — ตรวจสอบอีเมลเพื่อยืนยัน แล้วเข้าสู่ระบบ');
+    boot();
+  });
+  $('gate-google').addEventListener('click', () => Auth.signInGoogle());
+  $('gate-toggle').addEventListener('click', () => {
+    gateMode = gateMode === 'login' ? 'signup' : 'login';
+    $('gate-toggle-txt').textContent = gateMode === 'login' ? 'ยังไม่มีบัญชี?' : 'มีบัญชีอยู่แล้ว?';
+    $('gate-toggle').textContent = gateMode === 'login' ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+    $('gate-sub').textContent = gateMode === 'login' ? 'เข้าสู่ระบบเพื่อจัดการพอร์ตของคุณ' : 'สร้างบัญชีใหม่';
+    submit.textContent = labelFor();
+  });
+}
+
+// Live data on load + every 60s + on tab refocus.
 async function tick() { try { await MarketAPI.refresh(app); } catch (e) {} }
-tick();
-setInterval(tick, 60000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+
+Auth.onChange(session => { if (session) boot(); });
+boot();
