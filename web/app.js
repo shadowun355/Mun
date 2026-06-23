@@ -83,15 +83,15 @@ class Component {
       screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
       range: '1d', watchFilter: 'all', txnFilter: 'all',
       selected: 'AAPL', starred: { AAPL: true, BTC: true }, notif: true,
-      ticket: null, extraTxns: [], toast: '', submitting: false
+      ticket: null, extraTxns: [], toast: '', submitting: false, candles: []
     };
     this.loadPersisted();
   }
 
+  candleCache = {}; // 'sym|range' -> bars[], avoids refetch on chip re-toggle
+
   RATE = 36.4; // USD->THB fallback; replaced live by MarketAPI
 
-  UP = "M0,108 C30,100 44,118 74,110 C104,102 116,70 150,78 C184,86 196,58 230,52 C262,46 276,64 304,50 C330,38 344,26 358,22";
-  DN = "M0,30 C30,40 44,28 74,46 C104,64 116,58 150,74 C184,90 196,86 230,100 C262,112 276,104 304,118 C330,130 344,126 358,134";
   USPARK = "M0,18 C12,16 18,9 28,11 C40,13 46,5 56,4";
   DSPARK = "M0,6 C12,8 18,5 28,10 C40,15 46,13 56,18";
 
@@ -177,7 +177,21 @@ class Component {
   }
   pctStr(p) { return (p >= 0 ? '+' : '−') + Math.abs(p).toFixed(2) + '%'; }
 
-  open(sym) { this.setState(st => ({ prevScreen: st.screen === 'detail' ? st.prevScreen : st.screen, screen: 'detail', selected: sym })); }
+  open(sym) {
+    this.setState(st => ({ prevScreen: st.screen === 'detail' ? st.prevScreen : st.screen, screen: 'detail', selected: sym }));
+    this.loadCandles(sym, this.state.range);
+  }
+
+  // Fetch (or reuse cached) OHLC bars for the detail chart; re-render when they land,
+  // but only if the user is still on the same symbol+range.
+  async loadCandles(sym, range) {
+    const key = sym + '|' + range;
+    if (this.candleCache[key]) { this.setState({ candles: this.candleCache[key] }); return; }
+    this.setState({ candles: [] }); // clear stale candles while loading
+    const bars = await MarketAPI.fetchCandles(this, this.data[sym], range);
+    this.candleCache[key] = bars;
+    if (this.state.selected === sym && this.state.range === range) this.setState({ candles: bars });
+  }
 
   renderVals() {
     const S = this.state;
@@ -211,7 +225,7 @@ class Component {
     const rangeDefs = [['1d','1ว'],['1w','1สั'],['1m','1ด'],['3m','3ด'],['1y','1ป'],['all','ทั้งหมด']];
     const ranges = rangeDefs.map(([k, label]) => {
       const on = S.range === k;
-      return { label, weight: on ? '600' : '400', bg: on ? t.goldsoft : 'transparent', col: on ? t.gold : t.sub, onClick: () => this.setState({ range: k }) };
+      return { label, weight: on ? '600' : '400', bg: on ? t.goldsoft : 'transparent', col: on ? t.gold : t.sub, onClick: () => { this.setState({ range: k }); this.loadCandles(this.state.selected, k); } };
     });
 
     const holdings = this.holdingList.map(sym => {
@@ -238,13 +252,29 @@ class Component {
     const sel = this.data[S.selected]; const selVal = sel.shares * sel.price;
     const gainUsd = (sel.price - sel.avg) * sel.shares; const gainPct = sel.avg ? (sel.price / sel.avg - 1) * 100 : 0;
     const dDayUp = sel.dayPct >= 0;
+
+    // Candlestick geometry over the 358x148 viewBox. Empty until bars load → svg blank.
+    const bars = S.candles || [];
+    let candles = [];
+    if (bars.length) {
+      const W = 358, H = 148, pad = 8;
+      const lo = Math.min(...bars.map(b => b.l)), hi = Math.max(...bars.map(b => b.h));
+      const span = (hi - lo) || 1;
+      const y = v => pad + (H - 2 * pad) * (1 - (v - lo) / span);
+      const step = W / bars.length;
+      const bw = Math.max(1.5, step * 0.62);
+      candles = bars.map((b, i) => {
+        const cx = i * step + step / 2;
+        const yo = y(b.o), yc = y(b.c);
+        return { wx: cx, wy1: y(b.h), wy2: y(b.l), bx: cx - bw / 2, by: Math.min(yo, yc), bw, bh: Math.max(1, Math.abs(yc - yo)), color: b.c >= b.o ? 'var(--up)' : 'var(--down)' };
+      });
+    }
     const d = {
       sym: sel.sym, name2: sel.name2,
       subline: sel.exch + ' · ' + (sel.native === 'usd' ? 'ดอลลาร์สหรัฐ' : 'บาท'),
       priceStr: this.price(sel.price), priceAlt: this.altVal(sel.price),
       dayStr: (dDayUp ? '▲ ' : '▼ ') + this.pctStr(sel.dayPct), dayBg: dDayUp ? 'color-mix(in oklab,var(--up) 16%,transparent)' : 'color-mix(in oklab,var(--down) 16%,transparent)', dayCol: dDayUp ? 'var(--up)' : 'var(--down)',
-      chart: dDayUp ? this.UP : this.DN, chartArea: (dDayUp ? this.UP : this.DN) + ' L358,148 L0,148 Z',
-      areaFill: 'color-mix(in oklab,var(--gold) 14%,transparent)', lineColor: dDayUp ? 'var(--up)' : 'var(--down)',
+      candles,
       open: this.price(sel.open), high: this.price(sel.high), low: this.price(sel.low), mcap: sel.mcap, vol: sel.vol, pe: sel.pe,
       held: sel.shares > 0, notHeld: sel.shares <= 0,
       posQty: this.qtyLabel(sel) + ' · ' + this.val(selVal), posAvg: this.price(sel.avg),

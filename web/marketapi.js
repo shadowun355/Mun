@@ -56,6 +56,23 @@ const MarketAPI = {
     }));
   },
 
+  // Map an instrument to its Yahoo symbol: Thai -> .BK, crypto -> -USD, else plain.
+  yahooSym(s) {
+    if (s.cat === 'thai') return s.sym + '.BK';
+    if (s.kind === 'crypto') return s.sym + '-USD';
+    return s.sym;
+  },
+
+  // OHLC bars for the detail candlestick chart. USD-canonical: THB bars / FX rate.
+  // Returns [] on any failure — the UI keeps whatever it had, never throws.
+  async fetchCandles(app, s, range) {
+    try {
+      const j = await this.getJSON(`${this.proxyBase}/candles?sym=${this.yahooSym(s)}&range=${range}`);
+      const div = j.ccy === 'THB' ? app.RATE : 1;
+      return j.bars.map(b => ({ o: b.o / div, h: b.h / div, l: b.l / div, c: b.c / div }));
+    } catch (e) { return []; }
+  },
+
   async refresh(app) {
     // FX first: USD display + Thai normalization depend on a fresh rate.
     try { await this.fx(app); } catch (e) {}

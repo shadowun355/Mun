@@ -149,7 +149,12 @@
           </div>
         </div>
         <div style="padding:18px 16px 0">
-          <svg width="100%" height="148" viewBox="0 0 358 148" preserveAspectRatio="none" style="display:block"><path d="{{ d.chartArea }}" fill="{{ d.areaFill }}"></path><path d="{{ d.chart }}" fill="none" stroke="{{ d.lineColor }}" stroke-width="2.4" stroke-linecap="round"></path></svg>
+          <svg width="100%" height="148" viewBox="0 0 358 148" style="display:block">
+            <sc-for list="{{ d.candles }}" as="k">
+              <line x1="{{ k.wx }}" y1="{{ k.wy1 }}" x2="{{ k.wx }}" y2="{{ k.wy2 }}" stroke="{{ k.color }}" stroke-width="1"></line>
+              <rect x="{{ k.bx }}" y="{{ k.by }}" width="{{ k.bw }}" height="{{ k.bh }}" fill="{{ k.color }}"></rect>
+            </sc-for>
+          </svg>
           <div style="display:flex;gap:6px;margin-top:10px;padding:0 6px">
             <sc-for list="{{ ranges }}" as="r">
               <span onClick="{{ r.onClick }}" style="font-size:12px;font-weight:{{ r.weight }};cursor:pointer;border-radius:8px;padding:5px 0;flex:1;text-align:center;background:{{ r.bg }};color:{{ r.col }}">{{ r.label }}</span>
