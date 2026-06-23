@@ -43,10 +43,17 @@ Parity-first static site rebuilding the iOS app for the browser. Plan:
 - **Proxy:** `proxy/app.py` gained `CORSMiddleware` (REQUIRED — browsers were blocked;
   native iOS had no CORS) + `GET /us?sym=` (Finnhub, key from `FINNHUB_KEY` env, not
   in client JS). `render.yaml` adds a `mun-web` static site (`rootDir: web`).
-- **NEXT (blocking before web is live):** redeploy the proxy (CORS + /us are local
-  only) and set `FINNHUB_KEY` in the Render dashboard, then verify
-  `curl -I -H "Origin: https://x.com" https://mun-re6q.onrender.com/quote?sym=PTT`
-  shows the CORS header. Then deploy `web/` (Render Blueprint picks up `mun-web`).
+- **Proxy redeployed 2026-06-23:** merged `web-port` → `main` (fast-forward) +
+  pushed; Render `mun-re6q` auto-redeployed in ~30s. Verified live:
+  CORS `access-control-allow-origin: *` on `/quote`, Thai `/quote?sym=PTT` → 35.0 THB,
+  `/us` route present.
+- **NEXT (blocking before web is live), both Render-dashboard actions:**
+  1. Set env `FINNHUB_KEY=d8sflopr01qq7apvcre0d8sflopr01qq7apvcreg` on the `mun-re6q`
+     proxy service (Environment tab). Until set, `/us?sym=AAPL` → `{"detail":"no
+     FINNHUB_KEY set"}` and the web client keeps seed prices for US stocks (no crash).
+  2. Create the `mun-web` static site (New → Static Site, rootDir `web`, publish `.`,
+     no build — or New → Blueprint to pick up `render.yaml`'s `mun-web`). That serves
+     `web/` publicly = the web port is live.
 - **Security:** Finnhub key now server-side only. Still in git history at `72dba5c` —
   rotate before/with going public.
 
