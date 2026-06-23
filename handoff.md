@@ -53,10 +53,16 @@ https://mun-re6q.onrender.com. `FINNHUB_KEY` set in Render → `/us` live. Favic
     from cloud, currency+star sync survive reload, logout clears session, 0 console errors.
   - Email gotcha: Supabase rejects `@example.com` as invalid — use a real domain.
   - Skipped (YAGNI): localStorage→cloud migration, magic-link/Apple, portfolio snapshots.
-  - **Not yet done:** Google OAuth (needs Google Cloud client — `SUPABASE_SETUP.md` §4);
-    the Google button is wired but errors until that's configured. Rotate old Finnhub key
-    in git history (`72dba5c`). Optional: wrap gate inputs in a `<form>` to clear a verbose
-    Chrome DOM hint (not an error).
+  - ✅ **Google OAuth configured + verified 2026-06-24.** Google Cloud OAuth web client +
+    Supabase Google provider set. Browser test: Google button redirects to Google sign-in
+    with correct client_id (`936159950771-...`) + redirect_uri
+    (`https://livhijcgkielwrkdqtbm.supabase.co/auth/v1/callback`), no redirect_uri_mismatch.
+    Consent→callback→session is standard Supabase (couldn't complete actual Google login in
+    automation — needs real credentials). NOTE: Google consent screen may be in **Testing**
+    mode → only added test users can complete login until **Published**.
+  - **Not yet done:** Rotate old Finnhub key in git history (`72dba5c`). Optional: wrap gate
+    inputs in a `<form>` to clear a verbose Chrome DOM hint (not an error). Turn Email
+    "Confirm email" back ON for real users (off for testing).
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line
