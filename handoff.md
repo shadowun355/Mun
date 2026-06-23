@@ -18,9 +18,26 @@ crypto+FX+US data live; orders simulated via `MockBroker`. Read `SCOPE.md` first
 **iOS app PAUSED 2026-06-22** (Apple $99/yr fee deferred). Pivoted to a **web port**
 to ship for free — Swift left untouched, not deleted. See `web/` + `SCOPE.md`.
 
-### Web port (branch `web-port`, started 2026-06-22)
+### Web port (merged to `main` 2026-06-23, LIVE)
 Parity-first static site rebuilding the iOS app for the browser. Plan:
 `~/.claude/plans/since-i-know-that-glowing-wigderson.md`.
+**LIVE:** site https://mun-3skf.onrender.com (Render static `mun-web`), proxy
+https://mun-re6q.onrender.com. `FINNHUB_KEY` set in Render → `/us` live. Favicon added.
+
+#### Feature work (plan `~/.claude/plans/starry-kindling-key.md`)
+- ✅ **Part A — Candlestick chart (detail view), 2026-06-23.** Proxy `GET /candles?sym=&range=`
+  exposes the Yahoo OHLC bar series (one source: Thai `.BK` / US plain / crypto `-USD`);
+  `range`→Yahoo (range,interval) map in `proxy/app.py`. Client `MarketAPI.yahooSym()` +
+  `fetchCandles()` (THB bars ÷ FX rate). `app.js` builds `d.candles` geometry (wick line +
+  body rect, close≥open→`--up` green else `--down` red) over the 358×148 viewBox;
+  `loadCandles()` caches per `sym|range`, triggered by `open()` + range chips. Markup in
+  `index.html` detail chart = `<sc-for>` of `<line>`+`<rect>`. Old canned line path removed.
+  Verified live: AAPL 12 candles @1d, 252 @1y (131 green/121 red), range switch rescales,
+  0 console errors.
+- ▶ **Part B — Supabase login + per-user portfolio (NEXT).** Real accounts (email/pw +
+  Google) + cloud sync; holdings derived from transactions, no cash. Needs a Supabase
+  project (user creates; SQL + steps to be provided). Then auth gate, portfolio engine
+  rewrite, transactions as real records. See plan file.
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line
