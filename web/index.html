@@ -68,6 +68,40 @@
 
 <div id="app" style="min-height:100vh;display:flex;justify-content:center;background:#e7e5df;font-family:'Anuphan',sans-serif"></div>
 
+<!-- Add/edit transaction sheet. Plain DOM (outside the reactive template) so the 60s
+     live-data re-render can't wipe half-typed inputs. Wired in app.js (wireTxnForm). -->
+<div id="txnsheet" style="display:none;position:fixed;inset:0;z-index:60;align-items:flex-end;justify-content:center;font-family:'Anuphan',sans-serif">
+  <div id="txnsheet-bg" style="position:absolute;inset:0;background:rgba(20,16,8,.42)"></div>
+  <div style="position:relative;width:100%;max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:24px 24px 0 0;padding:22px 20px 28px;max-height:92vh;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div id="txnsheet-title" style="font-size:18px;font-weight:700;color:var(--ink)">เพิ่มรายการ</div>
+      <div id="txnsheet-close" style="cursor:pointer;font-size:20px;color:var(--sub);line-height:1;padding:4px 8px">✕</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">สินทรัพย์</div>
+        <select id="tf-sym" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></select></div>
+      <div><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">ประเภท</div>
+        <select id="tf-type" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit">
+          <option value="buy">ซื้อ</option><option value="sell">ขาย</option><option value="dividend">ปันผล</option></select></div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">จำนวน</div>
+          <input id="tf-qty" type="number" step="any" min="0" placeholder="0" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></div>
+        <div style="flex:1"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">ราคา (USD)</div>
+          <input id="tf-price" type="number" step="any" min="0" placeholder="0.00" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">ค่าธรรมเนียม (USD)</div>
+          <input id="tf-fee" type="number" step="any" min="0" value="0" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></div>
+        <div style="flex:1"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">วันที่</div>
+          <input id="tf-date" type="date" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></div>
+      </div>
+      <div id="tf-err" style="display:none;font-size:13px;color:var(--down)"></div>
+      <button id="tf-save" style="width:100%;padding:14px;border:none;border-radius:13px;background:var(--gold);color:var(--ongold);font-size:15.5px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px">บันทึก</button>
+      <button id="tf-delete" style="display:none;width:100%;padding:12px;border:1px solid var(--line);border-radius:13px;background:transparent;color:var(--down);font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit">ลบรายการ</button>
+    </div>
+  </div>
+</div>
+
 <!-- Phone markup, lifted from the design prototype. Bound by the engine in app.js:
      {{ expr }} interpolation, <sc-if>, <sc-for as=>, onClick. -->
 <template id="tpl">
@@ -262,7 +296,7 @@
         <div style="padding:6px 22px 4px"><div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">เงินปันผล</div></div>
         <div style="margin:12px 16px 0;padding:20px 22px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
           <div style="font-size:13px;color:var(--sub)">รับแล้วในปีนี้</div>
-          <div style="font-family:'Newsreader',serif;font-size:38px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:6px;letter-spacing:-.5px">฿18,420</div>
+          <div style="font-family:'Newsreader',serif;font-size:38px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:6px;letter-spacing:-.5px">{{ divReceived }}</div>
           <div style="display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
             <div><div style="font-size:12px;color:var(--sub)">คาดทั้งปี</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">฿32,000</div></div>
             <div><div style="font-size:12px;color:var(--sub)">อัตราผลตอบแทน</div><div style="font-size:16px;font-weight:600;color:var(--gold);margin-top:3px">3.20%</div></div>
@@ -308,7 +342,10 @@
       <div>
         <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
           <div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">รายการซื้อขาย</div>
-          <div style="width:38px;height:38px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4" stroke-linecap="round"></path></svg></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span onClick="{{ exportCSV }}" style="font-size:12.5px;font-weight:600;color:var(--gold);cursor:pointer;padding:8px 12px;border:1px solid var(--line);border-radius:10px">CSV</span>
+            <div onClick="{{ addTxn }}" style="width:38px;height:38px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ongold)" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+          </div>
         </div>
         <div style="display:flex;gap:7px;padding:12px 18px 0">
           <sc-for list="{{ txnTabs }}" as="f">
@@ -320,7 +357,7 @@
             <div style="padding:18px 22px 8px;font-size:12.5px;font-weight:600;color:var(--sub)">{{ g.date }}</div>
             <div style="margin:0 16px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
               <sc-for list="{{ g.items }}" as="t">
-                <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid {{ t.bb }}">
+                <div onClick="{{ t.onEdit }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid {{ t.bb }};cursor:pointer">
                   <div style="width:40px;height:40px;border-radius:12px;background:{{ t.iconBg }};display:flex;align-items:center;justify-content:center">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.iconStroke }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.iconPath }}"></path></svg>
                   </div>
@@ -334,7 +371,7 @@
         <sc-if value="{{ txnEmpty }}">
         <div style="margin:18px 16px 0;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:26px 18px;text-align:center">
           <div style="font-size:14px;color:var(--sub)">ยังไม่มีรายการซื้อขาย</div>
-          <div style="font-size:12.5px;color:var(--faint);margin-top:5px">เปิดหุ้นหรือคริปโตแล้วแตะ “ซื้อ” เพื่อเริ่มสร้างพอร์ต</div>
+          <div style="font-size:12.5px;color:var(--faint);margin-top:5px">แตะ + ด้านบนเพื่อเพิ่มรายการ หรือซื้อจากหน้าหุ้น</div>
         </div>
         </sc-if>
         <div style="height:28px"></div>
@@ -382,6 +419,7 @@
             <span style="flex:1;font-size:15px;color:var(--down)">ออกจากระบบ</span>
           </div>
         </div>
+        <div style="text-align:center;padding:6px 16px 28px;font-size:12px;color:var(--faint)">© 2026 Mun · มั่น · สงวนลิขสิทธิ์</div>
       </div>
       </sc-if>
 

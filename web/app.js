@@ -151,9 +151,10 @@ class Component {
   deriveHoldings(txns) {
     const acc = {};
     for (const tx of txns) {
+      if (tx.side === 'dividend') continue;   // income, not a position change
       const m = acc[tx.sym] || (acc[tx.sym] = { qty: 0, buyQty: 0, buyCost: 0 });
-      const q = Number(tx.qty), pr = Number(tx.price_usd);
-      if (tx.side === 'buy') { m.qty += q; m.buyQty += q; m.buyCost += q * pr; }
+      const q = Number(tx.qty), pr = Number(tx.price_usd), fee = Number(tx.fee) || 0;
+      if (tx.side === 'buy') { m.qty += q; m.buyQty += q; m.buyCost += q * pr + fee; }  // fee into cost basis
       else { m.qty -= q; }
     }
     const out = {};
@@ -162,6 +163,80 @@ class Component {
       if (m.qty > 1e-9) out[sym] = { qty: m.qty, avg: m.buyQty ? m.buyCost / m.buyQty : 0 };
     }
     return out;
+  }
+
+  // ---- transaction ledger (Phase 1): manual add / edit / delete -----------
+  // The sheet is plain DOM (#txnsheet) so the 60s live-data re-render can't wipe
+  // half-typed inputs. editingId null = add, else edit that row.
+  openTxnForm(row) {
+    const $ = id => document.getElementById(id);
+    this.editingId = row ? row.id : null;
+    const symSel = $('tf-sym');
+    if (!symSel.options.length) {  // populate asset options once
+      Object.values(this.data).forEach(s => {
+        const o = document.createElement('option'); o.value = s.sym; o.textContent = s.sym + ' · ' + s.name; symSel.appendChild(o);
+      });
+    }
+    const sym = row ? row.sym : 'AAPL';
+    $('txnsheet-title').textContent = row ? 'แก้ไขรายการ' : 'เพิ่มรายการ';
+    symSel.value = sym;
+    $('tf-type').value = row ? row.side : 'buy';
+    $('tf-qty').value = row ? row.qty : '';
+    $('tf-price').value = row ? row.price_usd : (this.data[sym] ? this.data[sym].price.toFixed(2) : '');
+    $('tf-fee').value = row ? (row.fee || 0) : 0;
+    $('tf-date').value = (row ? row.ts : new Date().toISOString()).slice(0, 10);
+    $('tf-delete').style.display = row ? 'block' : 'none';
+    $('tf-err').style.display = 'none';
+    $('txnsheet').style.display = 'flex';
+  }
+  closeTxnForm() { document.getElementById('txnsheet').style.display = 'none'; }
+  wireTxnForm() {
+    const $ = id => document.getElementById(id);
+    if ($('tf-save')._wired) return; $('tf-save')._wired = true;
+    $('tf-save').addEventListener('click', () => this.saveTxn());
+    $('tf-delete').addEventListener('click', () => this.deleteTxn());
+    $('txnsheet-close').addEventListener('click', () => this.closeTxnForm());
+    $('txnsheet-bg').addEventListener('click', () => this.closeTxnForm());
+    // Prefill price with the live quote when the asset changes (unless editing).
+    $('tf-sym').addEventListener('change', () => {
+      if (this.editingId) return;
+      const s = this.data[$('tf-sym').value]; if (s) $('tf-price').value = s.price.toFixed(2);
+    });
+  }
+
+  async saveTxn() {
+    const $ = id => document.getElementById(id);
+    const err = $('tf-err'); const showErr = m => { err.textContent = m; err.style.display = 'block'; };
+    const sym = $('tf-sym').value, type = $('tf-type').value;
+    const qty = parseFloat($('tf-qty').value), price = parseFloat($('tf-price').value);
+    const fee = parseFloat($('tf-fee').value) || 0, date = $('tf-date').value;
+    if (!(qty > 0) || !(price >= 0) || !date) return showErr('กรอกจำนวน ราคา และวันที่ให้ถูกต้อง');
+    const rowData = { user_id: this.user.id, sym, side: type, qty, price_usd: price, fee, ts: new Date(date).toISOString() };
+    const res = this.editingId
+      ? await SB.from('transactions').update(rowData).eq('id', this.editingId)
+      : await SB.from('transactions').insert(rowData);
+    if (res.error) return showErr(res.error.message);
+    this.closeTxnForm();
+    await this.loadTxns();
+    this.showToast(this.editingId ? 'แก้ไขรายการแล้ว' : 'เพิ่มรายการแล้ว');
+  }
+
+  async deleteTxn() {
+    if (!this.editingId) return;
+    await SB.from('transactions').delete().eq('id', this.editingId);
+    this.closeTxnForm();
+    await this.loadTxns();
+    this.showToast('ลบรายการแล้ว');
+  }
+
+  // Export the ledger as CSV (client-side blob download).
+  exportCSV() {
+    const head = ['date', 'sym', 'side', 'qty', 'price_usd', 'fee'];
+    const lines = [head.join(',')];
+    this.state.txns.forEach(t => lines.push([t.ts, t.sym, t.side, t.qty, t.price_usd, t.fee || 0].join(',')));
+    const url = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'mun-transactions.csv'; a.click();
+    URL.revokeObjectURL(url);
   }
 
   // ---- formatters / math (verbatim from prototype; RATE now live) ----
@@ -217,6 +292,9 @@ class Component {
       background: t.page
     };
     document.body.style.background = t.page; // fill the whole window incl. overscroll
+    // Mirror theme vars onto :root so DOM outside .shell (#txnsheet) can theme too.
+    const rootEl = document.documentElement;
+    for (const k in rootStyle) if (k.startsWith('--')) rootEl.style.setProperty(k, rootStyle[k]);
 
     const ac = (n) => (scr === n ? t.gold : t.faint);
     const c = { overview: ac('overview'), watch: ac('watch'), dividends: ac('dividends'), transactions: ac('transactions'), account: ac('account') };
@@ -317,16 +395,20 @@ class Component {
       const time = dt.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
       const s = this.data[tx.sym] || { kind: 'stock', sym: tx.sym };
       const buy = tx.side === 'buy'; const q = Number(tx.qty), pr = Number(tx.price_usd);
+      const div = tx.side === 'dividend';
+      const verb = div ? 'ปันผล ' : buy ? 'ซื้อ ' : 'ขาย ';
       const item = Object.assign({
-        type: tx.side, title: (buy ? 'ซื้อ ' : 'ขาย ') + tx.sym,
+        type: tx.side, title: verb + tx.sym,
         sub: this.qtyLabel(s, q) + ' · ' + this.price(pr),
-        amt: (buy ? '−' : '+') + this.val(q * pr), time
-      }, icon(tx.side), { amtCol: 'var(--ink)' });
+        amt: (buy ? '−' : '+') + this.val(q * pr), time,
+        onEdit: () => this.openTxnForm(tx)
+      }, icon(tx.side), { amtCol: div ? 'var(--up)' : 'var(--ink)' });
       if (txnIdx[date] == null) { txnIdx[date] = txnByDate.length; txnByDate.push({ date, items: [] }); }
       txnByDate[txnIdx[date]].items.push(item);
     });
     txnByDate.forEach(g => g.items.forEach((it, i, arr) => { it.bb = i === arr.length - 1 ? 'transparent' : 'var(--line)'; }));
     const txnGroups = txnByDate, txnEmpty = !txnGroups.length;
+    const divUsd = S.txns.filter(t => t.side === 'dividend').reduce((a, t) => a + Number(t.qty) * Number(t.price_usd), 0);
 
     const tkState = S.ticket; let tk = {}, showTicket = false;
     if (tkState) {
@@ -351,6 +433,9 @@ class Component {
       darkTrack: mkTrack(S.dark), darkKnob: mkKnob(S.dark),
       notifTrack: mkTrack(S.notif), notifKnob: mkKnob(S.notif),
       ranges, holdings, alloc, d, watchTabs, watchRows, txnTabs, txnGroups, txnEmpty,
+      divReceived: this.val(divUsd),
+      addTxn: () => this.openTxnForm(null),
+      exportCSV: () => this.exportCSV(),
       userEmail: (this.user && this.user.email) || '',
       userName: (this.user && (this.user.email || '').split('@')[0]) || 'นักลงทุน',
       userInitial: (this.user && (this.user.email || 'M')[0].toUpperCase()) || 'M',
@@ -423,6 +508,7 @@ async function boot() {
   app = new Component();
   app.user = session.user;
   app.render();
+  app.wireTxnForm();               // bind the (DOM) add/edit transaction sheet
   await app.loadUserData();        // pull txns / watchlist / prefs, then re-render
   tick(); setInterval(tick, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
