@@ -104,11 +104,13 @@ class Component {
     ETH:  { sym:'ETH', name:'Ethereum', name2:'Ethereum', logo:'Ξ', exch:'Crypto', native:'usd', cat:'crypto', kind:'crypto', price:2261, dayPct:-1.40, shares:0, avg:0, open:2295, high:2310, low:2240, mcap:'272B', vol:'฿18B', pe:'—' },
     // iOS delta: ETF symbols (watchlist-only, patched live via Finnhub /us)
     SPY:  { sym:'SPY', name:'S&P 500 ETF', name2:'SPDR S&P 500 ETF Trust', logo:'SP', exch:'NYSE', native:'usd', cat:'etf', kind:'stock', price:545.0, dayPct:0.62, shares:0, avg:0, open:543.1, high:546.4, low:542.2, mcap:'560B', vol:'62M', pe:'—' },
-    QQQ:  { sym:'QQQ', name:'Nasdaq 100 ETF', name2:'Invesco QQQ Trust', logo:'QQ', exch:'NASDAQ', native:'usd', cat:'etf', kind:'stock', price:478.0, dayPct:0.88, shares:0, avg:0, open:475.0, high:479.5, low:474.3, mcap:'300B', vol:'40M', pe:'—' }
+    QQQ:  { sym:'QQQ', name:'Nasdaq 100 ETF', name2:'Invesco QQQ Trust', logo:'QQ', exch:'NASDAQ', native:'usd', cat:'etf', kind:'stock', price:478.0, dayPct:0.88, shares:0, avg:0, open:475.0, high:479.5, low:474.3, mcap:'300B', vol:'40M', pe:'—' },
+    // Phase 3: gold asset class — 1 troy oz XAU (Yahoo GC=F), USD, patched live via proxy /yquote
+    XAU:  { sym:'XAU', name:'ทองคำ', name2:'Gold (XAU · 1 oz)', logo:'Au', exch:'COMEX', native:'usd', cat:'gold', kind:'gold', price:4085.0, dayPct:0.0, shares:0, avg:0, open:4085.0, high:4085.0, low:4085.0, mcap:'—', vol:'—', pe:'—' }
   };
 
   // Universe of watchable symbols (the catalog). Which are *held* is derived from txns.
-  watchList = ['TSLA', 'CPALL', 'NVDA', 'KBANK', 'ETH', 'SPY', 'QQQ'];
+  watchList = ['XAU', 'TSLA', 'CPALL', 'NVDA', 'KBANK', 'ETH', 'SPY', 'QQQ'];
 
   // ---- reactive runtime (replaces DCLogic) ----
   setState(p) {
@@ -363,12 +365,13 @@ class Component {
     const dayUp = dayAbsUsd >= 0;
     const dayStr = (dayUp ? '▲ ' : '▼ ') + this.val(Math.abs(dayAbsUsd)) + ' · ' + this.pctStr(dayPct);
 
-    const catUsd = { foreign:0, thai:0, crypto:0, etf:0 };
+    const catUsd = { foreign:0, thai:0, crypto:0, etf:0, gold:0 };
     heldSyms.forEach(sym => { const s = this.data[sym]; catUsd[s.cat] += H[sym].qty * s.price; });
     const allocRaw = [
       { label:'หุ้นต่างประเทศ', color:'var(--gold)', usd: catUsd.foreign + catUsd.etf },
       { label:'หุ้นไทย', color:'var(--c-sage)', usd: catUsd.thai },
-      { label:'คริปโต', color:'var(--c-blue)', usd: catUsd.crypto }
+      { label:'คริปโต', color:'var(--c-blue)', usd: catUsd.crypto },
+      { label:'ทองคำ', color:'var(--c-clay)', usd: catUsd.gold }
     ];
     const alloc = allocRaw.map(a => { const p = totalUsd ? Math.round(a.usd / totalUsd * 100) : 0; return { label: a.label, color: a.color, pct: p, pctLabel: p + '%' }; });
 
@@ -413,12 +416,20 @@ class Component {
     };
 
     // iOS delta: 'etf' (กองทุน) filter chip
-    const wfDefs = [['all','ทั้งหมด'],['thai','หุ้นไทย'],['foreign','ต่างประเทศ'],['crypto','คริปโต'],['etf','กองทุน']];
+    const wfDefs = [['all','ทั้งหมด'],['thai','หุ้นไทย'],['foreign','ต่างประเทศ'],['crypto','คริปโต'],['etf','กองทุน'],['gold','ทองคำ']];
     const watchTabs = wfDefs.map(([k, label]) => { const on = S.watchFilter === k; return { label, weight: on ? '600' : '400', bg: on ? t.gold : t.card, col: on ? t.ongold : t.sub, bd: on ? t.gold : t.line, onClick: () => this.setState({ watchFilter: k }) }; });
     const watchRows = this.watchList.filter(sym => S.watchFilter === 'all' || this.data[sym].cat === S.watchFilter).map(sym => {
       const s = this.data[sym]; const up = s.dayPct >= 0;
       return { sym: s.sym, name2: s.name2, priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: up ? 'var(--up)' : 'var(--down)', spark: up ? this.USPARK : this.DSPARK, onOpen: () => this.open(sym) };
     });
+
+    // Phase 3: market overview strip — curated live tickers from the catalog (no new fetch).
+    const marketStrip = ['XAU', 'BTC', 'SPY', 'PTT'].map(sym => {
+      const s = this.data[sym]; const up = s.dayPct >= 0;
+      return { sym: s.sym, name: s.name, priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: up ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
+    });
+    // Phase 3: news list (from MarketAPI.refresh → S.news; [] until first load / on failure).
+    const newsItems = (S.news || []).map(n => ({ headline: n.headline, source: n.source || 'ข่าว', url: n.url }));
 
     const tfDefs = [['all','ทั้งหมด'],['buy','ซื้อ'],['sell','ขาย'],['dividend','ปันผล']];
     const txnTabs = tfDefs.map(([k, label]) => { const on = S.txnFilter === k; return { label, weight: on ? '600' : '400', bg: on ? t.gold : t.card, col: on ? t.ongold : t.sub, bd: on ? t.gold : t.line, onClick: () => this.setState({ txnFilter: k }) }; });
@@ -474,6 +485,7 @@ class Component {
       darkTrack: mkTrack(S.dark), darkKnob: mkKnob(S.dark),
       notifTrack: mkTrack(S.notif), notifKnob: mkKnob(S.notif),
       ranges, holdings, alloc, d, watchTabs, watchRows, txnTabs, txnGroups, txnEmpty,
+      marketStrip, newsItems, hasNews: newsItems.length > 0,
       divReceived: this.val(divUsd),
       realizedStr: (F.realizedUsd >= 0 ? '+' : '−') + this.val(Math.abs(F.realizedUsd)),
       realizedCol: F.realizedUsd >= 0 ? 'var(--up)' : 'var(--down)',

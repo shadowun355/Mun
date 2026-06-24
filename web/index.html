@@ -158,6 +158,16 @@
             </sc-for>
           </div>
         </div>
+        <!-- Phase 3: market overview strip — live tickers (gold/crypto/index/Thai) -->
+        <div style="margin:18px 0 0;padding:0 16px;display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <sc-for list="{{ marketStrip }}" as="m">
+            <div onClick="{{ m.onOpen }}" style="flex:none;min-width:108px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 13px;cursor:pointer">
+              <div style="font-size:12px;color:var(--sub);font-weight:600">{{ m.name }}</div>
+              <div style="font-size:15px;font-weight:600;color:var(--ink);margin-top:3px">{{ m.priceStr }}</div>
+              <div style="font-size:12px;font-weight:600;color:{{ m.pctColor }};margin-top:1px">{{ m.pct }}</div>
+            </div>
+          </sc-for>
+        </div>
         <div style="margin:18px 16px 0">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
             <span style="font-size:14px;font-weight:600;color:var(--ink)">สัดส่วนการลงทุน</span>
@@ -189,6 +199,20 @@
             </sc-for>
           </div>
         </div>
+        <!-- Phase 3: market news (Finnhub general). Hidden until headlines load. -->
+        <sc-if value="{{ hasNews }}">
+        <div style="margin:4px 16px 28px">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:9px">ข่าวตลาด</div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 16px">
+            <sc-for list="{{ newsItems }}" as="n">
+              <a href="{{ n.url }}" target="_blank" rel="noopener" style="display:block;padding:13px 0;border-bottom:1px solid var(--line);text-decoration:none">
+                <div style="font-size:14px;font-weight:600;color:var(--ink);line-height:1.35">{{ n.headline }}</div>
+                <div style="font-size:12px;color:var(--sub);margin-top:4px">{{ n.source }}</div>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
       </div>
       </sc-if>
 

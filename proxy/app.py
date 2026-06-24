@@ -21,7 +21,6 @@ app = FastAPI(title="Mun ThaiStock proxy")
 # ponytail: allow_origins=["*"] — tighten to the deployed site origin once it's known.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"])
 
-YF = "https://query1.finance.yahoo.com/v8/finance/chart/{}.BK"
 UA = {"User-Agent": "Mozilla/5.0"}  # Yahoo 403s the default requests UA
 
 # Candle history: same Yahoo chart endpoint, but keep the whole bar series. Takes a
@@ -34,10 +33,16 @@ RANGES = {"1d": ("1d", "5m"), "1w": ("5d", "15m"), "1m": ("1mo", "1d"),
 # Finnhub key stays server-side (env var) — it must not ship in browser JS.
 FINNHUB_KEY = os.environ.get("FINNHUB_KEY", "")
 FH = "https://finnhub.io/api/v1/quote?symbol={}&token={}"
+FH_NEWS = "https://finnhub.io/api/v1/news?category=general&token={}"
 
 
-def fetch(sym: str) -> dict:
-    r = requests.get(YF.format(sym), headers=UA, timeout=8)
+YF_RAW = "https://query1.finance.yahoo.com/v8/finance/chart/{}"  # literal Yahoo symbol
+
+
+def yfetch(ysym: str) -> dict:
+    """Quote for a literal Yahoo symbol (PTT.BK, GC=F, ^SET.BK, ...). ccy is THB for
+    .BK symbols (web client divides by FX rate), else USD."""
+    r = requests.get(YF_RAW.format(ysym), headers=UA, timeout=8)
     r.raise_for_status()
     res = r.json()["chart"]["result"][0]
     m = res["meta"]
@@ -49,14 +54,18 @@ def fetch(sym: str) -> dict:
     lows = [x for x in q.get("low", []) if x is not None]
     opens = [x for x in q.get("open", []) if x is not None]
     return {
-        "sym": sym,
+        "sym": ysym,
         "price": price,
         "dayPct": (price - prev) / prev * 100 if prev else 0.0,
         "open": opens[0] if opens else m.get("regularMarketOpen", price),
         "high": max(highs) if highs else m.get("regularMarketDayHigh", price),
         "low": min(lows) if lows else m.get("regularMarketDayLow", price),
-        "ccy": "THB",
+        "ccy": "THB" if ysym.endswith(".BK") else "USD",
     }
+
+
+def fetch(sym: str) -> dict:
+    return yfetch(sym + ".BK")  # SET stocks: PTT -> PTT.BK
 
 
 def candles(ysym: str, rng: str) -> dict:
@@ -105,6 +114,32 @@ def us(sym: str):
         raise HTTPException(status_code=404, detail=f"no us quote for {sym}: {e}")
 
 
+@app.get("/yquote")
+def yquote(sym: str):
+    """Quote for a literal Yahoo symbol (gold GC=F, indices). Same shape as /quote.
+    404 on error → web client keeps seed."""
+    try:
+        return yfetch(sym.upper())
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"no yquote for {sym}: {e}")
+
+
+@app.get("/news")
+def news(limit: int = 12):
+    """General market news headlines via Finnhub, key hidden server-side. Returns a
+    (possibly empty) list — never throws to the UI, which is the main screen."""
+    if not FINNHUB_KEY:
+        return []
+    try:
+        r = requests.get(FH_NEWS.format(FINNHUB_KEY), timeout=8)
+        r.raise_for_status()
+        return [{"headline": a["headline"], "url": a["url"], "source": a.get("source", ""),
+                 "datetime": a.get("datetime", 0)}
+                for a in r.json()[:limit] if a.get("headline") and a.get("url")]
+    except Exception:
+        return []
+
+
 @app.get("/candles")
 def candles_route(sym: str, range: str = "1m"):
     """OHLC bar series for a chart. `sym` is the literal Yahoo symbol (e.g. PTT.BK,
@@ -124,4 +159,6 @@ if __name__ == "__main__":
     assert d["price"] > 0 and d["ccy"] == "THB", d
     cd = candles("PTT.BK", "1m")
     assert cd["bars"] and cd["bars"][-1]["c"] > 0 and cd["ccy"] == "THB", cd
-    print("ok", d, len(cd["bars"]), "bars")
+    g = yfetch("GC=F")  # gold futures, USD
+    assert g["price"] > 0 and g["ccy"] == "USD", g
+    print("ok", d, len(cd["bars"]), "bars; gold", g["price"])

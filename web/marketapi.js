@@ -56,10 +56,22 @@ const MarketAPI = {
     }));
   },
 
+  // Gold (XAU): Yahoo GC=F via proxy /yquote. Already USD — do NOT divide by FX rate.
+  async gold(app) {
+    const j = await this.getJSON(`${this.proxyBase}/yquote?sym=${encodeURIComponent('GC=F')}`);
+    this.patch(app, 'XAU', j);
+  },
+
+  // General market news headlines (Finnhub via proxy). Never throws → [] on failure.
+  async news() {
+    try { return await this.getJSON(`${this.proxyBase}/news`); } catch (e) { return []; }
+  },
+
   // Map an instrument to its Yahoo symbol: Thai -> .BK, crypto -> -USD, else plain.
   yahooSym(s) {
     if (s.cat === 'thai') return s.sym + '.BK';
     if (s.kind === 'crypto') return s.sym + '-USD';
+    if (s.kind === 'gold') return 'GC=F';
     return s.sym;
   },
 
@@ -67,7 +79,7 @@ const MarketAPI = {
   // Returns [] on any failure — the UI keeps whatever it had, never throws.
   async fetchCandles(app, s, range) {
     try {
-      const j = await this.getJSON(`${this.proxyBase}/candles?sym=${this.yahooSym(s)}&range=${range}`);
+      const j = await this.getJSON(`${this.proxyBase}/candles?sym=${encodeURIComponent(this.yahooSym(s))}&range=${range}`);
       const div = j.ccy === 'THB' ? app.RATE : 1;
       return j.bars.map(b => ({ o: b.o / div, h: b.h / div, l: b.l / div, c: b.c / div }));
     } catch (e) { return []; }
@@ -76,7 +88,8 @@ const MarketAPI = {
   async refresh(app) {
     // FX first: USD display + Thai normalization depend on a fresh rate.
     try { await this.fx(app); } catch (e) {}
-    await Promise.allSettled([this.crypto(app), this.us(app), this.thai(app)]);
-    app.setState({}); // re-render with patched numbers
+    const [, , , , news] = await Promise.allSettled([
+      this.crypto(app), this.us(app), this.thai(app), this.gold(app), this.news()]);
+    app.setState({ news: news.value || [] }); // re-render with patched numbers + news
   }
 };
