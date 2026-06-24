@@ -30,9 +30,9 @@ Make Transactions a real editable ledger, not just buy-ticket output.
 - Per-position unrealized vs realized P/L.
 - Tax report export (FIFO) → CSV.
 
-### Phase 3 — Gold + market overview ◀ NEXT
-- Add **gold** (ทองคำ) asset class (XAU price via FX/metal API or Yahoo `GC=F`).
-- Market overview strip (indices/crypto/gold tickers) + simple news list.
+### Phase 3 — Gold + market overview ✅ CODE SHIPPED 2026-06-24 (commit f2fd2e0), awaiting live verify
+- Gold (ทองคำ) asset class via Yahoo `GC=F` (proxy `/yquote`), USD, tradeable.
+- Market overview strip (XAU/BTC/SPY/PTT, reused from catalog) + news list (Finnhub `/news`).
 
 ### Phase 4 — Buy Planner (DCA)
 - DCA / averaging-down calculator: target, levels (up to 7 support levels), per-level

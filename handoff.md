@@ -85,8 +85,24 @@ gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 
   P/L row, Transactions realized summary + "ภาษี" button → FIFO tax CSV
   (date,sym,qty,proceeds,cost,gain). Pure client, no migration. Verified live: buy10@100 +
   buy10@200 + sell15@300 → realized $2500, remaining 5@$200, tax CSV correct.
-- ▶ **Phase 3 (NEXT): gold asset class + market overview/news.** Needs a gold price source
-  (Yahoo `GC=F` via the candles/quote proxy path, or a metals API). See roadmap file.
+- ✅ **Phase 3 — gold + market overview/news, CODE SHIPPED 2026-06-24 (commit `f2fd2e0`),
+  awaiting live verify after deploy.**
+  - Proxy: `fetch()` refactored into `yfetch(literal Yahoo sym)`; `/quote` = `yfetch(sym+".BK")`.
+    `ccy` now THB only for `.BK`, else USD (was hardcoded THB). New `GET /yquote?sym=`
+    (gold `GC=F`, indices) + `GET /news` (Finnhub general headlines, key server-side,
+    fail-silent `[]`). yfetch logic verified live: GC=F $4085 USD, PTT.BK/^SET.BK THB.
+  - Gold (XAU): seeded tradeable instrument (`cat:'gold'`, `kind:'gold'`, Yahoo `GC=F`,
+    USD, **not** FX-divided). `MarketAPI.gold()` patches live; `yahooSym` maps gold→`GC=F`
+    so detail candles work. Watchlist + `ทองคำ` filter chip + alloc slice (`--c-clay`) +
+    `catUsd.gold`.
+  - Market overview strip on Overview = live tickers XAU/BTC/SPY/PTT reused from catalog
+    (no new fetch), tap-to-open. News list under holdings (Finnhub `/news`), hidden until
+    headlines load, links open new tab.
+  - **NEXT to finish phase:** push → Render redeploys proxy (`mun-re6q`) + static (`mun-web`);
+    then verify live: `curl /yquote?sym=GC=F` → USD gold, `curl /news` → headlines (needs
+    `FINNHUB_KEY` env, already set), browser: gold in watchlist/strip, gold detail candles,
+    news list renders, 0 console errors. SET-index strip ticker skipped (THB index breaks
+    USD-canonical reuse) — add later if wanted (`^SET.BK` resolves).
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line
