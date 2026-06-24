@@ -28,7 +28,7 @@ export class SearchService {
 
     // 1) Cache-first — previously-seen symbols, free + unlimited.
     const cached = await this.cache.searchMetadata(q);
-    if (cached.length > 0) return { hits: cached, cached: true };
+    if (cached.length > 0) return { hits: this.rank(cached, q), cached: true };
 
     // 2) Cache miss → external. Charge quota (RPC allows unlimited tiers, denies
     //    over-limit with QUOTA_EXCEEDED, replays a completed idempotent request).
@@ -40,6 +40,18 @@ export class SearchService {
     // 3) Write-through (idempotent upserts) so the next identical search is a cache hit.
     await Promise.all(hits.map((h) => this.cache.putMetadata(h)));
 
-    return { hits, cached: false };
+    return { hits: this.rank(hits, q), cached: false };
+  }
+
+  // Rank both cache-hit and provider results identically: exact ticker first, then
+  // Thai .BK listings, then primary listings over foreign cross-listings (JEPQ before
+  // JEPQ.TO, PTT.BK before PTTRX). Stable sort keeps the source order for ties.
+  private rank(hits: SymbolMeta[], query: string): SymbolMeta[] {
+    const Q = query.toUpperCase();
+    const score = (m: SymbolMeta) =>
+      (m.symbol.toUpperCase() === Q ? 100 : 0) +
+      (m.market === "TH" ? 50 : 0) +
+      (!m.symbol.includes(".") ? 20 : 0);
+    return [...hits].sort((a, b) => score(b) - score(a));
   }
 }
