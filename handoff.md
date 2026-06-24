@@ -166,9 +166,11 @@ no SET list to maintain.
      per-keystroke).
      **Deferred (ponytail):** the full "60s refresh iterates held/watched via quote fn"
      cutover (discovered holdings refresh on reload + on pick, not every 60s — fine for v1);
-     global search outside the txn form. **Follow-up (advisor):** search relevance — Yahoo
-     ranks foreign listings/funds first (picked `JEPQ.TO` Toronto, `PTT`→`PTTRX` before the
-     `.BK`); for a Thai app, boost the `.BK`/primary listing in the result ordering.
+     global search outside the txn form. **Search relevance — FIXED + verified live 2026-06-24.**
+     `SearchService.rank()` (NOT the provider — must cover the cache-hit path, which had no
+     ORDER BY) scores hits: exact ticker +100, Thai `.BK` market +50, primary/bare symbol
+     +20 (stable sort keeps Yahoo order for ties). Redeployed `search`. Curl (both cached,
+     free): PTT → PTT(TH) #1 (was behind PTTRX); JEPQ → JEPQ #1, JEPQ.TO #2 (was reversed).
 
   **SymbolUniverse = LIVE.** All 4 phases + the discovery client slice shipped & verified.
   Throwaway test users left in auth.users: `sutest1/2@mun-test.dev`, `sutest_ui_*@mun-test.dev`.
