@@ -97,7 +97,27 @@ no SET list to maintain.
   write-through), `QuoteService` (resolve + stale-while-revalidate + graceful
   degradation). Error model + idempotency strategy documented in the README.
   **No deno in dev env** → not typechecked here; verified when Phase 3 deploys the
-  Edge Functions. STOPPED per phased instruction (awaiting "Phase 3" command).
+  Edge Functions.
+- ✅ **Phase 3 — Edge Functions & cache flow, CODE WRITTEN 2026-06-24 (commit pending), unverified.**
+  Two thin entrypoints over the Phase 2 services: `functions/search/index.ts`
+  (GET|POST `/search?q=`) + `functions/quote/index.ts` (`/quote?sym=&market=`).
+  Shared `_shared/respond.ts` (CORS + envelope + single error catch + param parse)
+  and `_shared/context.ts` (auth + service-graph wiring: cache on service-role
+  client, ratelimit on user-JWT client). Flow: auth → cache-first → miss charges
+  atomic quota → providers → write-through. **Stale-while-revalidate**: quote serves
+  stale instantly + refreshes in background via `EdgeRuntime.waitUntil` (no charge —
+  cached symbols unlimited). Idempotency-Key header → `finalize_request` stores the
+  result for replay. Consistent `{success,error_code,message}` failures with HTTP
+  status map. **Refinement to Phase 2:** dropped the coarse `premium` flag — gate on
+  cache-miss only and let the atomic RPC enforce per-tier limits (correct for the
+  4-tier model). Deploy/curl-verify recipe in `functions/README.md` (`--no-verify-jwt`;
+  auth enforced in-code). **No deno** → not typechecked; verify by deploy + the curl
+  suite (auth-required, US+Thai search, miss→cached flip, 5-then-deny quota, idempotent
+  replay). STOPPED per phased instruction (awaiting "Phase 4" command).
+  **Remaining integration (NOT a numbered phase):** client refactor (req 10) — wire
+  `web/app.js`/`marketapi.js` to these functions, live search box, `getInst()` stub so
+  unknown held symbols don't crash `renderVals`. Touches the live app → its own
+  browser-verify pass; do after Phase 4 or on request.
 
 #### PortPro feature-parity milestone (plan `web/ROADMAP_PORTPRO.md`)
 8-phase clean-room push to match portpro.app capabilities (NOT its look — Mun keeps its

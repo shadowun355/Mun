@@ -1,6 +1,7 @@
-// SearchService — the search orchestrator. Implements the locked flow:
-// cache-first; only a cache MISS hits an external provider, and only then is quota
-// charged. Cache hits are always free and unlimited.
+// SearchService — the search orchestrator. Locked flow: cache-first; only a cache
+// MISS hits an external provider, and only a miss charges quota. Cache hits are
+// always free and unlimited. The atomic quota RPC (RateLimitService) is the single
+// source of truth for per-tier limits, so there is no per-plan branching here.
 //
 // Edge Fn → SearchService → (CacheService | RateLimitService | ProviderService)
 
@@ -20,7 +21,7 @@ export class SearchService {
 
   async search(
     query: string,
-    opts: { premium: boolean; idempotencyKey: string | null },
+    opts: { idempotencyKey: string | null },
   ): Promise<SearchResult> {
     const q = query.trim();
     if (q.length < 1) return { hits: [], cached: true };
@@ -29,11 +30,10 @@ export class SearchService {
     const cached = await this.cache.searchMetadata(q);
     if (cached.length > 0) return { hits: cached, cached: true };
 
-    // 2) Cache miss → external. Charge quota for free users (throws if exceeded).
-    if (!opts.premium) {
-      const quota = await this.rate.consume(opts.idempotencyKey);
-      if (quota.replayed) return quota.response as SearchResult; // idempotent replay
-    }
+    // 2) Cache miss → external. Charge quota (RPC allows unlimited tiers, denies
+    //    over-limit with QUOTA_EXCEEDED, replays a completed idempotent request).
+    const quota = await this.rate.consume(opts.idempotencyKey);
+    if (quota.replayed) return quota.response as SearchResult;
 
     const hits = await this.providers.search(q);
 
