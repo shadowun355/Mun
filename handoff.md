@@ -145,10 +145,27 @@ no SET list to maintain.
      Cosmetic: cached quote responses carry extra null fields + empty `data":{}` vs the miss
      shape — works, low priority. Throwaway test users `sutest1/2@mun-test.dev` left in
      auth.users (harmless).
-  3. ⏳ **Client refactor (req 10, NOT a numbered phase):** wire `web/app.js`/`marketapi.js`
-     to the `search`/`quote` functions, add a live search box, add a `getInst()` stub so
-     unknown held symbols don't crash `renderVals`. Touches the live app → own
-     browser-verify pass. NEXT.
+  3. ✅ **Client refactor (req 10) — DISCOVERY-ONLY slice, VERIFIED IN-BROWSER 2026-06-24.**
+     Scope chosen = lazy/discovery (not full cutover): the 60s refresh stays on the FREE
+     proxy; only symbol discovery goes through the quota-gated functions. Changes:
+     `web/supabase.js` `Fn.call()` (fresh-token Edge Function caller over the envelope);
+     `web/app.js` `getInst(sym)`/`stubInst()` (zero-price stub for held symbols absent from
+     the seed catalog — swapped the unguarded `this.data[sym]` reads in
+     renderVals/open/loadCandles/ticket so a held-but-unknown symbol renders instead of
+     crashing); txn form `<select>` → debounced live search box hitting `/search`, pick
+     `registerHit()` maps market→cat/kind/native + one `/quote` charge fills the price;
+     `demo()` self-check. Verified live (Puppeteer, fresh signup): demo() OK; search
+     JEPQ/PTT→7 hits; pick→registered + live price 29.39; held unknown `ZZZZ` renders
+     detail+overview, no throw; only console noise a benign candles 404 for the fake symbol.
+     **Deferred (ponytail, commented in code):** live-ticking discovered symbols after a
+     reload (price shows at add-time; `this.data` resets to seed on reload so a discovered
+     holding shows at $0 until re-registered — the full "refresh iterates held/watched via
+     quote fn" cutover is the next step if wanted); global search outside the txn form.
+
+  **SymbolUniverse = LIVE.** All 4 phases + the discovery client slice shipped & verified.
+  Throwaway test users left in auth.users: `sutest1/2@mun-test.dev`, `sutest_ui_*@mun-test.dev`.
+  ⚠️ Revoke the Supabase personal access token used for the CLI deploy (was pasted in a
+  terminal session): https://supabase.com/dashboard/account/tokens.
 
 #### PortPro feature-parity milestone (plan `web/ROADMAP_PORTPRO.md`)
 8-phase clean-room push to match portpro.app capabilities (NOT its look — Mun keeps its
