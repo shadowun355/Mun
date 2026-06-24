@@ -30,7 +30,7 @@ Make Transactions a real editable ledger, not just buy-ticket output.
 - Per-position unrealized vs realized P/L.
 - Tax report export (FIFO) → CSV.
 
-### Phase 3 — Gold + market overview ✅ CODE SHIPPED 2026-06-24 (commit f2fd2e0), awaiting live verify
+### Phase 3 — Gold + market overview ✅ DONE + VERIFIED LIVE 2026-06-24 (commit f2fd2e0)
 - Gold (ทองคำ) asset class via Yahoo `GC=F` (proxy `/yquote`), USD, tradeable.
 - Market overview strip (XAU/BTC/SPY/PTT, reused from catalog) + news list (Finnhub `/news`).
 

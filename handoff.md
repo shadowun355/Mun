@@ -85,8 +85,13 @@ gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 
   P/L row, Transactions realized summary + "ภาษี" button → FIFO tax CSV
   (date,sym,qty,proceeds,cost,gain). Pure client, no migration. Verified live: buy10@100 +
   buy10@200 + sell15@300 → realized $2500, remaining 5@$200, tax CSV correct.
-- ✅ **Phase 3 — gold + market overview/news, CODE SHIPPED 2026-06-24 (commit `f2fd2e0`),
-  awaiting live verify after deploy.**
+- ✅ **Phase 3 — gold + market overview/news, VERIFIED LIVE 2026-06-24 (commit `f2fd2e0`).**
+  Pushed → Render redeployed proxy + static. Verified: `curl /yquote?sym=GC=F` → $4089 USD,
+  `curl /news` → real CNBC/Reuters headlines. Browser (logged in): market strip shows 4 live
+  tickers (ทองคำ ฿134,921 −1.20% / BTC / S&P / PTT), alloc has ทองคำ slice, news list = 12
+  headlines w/ working links, 60s tick refreshes prices + persists news. Gold detail = COMEX
+  USD header + 20 candle bodies/wicks drawn from `GC=F` (encodeURIComponent round-trip works) +
+  not-held state. 0 console errors whole session.
   - Proxy: `fetch()` refactored into `yfetch(literal Yahoo sym)`; `/quote` = `yfetch(sym+".BK")`.
     `ccy` now THB only for `.BK`, else USD (was hardcoded THB). New `GET /yquote?sym=`
     (gold `GC=F`, indices) + `GET /news` (Finnhub general headlines, key server-side,
