@@ -230,6 +230,27 @@ class Component {
     } catch (e) { /* leave stub price; user can type it in the form */ }
   }
 
+  // On load, held symbols absent from the seed catalog (discovered in a past session)
+  // would render at $0 and zero out the portfolio total. Recover them: pull their
+  // market/name from the public symbol_metadata cache, register, and fetch one quote.
+  // The quote is FREE — these symbols are already cached, so it's a cache hit (no charge).
+  async hydrateHeldSymbols() {
+    const held = Object.keys(this.fifo(this.state.txns).holdings);
+    const missing = held.filter(s => !this.data[s]);
+    if (!missing.length) return;
+    const { data: meta } = await SB.from('symbol_metadata')
+      .select('symbol,market,name,exchange,asset_type').in('symbol', missing);
+    const bySym = {}; (meta || []).forEach(m => { bySym[m.symbol] = m; });
+    for (const sym of missing) {
+      const m = bySym[sym];
+      const inst = this.registerHit(m
+        ? { symbol: m.symbol, market: m.market, name: m.name, exchange: m.exchange, assetType: m.asset_type }
+        : { symbol: sym, market: 'US' });          // fallback: assume US if metadata missing
+      await this.quoteInst(inst);
+    }
+    this.setState({});                             // re-render with recovered prices
+  }
+
   // ---- transaction ledger (Phase 1): manual add / edit / delete -----------
   // The sheet is plain DOM (#txnsheet) so the 60s live-data re-render can't wipe
   // half-typed inputs. editingId null = add, else edit that row.
@@ -264,8 +285,9 @@ class Component {
     search.addEventListener('input', () => {
       clearTimeout(this._searchT);
       const q = search.value.trim();
-      if (!q) { $('tf-results').style.display = 'none'; return; }
-      this._searchT = setTimeout(() => this.runSearch(q), 250);
+      // >=2 chars + 350ms: a search MISS charges quota, so don't fire on every keystroke.
+      if (q.length < 2) { $('tf-results').style.display = 'none'; return; }
+      this._searchT = setTimeout(() => this.runSearch(q), 350);
     });
     document.addEventListener('click', e => {  // dismiss results on outside click
       if (!e.target.closest('#tf-results') && e.target !== search) $('tf-results').style.display = 'none';
@@ -660,6 +682,7 @@ async function boot() {
   app.render();
   app.wireTxnForm();               // bind the (DOM) add/edit transaction sheet
   await app.loadUserData();        // pull txns / watchlist / prefs, then re-render
+  await app.hydrateHeldSymbols();  // recover discovered holdings (market+price) so totals aren't $0
   tick(); setInterval(tick, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 }
