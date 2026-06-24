@@ -38,7 +38,18 @@ export class YahooProvider implements Provider {
       } catch { /* not a Thai symbol — ignore */ }
     }
 
-    return [...hits.values()];
+    // Rank: exact ticker match first, then Thai .BK listings, then primary listings
+    // over foreign cross-listings (e.g. JEPQ before JEPQ.TO, PTT.BK before PTTRX).
+    // Array.sort is stable → ties keep Yahoo's own relevance order.
+    return [...hits.values()].sort((a, b) => this.rankScore(b, q) - this.rankScore(a, q));
+  }
+
+  private rankScore(m: SymbolMeta, query: string): number {
+    let s = 0;
+    if (m.symbol.toUpperCase() === query.toUpperCase()) s += 100; // exact ticker
+    if (m.market === "TH") s += 50;                               // boost Thai .BK
+    if (!m.symbol.includes(".")) s += 20;                         // primary over cross-listing
+    return s;
   }
 
   async quote(symbol: string, market: Market): Promise<Quote> {
