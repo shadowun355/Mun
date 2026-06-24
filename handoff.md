@@ -157,10 +157,18 @@ no SET list to maintain.
      `demo()` self-check. Verified live (Puppeteer, fresh signup): demo() OK; search
      JEPQ/PTT→7 hits; pick→registered + live price 29.39; held unknown `ZZZZ` renders
      detail+overview, no throw; only console noise a benign candles 404 for the fake symbol.
-     **Deferred (ponytail, commented in code):** live-ticking discovered symbols after a
-     reload (price shows at add-time; `this.data` resets to seed on reload so a discovered
-     holding shows at $0 until re-registered — the full "refresh iterates held/watched via
-     quote fn" cutover is the next step if wanted); global search outside the txn form.
+     **Reload bug found in review + FIXED:** a discovered holding zeroed the portfolio
+     total after reload (`this.data` resets to seed → `getInst` stub price 0). `boot()` now
+     calls `hydrateHeldSymbols()` after `loadUserData`: held syms absent from the seed are
+     rebuilt from the public `symbol_metadata` cache + one FREE cached `quote`. Verified:
+     log TSM → reload → total ฿0 → ฿147,560, TSM @ live 441.40, 0 errors. Also: search box
+     now needs ≥2 chars + 350ms debounce (a search miss charges quota; don't burn it
+     per-keystroke).
+     **Deferred (ponytail):** the full "60s refresh iterates held/watched via quote fn"
+     cutover (discovered holdings refresh on reload + on pick, not every 60s — fine for v1);
+     global search outside the txn form. **Follow-up (advisor):** search relevance — Yahoo
+     ranks foreign listings/funds first (picked `JEPQ.TO` Toronto, `PTT`→`PTTRX` before the
+     `.BK`); for a Thai app, boost the `.BK`/primary listing in the result ordering.
 
   **SymbolUniverse = LIVE.** All 4 phases + the discovery client slice shipped & verified.
   Throwaway test users left in auth.users: `sutest1/2@mun-test.dev`, `sutest_ui_*@mun-test.dev`.
