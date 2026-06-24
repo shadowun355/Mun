@@ -64,6 +64,28 @@ https://mun-re6q.onrender.com. `FINNHUB_KEY` set in Render → `/us` live. Favic
   - Optional: wrap gate/sheet inputs in a `<form>` to clear a verbose Chrome DOM hint (not
     an error); turn Email "Confirm email" back ON for real users (off for testing).
 
+#### SymbolUniverse — production symbol service (NEW workstream, plan `~/.claude/plans/sorted-stirring-valiant.md`)
+Replace hardcoded ticker lists with a provider-backed cache + freemium quota, built
+phased (DB → services → edge functions → reliability). User-locked: lazy cache-first
+(cache>API), **Supabase Edge Functions (Deno/TS)** runtime, **two-table cache**
+(`symbol_metadata` long-TTL / `symbol_quote` short-TTL), Free=5 external fetches/day,
+mocked subscriptions (Stripe-ready schema). Search verified: Yahoo `/v1/finance/search`
+(US/ETF) + `<sym>.BK` probe (Thai) resolves all of AAPL/SCHD/JEPI/JEPQ/PTT/ADVANC/DELTA,
+no SET list to maintain.
+- ✅ **Phase 1 — DB foundation & concurrency, CODE WRITTEN 2026-06-24 (uncommitted), awaiting apply+verify.**
+  `web/supabase/migrations/20260624000001_symbol_universe_foundation.sql` (one atomic
+  migration): tables `plans`/`subscriptions`/`user_api_usage`/`symbol_metadata`/
+  `symbol_quote`/`idempotency_keys` + indexes (trigram search, partial-unique active sub,
+  expiry sweeps) + FKs + RLS (own-row reads; cache/plans public; all writes via service
+  role / SECURITY DEFINER) + RPCs `consume_external_quota(key)` (atomic single-statement
+  check-and-increment; idempotency ownership gate via `INSERT…ON CONFLICT DO NOTHING
+  RETURNING`; frees key on deny) + `finalize_request(key,response)`. Seed = 4 plans.
+  **No local Postgres** → not executed here. Verify: apply migration, then run
+  `web/supabase/tests/phase1_verify.sql` in the Supabase SQL editor (5-allow-then-deny,
+  idempotent replay no double-charge, unlimited tier, trigram index used) + the pgbench
+  10-way concurrency check noted at the file's end. Phases 2–4 outlined in the plan;
+  STOPPED here per phased instruction (awaiting "Phase 2" command).
+
 #### PortPro feature-parity milestone (plan `web/ROADMAP_PORTPRO.md`)
 8-phase clean-room push to match portpro.app capabilities (NOT its look — Mun keeps its
 gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 Buy Planner ·
