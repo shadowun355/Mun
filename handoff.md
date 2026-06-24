@@ -83,8 +83,21 @@ no SET list to maintain.
   **No local Postgres** → not executed here. Verify: apply migration, then run
   `web/supabase/tests/phase1_verify.sql` in the Supabase SQL editor (5-allow-then-deny,
   idempotent replay no double-charge, unlimited tier, trigram index used) + the pgbench
-  10-way concurrency check noted at the file's end. Phases 2–4 outlined in the plan;
-  STOPPED here per phased instruction (awaiting "Phase 2" command).
+  10-way concurrency check noted at the file's end. Phases 2–4 outlined in the plan.
+- ✅ **Phase 2 — core services & architecture, CODE WRITTEN 2026-06-24 (commit pending), unverified.**
+  Deno/TS service layer under `web/supabase/functions/_shared/` (see its README for
+  the full architecture). `types.ts`, `errors.ts` (AppError + consistent envelope),
+  `env.ts` (fail-fast), `http.ts` (fetch + timeout), `supabase.ts` (service/user
+  clients + requireUser). `providers/`: `Provider` interface + symbol-mapping helpers,
+  `yahoo.ts` (primary — keyless search + `.BK` Thai probe + quote), `finnhub.ts`
+  (US, key-gated), `alphavantage.ts` (last resort). `services/`: `ProviderService`
+  (priority Yahoo→Finnhub→AV, merge/fallback), `CacheService` (two-table TTL
+  read/write-through; only layer touching cache tables), `RateLimitService` (wraps
+  the Phase 1 quota RPCs), `SearchService` (cache-first; miss→quota→provider→
+  write-through), `QuoteService` (resolve + stale-while-revalidate + graceful
+  degradation). Error model + idempotency strategy documented in the README.
+  **No deno in dev env** → not typechecked here; verified when Phase 3 deploys the
+  Edge Functions. STOPPED per phased instruction (awaiting "Phase 3" command).
 
 #### PortPro feature-parity milestone (plan `web/ROADMAP_PORTPRO.md`)
 8-phase clean-room push to match portpro.app capabilities (NOT its look — Mun keeps its
