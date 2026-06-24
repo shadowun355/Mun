@@ -4,3 +4,6 @@ xcuserdata/
 
 # Secrets (never commit real keys)
 Mun/Secrets/
+
+# Supabase CLI scratch (link state, cli cache)
+**/supabase/.temp/
