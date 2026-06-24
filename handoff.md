@@ -72,7 +72,11 @@ phased (DB → services → edge functions → reliability). User-locked: lazy c
 mocked subscriptions (Stripe-ready schema). Search verified: Yahoo `/v1/finance/search`
 (US/ETF) + `<sym>.BK` probe (Thai) resolves all of AAPL/SCHD/JEPI/JEPQ/PTT/ADVANC/DELTA,
 no SET list to maintain.
-- ✅ **Phase 1 — DB foundation & concurrency, CODE WRITTEN 2026-06-24 (uncommitted), awaiting apply+verify.**
+- ✅ **Phase 1 — DB foundation & concurrency, APPLIED + VERIFIED LIVE 2026-06-24.**
+  Migration ran in Supabase SQL editor ("Success"). `phase1_assert.sql` (new hard-assert
+  DO-block, raises on any failed check) → "Success" = quota 5-allow-then-deny,
+  idempotent replay no double-charge, unlimited tier all hold. Trigram seq-scan on the
+  2-row table is expected (planner picks the index once the table grows).
   `web/supabase/migrations/20260624000001_symbol_universe_foundation.sql` (one atomic
   migration): tables `plans`/`subscriptions`/`user_api_usage`/`symbol_metadata`/
   `symbol_quote`/`idempotency_keys` + indexes (trigram search, partial-unique active sub,
