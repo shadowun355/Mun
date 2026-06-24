@@ -78,8 +78,10 @@
       <div id="txnsheet-close" style="cursor:pointer;font-size:20px;color:var(--sub);line-height:1;padding:4px 8px">✕</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:12px">
-      <div><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">สินทรัพย์</div>
-        <select id="tf-sym" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></select></div>
+      <div style="position:relative"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">สินทรัพย์</div>
+        <input id="tf-search" type="text" autocomplete="off" placeholder="ค้นหา เช่น AAPL, PTT, ทอง" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit">
+        <input id="tf-sym" type="hidden">
+        <div id="tf-results" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:5;margin-top:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;max-height:240px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.18)"></div></div>
       <div><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">ประเภท</div>
         <select id="tf-type" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit">
           <option value="buy">ซื้อ</option><option value="sell">ขาย</option><option value="dividend">ปันผล</option></select></div>

@@ -192,21 +192,56 @@ class Component {
   }
   deriveHoldings(txns) { return this.fifo(txns).holdings; }   // back-compat shim
 
+  // Safe instrument accessor. A symbol can be held (a txn row) without being in the
+  // seed catalog — e.g. discovered via search on another device. Return a zero-price
+  // stub so renderVals never dereferences undefined. Real prices arrive when the
+  // symbol is registered (search pick) or, for seeded symbols, via the proxy refresh.
+  getInst(sym) { return this.data[sym] || this.stubInst(sym); }
+  stubInst(sym) {
+    return { sym, name: sym, name2: sym, logo: sym.slice(0, 2).toUpperCase(),
+      exch: '', native: 'usd', cat: 'foreign', kind: 'stock', price: 0, dayPct: 0,
+      shares: 0, avg: 0, open: 0, high: 0, low: 0, mcap: '—', vol: '—', pe: '—' };
+  }
+
+  // Map a SymbolUniverse search hit to a catalog instrument and register it so the
+  // rest of the app (holdings, detail, ticket) treats it like a seeded symbol.
+  // market: US|TH|CRYPTO|COMMODITY -> internal cat/kind/native.
+  registerHit(hit) {
+    if (this.data[hit.symbol]) return this.data[hit.symbol];
+    const m = hit.market;
+    const cat = m === 'TH' ? 'thai' : m === 'CRYPTO' ? 'crypto'
+      : m === 'COMMODITY' ? 'gold' : (hit.assetType === 'etf' ? 'etf' : 'foreign');
+    const kind = cat === 'crypto' ? 'crypto' : cat === 'gold' ? 'gold' : 'stock';
+    const inst = Object.assign(this.stubInst(hit.symbol), {
+      name: hit.name || hit.symbol, name2: hit.name || hit.symbol,
+      exch: hit.exchange || '', native: m === 'TH' ? 'thb' : 'usd', cat, kind, market: m });
+    this.data[hit.symbol] = inst;
+    return inst;
+  }
+
+  // Fetch one live quote for a registered symbol via the quote Edge Function (the one
+  // deliberate quota charge — discovering a new symbol). THB markets -> USD-canonical.
+  async quoteInst(inst) {
+    try {
+      const { data: q } = await Fn.call('/quote', { sym: inst.sym, market: inst.market || 'US' });
+      const div = q.currency === 'THB' ? this.RATE : 1;
+      Object.assign(inst, { price: q.price / div, dayPct: q.dayPct,
+        open: (q.open || q.price) / div, high: (q.high || q.price) / div, low: (q.low || q.price) / div });
+    } catch (e) { /* leave stub price; user can type it in the form */ }
+  }
+
   // ---- transaction ledger (Phase 1): manual add / edit / delete -----------
   // The sheet is plain DOM (#txnsheet) so the 60s live-data re-render can't wipe
   // half-typed inputs. editingId null = add, else edit that row.
   openTxnForm(row) {
     const $ = id => document.getElementById(id);
     this.editingId = row ? row.id : null;
-    const symSel = $('tf-sym');
-    if (!symSel.options.length) {  // populate asset options once
-      Object.values(this.data).forEach(s => {
-        const o = document.createElement('option'); o.value = s.sym; o.textContent = s.sym + ' · ' + s.name; symSel.appendChild(o);
-      });
-    }
     const sym = row ? row.sym : 'AAPL';
+    const inst = this.getInst(sym);
     $('txnsheet-title').textContent = row ? 'แก้ไขรายการ' : 'เพิ่มรายการ';
-    symSel.value = sym;
+    $('tf-sym').value = sym;                                  // hidden chosen symbol
+    $('tf-search').value = sym + (inst.name && inst.name !== sym ? ' · ' + inst.name : '');
+    $('tf-results').style.display = 'none';
     $('tf-type').value = row ? row.side : 'buy';
     $('tf-qty').value = row ? row.qty : '';
     $('tf-price').value = row ? row.price_usd : (this.data[sym] ? this.data[sym].price.toFixed(2) : '');
@@ -224,11 +259,69 @@ class Component {
     $('tf-delete').addEventListener('click', () => this.deleteTxn());
     $('txnsheet-close').addEventListener('click', () => this.closeTxnForm());
     $('txnsheet-bg').addEventListener('click', () => this.closeTxnForm());
-    // Prefill price with the live quote when the asset changes (unless editing).
-    $('tf-sym').addEventListener('change', () => {
-      if (this.editingId) return;
-      const s = this.data[$('tf-sym').value]; if (s) $('tf-price').value = s.price.toFixed(2);
+    // Live symbol search (SymbolUniverse `search` fn), debounced.
+    const search = $('tf-search');
+    search.addEventListener('input', () => {
+      clearTimeout(this._searchT);
+      const q = search.value.trim();
+      if (!q) { $('tf-results').style.display = 'none'; return; }
+      this._searchT = setTimeout(() => this.runSearch(q), 250);
     });
+    document.addEventListener('click', e => {  // dismiss results on outside click
+      if (!e.target.closest('#tf-results') && e.target !== search) $('tf-results').style.display = 'none';
+    });
+  }
+
+  // Query the search Edge Function and render the hit list. A search miss charges
+  // quota (search IS the external fetch) → show a friendly quota message on 429.
+  async runSearch(q) {
+    const box = document.getElementById('tf-results');
+    let hits;
+    try { hits = (await Fn.call('/search', { q })).data || []; }
+    catch (e) {
+      const msg = e.message === 'QUOTA_EXCEEDED' ? 'เกินโควต้าค้นหาวันนี้' : 'ค้นหาไม่สำเร็จ';
+      box.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:var(--down)">${msg}</div>`;
+      box.style.display = 'block'; return;
+    }
+    if (!hits.length) {
+      box.innerHTML = '<div style="padding:12px 14px;font-size:13px;color:var(--sub)">ไม่พบสินทรัพย์</div>';
+      box.style.display = 'block'; return;
+    }
+    box.replaceChildren(...hits.slice(0, 8).map(h => {
+      const row = document.createElement('div');
+      row.style.cssText = 'padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--line);font-size:14px;color:var(--ink)';
+      row.innerHTML = `<b>${h.symbol}</b> <span style="color:var(--sub)">· ${h.market}${h.assetType ? ' · ' + h.assetType : ''}</span>` +
+        `<div style="font-size:12px;color:var(--sub);margin-top:1px">${h.name || ''}</div>`;
+      row.addEventListener('click', () => this.pickHit(h));
+      return row;
+    }));
+    box.style.display = 'block';
+  }
+
+  // Register the picked hit into the catalog + fetch one live quote (the deliberate
+  // quota charge). Leaves the form ready to log a transaction for any symbol.
+  async pickHit(h) {
+    const $ = id => document.getElementById(id);
+    const inst = this.registerHit(h);
+    $('tf-sym').value = h.symbol;
+    $('tf-search').value = h.symbol + (h.name ? ' · ' + h.name : '');
+    $('tf-results').style.display = 'none';
+    await this.quoteInst(inst);
+    if (!this.editingId && inst.price) $('tf-price').value = inst.price.toFixed(2);
+  }
+
+  // ponytail: one runnable check for the crash-safety + market-mapping logic.
+  // Run in the browser console: `app.demo()` -> throws on regression, else logs OK.
+  demo() {
+    const stub = this.getInst('___NOPE___');
+    console.assert(stub.price === 0 && stub.sym === '___NOPE___', 'getInst stub broken');
+    console.assert(this.getInst('AAPL').name === 'Apple', 'getInst real-row broken');
+    const reg = this.registerHit({ symbol: 'ADVANC', market: 'TH', name: 'Advanced Info', assetType: 'stock' });
+    console.assert(reg.cat === 'thai' && reg.native === 'thb' && reg.market === 'TH', 'TH mapping broken');
+    const etf = this.registerHit({ symbol: 'JEPQ', market: 'US', name: 'JPM', assetType: 'etf' });
+    console.assert(etf.cat === 'etf' && etf.kind === 'stock', 'ETF mapping broken');
+    delete this.data.ADVANC; delete this.data.JEPQ;  // leave catalog as found
+    console.log('demo() OK');
   }
 
   async saveTxn() {
@@ -307,7 +400,7 @@ class Component {
     const key = sym + '|' + range;
     if (this.candleCache[key]) { this.setState({ candles: this.candleCache[key] }); return; }
     this.setState({ candles: [] }); // clear stale candles while loading
-    const bars = await MarketAPI.fetchCandles(this, this.data[sym], range);
+    const bars = await MarketAPI.fetchCandles(this, this.getInst(sym), range);
     this.candleCache[key] = bars;
     if (this.state.selected === sym && this.state.range === range) this.setState({ candles: bars });
   }
@@ -355,18 +448,18 @@ class Component {
     const heldSyms = Object.keys(H);
 
     const holdings = heldSyms.map(sym => {
-      const s = this.data[sym]; const qty = H[sym].qty; const v = qty * s.price;
+      const s = this.getInst(sym); const qty = H[sym].qty; const v = qty * s.price;
       return { logo: s.logo, name: s.name, holdSub: s.sym + ' · ' + this.qtyLabel(s, qty), valStr: this.val(v), pct: this.pctStr(s.dayPct), pctColor: s.dayPct >= 0 ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
     });
 
     let totalUsd = 0, dayAbsUsd = 0;   // no cash — total is the sum of holdings
-    heldSyms.forEach(sym => { const s = this.data[sym]; const v = H[sym].qty * s.price; totalUsd += v; dayAbsUsd += v * s.dayPct / 100; });
+    heldSyms.forEach(sym => { const s = this.getInst(sym); const v = H[sym].qty * s.price; totalUsd += v; dayAbsUsd += v * s.dayPct / 100; });
     const dayPct = totalUsd ? dayAbsUsd / totalUsd * 100 : 0;
     const dayUp = dayAbsUsd >= 0;
     const dayStr = (dayUp ? '▲ ' : '▼ ') + this.val(Math.abs(dayAbsUsd)) + ' · ' + this.pctStr(dayPct);
 
     const catUsd = { foreign:0, thai:0, crypto:0, etf:0, gold:0 };
-    heldSyms.forEach(sym => { const s = this.data[sym]; catUsd[s.cat] += H[sym].qty * s.price; });
+    heldSyms.forEach(sym => { const s = this.getInst(sym); catUsd[s.cat] += H[sym].qty * s.price; });
     const allocRaw = [
       { label:'หุ้นต่างประเทศ', color:'var(--gold)', usd: catUsd.foreign + catUsd.etf },
       { label:'หุ้นไทย', color:'var(--c-sage)', usd: catUsd.thai },
@@ -375,7 +468,7 @@ class Component {
     ];
     const alloc = allocRaw.map(a => { const p = totalUsd ? Math.round(a.usd / totalUsd * 100) : 0; return { label: a.label, color: a.color, pct: p, pctLabel: p + '%' }; });
 
-    const sel = this.data[S.selected];
+    const sel = this.getInst(S.selected);
     const selQty = H[sel.sym] ? H[sel.sym].qty : 0, selAvg = H[sel.sym] ? H[sel.sym].avg : 0;
     const selVal = selQty * sel.price;
     const gainUsd = (sel.price - selAvg) * selQty; const gainPct = selAvg ? (sel.price / selAvg - 1) * 100 : 0;
@@ -464,7 +557,7 @@ class Component {
 
     const tkState = S.ticket; let tk = {}, showTicket = false;
     if (tkState) {
-      showTicket = true; const s = this.data[tkState.sym]; const buy = tkState.mode === 'buy';
+      showTicket = true; const s = this.getInst(tkState.sym); const buy = tkState.mode === 'buy';
       const totalUsd2 = tkState.qty * s.price;
       const label = buy ? 'ยืนยันการซื้อ' : 'ยืนยันการขาย';
       tk = {
@@ -533,7 +626,7 @@ class Component {
     if (!tk || this.state.submitting) return;
     this.setState({ submitting: true });
     setTimeout(async () => {
-      const s = this.data[tk.sym]; const buy = tk.mode === 'buy';
+      const s = this.getInst(tk.sym); const buy = tk.mode === 'buy';
       try {
         const { error } = await SB.from('transactions').insert({
           user_id: this.user.id, sym: tk.sym, side: buy ? 'buy' : 'sell',

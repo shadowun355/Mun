@@ -6,6 +6,21 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 
 const SB = supabase.createClient(SB_URL, SB_ANON);
 
+// Edge Function caller (SymbolUniverse search/quote). Fresh token each call —
+// supabase-js auto-refreshes the session. Throws on the {success:false} envelope.
+const FN_BASE = 'https://livhijcgkielwrkdqtbm.functions.supabase.co';
+const Fn = {
+  async call(path, params = {}) {
+    const { data: { session } } = await SB.auth.getSession();
+    const qs = new URLSearchParams(params).toString();
+    const r = await fetch(`${FN_BASE}${path}${qs ? '?' + qs : ''}`,
+      { headers: { Authorization: `Bearer ${session ? session.access_token : ''}` } });
+    const j = await r.json();
+    if (!j.success) throw new Error(j.error_code || r.status);
+    return j; // { success, data, meta }
+  }
+};
+
 const Auth = {
   async session() { const { data } = await SB.auth.getSession(); return data.session; },
   onChange(cb) { SB.auth.onAuthStateChange((_e, session) => cb(session)); },
