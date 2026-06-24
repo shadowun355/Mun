@@ -8,6 +8,7 @@
 import { buildContext } from "../_shared/context.ts";
 import { handle, json, param } from "../_shared/respond.ts";
 import { AppError } from "../_shared/errors.ts";
+import { counter } from "../_shared/observability/metrics.ts";
 
 Deno.serve(handle(async (req) => {
   const q = (await param(req, "q"))?.trim() ?? "";
@@ -17,6 +18,7 @@ Deno.serve(handle(async (req) => {
   const ctx = await buildContext(req);
 
   const result = await ctx.search.search(q, { idempotencyKey: key });
+  counter(result.cached ? "cache.hit" : "cache.miss", { fn: "search" });
 
   // Idempotency: store the result so a retry with the same key replays it.
   if (key) await ctx.rate.finalize(key, result);

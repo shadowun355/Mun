@@ -9,6 +9,7 @@ import { buildContext } from "../_shared/context.ts";
 import { handle, json, param } from "../_shared/respond.ts";
 import { AppError } from "../_shared/errors.ts";
 import { Market } from "../_shared/types.ts";
+import { counter } from "../_shared/observability/metrics.ts";
 
 const MARKETS: Market[] = ["US", "TH", "CRYPTO", "COMMODITY"];
 
@@ -25,6 +26,7 @@ Deno.serve(handle(async (req) => {
   const ctx = await buildContext(req);
 
   const result = await ctx.quote.resolve(sym, market, { idempotencyKey: key });
+  counter(result.cached ? "cache.hit" : "cache.miss", { fn: "quote", stale: String(result.stale) });
 
   // Stale-while-revalidate: respond now, refresh the cache after the response.
   if (result.revalidate) {

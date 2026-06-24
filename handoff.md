@@ -114,10 +114,28 @@ no SET list to maintain.
   auth enforced in-code). **No deno** → not typechecked; verify by deploy + the curl
   suite (auth-required, US+Thai search, miss→cached flip, 5-then-deny quota, idempotent
   replay). STOPPED per phased instruction (awaiting "Phase 4" command).
-  **Remaining integration (NOT a numbered phase):** client refactor (req 10) — wire
-  `web/app.js`/`marketapi.js` to these functions, live search box, `getInst()` stub so
-  unknown held symbols don't crash `renderVals`. Touches the live app → its own
-  browser-verify pass; do after Phase 4 or on request.
+- ✅ **Phase 4 — reliability & observability, CODE WRITTEN 2026-06-24 (commit pending), unverified.**
+  Defense-in-depth on every provider call: timeout (http.ts) → retry+backoff+jitter
+  (`reliability/retry.ts`, transient-only) → per-provider/per-instance circuit breaker
+  (`reliability/circuit-breaker.ts`, 5 fails→OPEN 30s→half-open) → provider fallback →
+  stale-cache degradation. Wired in `ProviderService.call()`. Observability:
+  `observability/trace.ts` (AsyncLocalStorage trace_id/route/user set at the edge),
+  `log.ts` (structured JSON, OTel seam), `metrics.ts` (counter/gauge/timing/timed).
+  Metrics emitted: request.duration_ms, provider.latency_ms, provider.failure,
+  cache.hit/miss, quota.consume. Docs: `functions/RELIABILITY.md` (Mermaid: quote-SWR
+  sequence + breaker state machine, metric catalogue, failure-mode table) +
+  `functions/BILLING.md` (mocked→Stripe path; schema already provider-agnostic, hot
+  path unchanged; webhook sketch). **No deno** → not typechecked; verify on deploy via
+  logs/metrics + a forced-provider-failure breaker test.
+
+**SymbolUniverse milestone = all 4 phases written + committed (Phases 1–4). REMAINING to go live:**
+  1. Apply Phase 1 migration to Supabase (+ run `phase1_verify.sql`).
+  2. Deploy Edge Functions (`supabase functions deploy search|quote --no-verify-jwt`),
+     set `FINNHUB_KEY`/`ALPHAVANTAGE_KEY` secrets; run the `functions/README.md` curl suite.
+  3. **Client refactor (req 10, NOT a numbered phase):** wire `web/app.js`/`marketapi.js`
+     to the `search`/`quote` functions, add a live search box, add a `getInst()` stub so
+     unknown held symbols don't crash `renderVals`. Touches the live app → own
+     browser-verify pass; do on request.
 
 #### PortPro feature-parity milestone (plan `web/ROADMAP_PORTPRO.md`)
 8-phase clean-room push to match portpro.app capabilities (NOT its look — Mun keeps its

@@ -5,6 +5,7 @@
 // Keeping this in one place means the Edge Functions stay a few lines each.
 
 import { requireUser, serviceClient, userClient } from "./supabase.ts";
+import { setUser } from "./observability/trace.ts";
 import { CacheService } from "./services/cache.service.ts";
 import { RateLimitService } from "./services/ratelimit.service.ts";
 import { ProviderService } from "./services/provider.service.ts";
@@ -21,6 +22,7 @@ export interface Ctx {
 export async function buildContext(req: Request): Promise<Ctx> {
   const auth = req.headers.get("authorization");
   const user = await requireUser(auth);
+  setUser(user.id); // attach the caller to every downstream log/metric line
 
   const cache = new CacheService(serviceClient());
   const rate = new RateLimitService(userClient(auth));

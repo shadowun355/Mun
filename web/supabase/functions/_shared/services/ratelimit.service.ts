@@ -7,6 +7,7 @@
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { AppError } from "../errors.ts";
+import { counter } from "../observability/metrics.ts";
 
 export interface QuotaResult {
   allowed: boolean;
@@ -28,8 +29,12 @@ export class RateLimitService {
     });
     if (error) throw new AppError("INTERNAL", `quota rpc failed: ${error.message}`);
     const r = data as Record<string, unknown>;
-    if (r.allowed) return r as unknown as QuotaResult;
+    if (r.allowed) {
+      counter("quota.consume", { outcome: r.unlimited ? "unlimited" : r.replayed ? "replayed" : "charged" });
+      return r as unknown as QuotaResult;
+    }
 
+    counter("quota.consume", { outcome: "denied", code: String(r.error_code ?? "QUOTA_EXCEEDED") });
     const code = String(r.error_code ?? "QUOTA_EXCEEDED");
     if (code === "REQUEST_IN_PROGRESS") {
       throw new AppError("REQUEST_IN_PROGRESS", String(r.message ?? "in progress"));

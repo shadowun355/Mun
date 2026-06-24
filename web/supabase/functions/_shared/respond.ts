@@ -2,6 +2,9 @@
 // catch site that turns any thrown AppError into a {success:false,...} body.
 
 import { asAppError } from "./errors.ts";
+import { newTraceId, runWithTrace } from "./observability/trace.ts";
+import { log } from "./observability/log.ts";
+import { timing } from "./observability/metrics.ts";
 
 export const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -16,16 +19,26 @@ export function json(body: unknown, status = 200): Response {
   });
 }
 
-// Wrap a handler: answer CORS preflight, and serialize errors uniformly.
+// Wrap a handler: answer CORS preflight, open a trace, time the request, and
+// serialize any error into the consistent envelope (the single catch site).
 export function handle(fn: (req: Request) => Promise<Response>) {
-  return async (req: Request): Promise<Response> => {
-    if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-    try {
-      return await fn(req);
-    } catch (e) {
-      const ae = asAppError(e);
-      return json(ae.toBody(), ae.httpStatus);
-    }
+  return (req: Request): Promise<Response> => {
+    if (req.method === "OPTIONS") return Promise.resolve(new Response("ok", { headers: CORS }));
+    const route = new URL(req.url).pathname;
+    return runWithTrace({ traceId: newTraceId(), route }, async () => {
+      const start = performance.now();
+      try {
+        const res = await fn(req);
+        log.info("request.ok", { status: res.status });
+        timing("request.duration_ms", performance.now() - start, { status: String(res.status) });
+        return res;
+      } catch (e) {
+        const ae = asAppError(e);
+        log.error("request.error", { error_code: ae.code, message: ae.message });
+        timing("request.duration_ms", performance.now() - start, { status: String(ae.httpStatus) });
+        return json(ae.toBody(), ae.httpStatus);
+      }
+    });
   };
 }
 
