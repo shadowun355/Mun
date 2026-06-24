@@ -132,14 +132,23 @@ no SET list to maintain.
   path unchanged; webhook sketch). **No deno** → not typechecked; verify on deploy via
   logs/metrics + a forced-provider-failure breaker test.
 
-**SymbolUniverse milestone = all 4 phases written + committed (Phases 1–4). REMAINING to go live:**
-  1. Apply Phase 1 migration to Supabase (+ run `phase1_verify.sql`).
-  2. Deploy Edge Functions (`supabase functions deploy search|quote --no-verify-jwt`),
-     set `FINNHUB_KEY`/`ALPHAVANTAGE_KEY` secrets; run the `functions/README.md` curl suite.
-  3. **Client refactor (req 10, NOT a numbered phase):** wire `web/app.js`/`marketapi.js`
+**SymbolUniverse milestone — go-live progress:**
+  1. ✅ **Phase 1 migration APPLIED + hard-asserted 2026-06-24** (see Phase 1 entry above).
+  2. ✅ **Edge Functions DEPLOYED + VERIFIED LIVE 2026-06-24.** `supabase functions deploy
+     search|quote --no-verify-jwt` via `npx supabase` (no brew/Docker; bundled remotely).
+     NO secrets set — Yahoo keyless primary covers US/Thai/etf/quote; Finnhub/AV fallback
+     unset (add later if Yahoo insufficient). Base `https://livhijcgkielwrkdqtbm.functions.supabase.co`.
+     Live curl suite all pass: auth gate 401 (clean envelope); search AAPL→US, ADVANC→TH/THB
+     (`.BK` probe), JEPQ→etf; quote NVDA miss→cached flip (`meta.cached` false→true);
+     PTT quote→35 THB; free quota 5-allow-then-QUOTA_EXCEEDED; Idempotency-Key replay does
+     not double-charge (proven by count: keyed sym charged once, 4 more new → 6th denied).
+     Cosmetic: cached quote responses carry extra null fields + empty `data":{}` vs the miss
+     shape — works, low priority. Throwaway test users `sutest1/2@mun-test.dev` left in
+     auth.users (harmless).
+  3. ⏳ **Client refactor (req 10, NOT a numbered phase):** wire `web/app.js`/`marketapi.js`
      to the `search`/`quote` functions, add a live search box, add a `getInst()` stub so
      unknown held symbols don't crash `renderVals`. Touches the live app → own
-     browser-verify pass; do on request.
+     browser-verify pass. NEXT.
 
 #### PortPro feature-parity milestone (plan `web/ROADMAP_PORTPRO.md`)
 8-phase clean-room push to match portpro.app capabilities (NOT its look — Mun keeps its
