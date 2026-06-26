@@ -1,6 +1,14 @@
 # Handoff
 
 ## Current status
+**Web logo shipped + verified live 2026-06-26 (commit `296cd41`, pushed).** Gold "M"
+PNG (`web/logo.png`, 128px/17KB, downscaled from `~/Downloads/Untitled40` 1024px) is now
+the favicon (replaced inline ม SVG) + sidebar brand icon (22px before "Mun · มั่น" in
+`index.html` `.brand`). Verified in-browser via DOM: favicon href=logo.png, brand img
+naturalWidth=128 (loaded), brand visible. Puppeteer screenshot tool was hitting a 5s
+font-load timeout — DOM check used instead. Root `*-verify.png`/`mun-desktop.jpg`
+gitignored (commit before).
+
 Mun (มั่น) — native iOS SwiftUI app. **Evolved scope is pinned in `SCOPE.md`**
 (portfolio tracker, no real execution, freemium subscription planned). UI complete;
 crypto+FX+US data live; orders simulated via `MockBroker`. Read `SCOPE.md` first.
