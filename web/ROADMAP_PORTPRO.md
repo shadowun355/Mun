@@ -54,9 +54,28 @@ Make Transactions a real editable ledger, not just buy-ticket output.
   persist→delete (save currently returns "Could not find table public.buy_plans",
   handled gracefully — sheet stays open, no crash).
 
-### Phase 5 — Dividend Calendar
+### Phase 5 — Dividend Calendar ✅ CODE DONE + VERIFIED (local proxy) 2026-06-26 (awaiting push→deploy)
 - Upcoming dividends / XD dates per held symbol (data source TBD — Finnhub/Yahoo).
 - Auto-suggest dividend transactions on XD; dividend yield calculator.
+- **Data source:** proxy `GET /dividends?sym=<yahooSym>` — Yahoo chart `events=div` (keyless,
+  same source family as `/quote`/`/candles`/`/yquote`). Returns native-ccy trailing history,
+  TTM yield, last payment, and an INFERRED next XD (last date + median payment interval).
+  Yahoo's forward calendar (quoteSummary) is crumb-gated/flaky from a server → cadence
+  inference is the honest free signal.
+- **Client:** Dividends screen now real — hero "รับแล้วในปีนี้" (already real), stats wired
+  (คาดทั้งปี / portfolio yield / รับ/เดือน), and a per-held-payer list (XD date, amount/share,
+  yield %, est. payout, est. next XD). One-tap a row → opens the Phase 1 ledger sheet
+  prefilled as a dividend (qty=held, price=amount/share, date=next XD). Native amounts →
+  USD-canonical (÷ FX rate for THB). `MarketAPI.dividends()`, `loadDividends()` (1 call/held
+  symbol, session-cached), `suggestDiv()`. Removed the fake "ปันผลรายเดือน" bar chart
+  (deletion over presenting fake data as real).
+- **Verified (local uvicorn proxy + live Supabase + browser):** curl `/dividends?sym=PTT.BK`
+  →6.57% yield, `SCHD`→3.28%, `AAPL`→0.38%; browser with PTT(6000)+SCHD(100) holdings →
+  rows render with correct currency conversion (PTT ฿1.40/sh, SCHD ฿8.45/sh), annual ฿17,300,
+  portfolio yield 5.46%; one-tap → ledger prefilled (PTT, dividend, qty 6000, ฿1.40, 11 ก.ย.).
+  Only console errors = local proxy `/us` 404 (no FINNHUB_KEY locally — live proxy has it).
+- **TO FINISH (user/push):** push → Render redeploys proxy (`mun-re6q`); then live curl
+  `/dividends?sym=SCHD` + browser check. No env/migration needed (keyless, no DB).
 
 ### Phase 6 — Watchlist alerts
 - Price alert thresholds per symbol. Delivery: in-app first; Telegram bot optional

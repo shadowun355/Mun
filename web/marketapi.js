@@ -62,6 +62,13 @@ const MarketAPI = {
     this.patch(app, 'XAU', j);
   },
 
+  // Phase 5: trailing dividends + TTM yield + inferred next XD for an instrument.
+  // Amounts are native currency (j.ccy); the app converts THB → USD-canonical. Throws
+  // on 404 (non-payer / error) — caller skips that symbol.
+  async dividends(s) {
+    return this.getJSON(`${this.proxyBase}/dividends?sym=${encodeURIComponent(this.yahooSym(s))}`);
+  },
+
   // General market news headlines (Finnhub via proxy). Never throws → [] on failure.
   async news() {
     try { return await this.getJSON(`${this.proxyBase}/news`); } catch (e) { return []; }

@@ -11,6 +11,8 @@ reliable and needs no Thai-specific lib. Swap the fetch() body if SET-direct
 data is ever needed.
 """
 import os
+import time
+import statistics
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -82,6 +84,39 @@ def candles(ysym: str, rng: str) -> dict:
     return {"sym": ysym, "bars": bars, "ccy": "THB" if ysym.endswith(".BK") else "USD"}
 
 
+# Phase 5: dividend history (keyless, same Yahoo chart endpoint + events=div).
+# Yahoo's forward calendar (quoteSummary) is crumb-gated and flaky from a server, so we
+# use the reliable trailing series and INFER the next XD from the payment cadence.
+YF_DIV = "https://query1.finance.yahoo.com/v8/finance/chart/{}?range=2y&interval=1mo&events=div"
+
+
+def dividends(ysym: str) -> dict:
+    """Trailing dividends + TTM yield + an inferred next-XD estimate for a literal Yahoo
+    symbol (PTT.BK, SCHD, ...). Amounts are native currency (ccy). nextEst is an ESTIMATE
+    (last XD + median payment interval), null if fewer than 2 payments are known."""
+    r = requests.get(YF_DIV.format(ysym), headers=UA, timeout=8)
+    r.raise_for_status()
+    res = r.json()["chart"]["result"][0]
+    price = res["meta"].get("regularMarketPrice") or 0
+    evs = ((res.get("events") or {}).get("dividends") or {})
+    hist = sorted(({"date": int(v["date"]), "amount": float(v["amount"])} for v in evs.values()),
+                  key=lambda d: d["date"])
+    ccy = "THB" if ysym.endswith(".BK") else "USD"
+    now = int(time.time())
+    ttm = sum(d["amount"] for d in hist if d["date"] >= now - 365 * 86400)
+    next_est = None
+    if len(hist) >= 2:
+        gaps = [hist[i]["date"] - hist[i - 1]["date"] for i in range(1, len(hist))]
+        next_est = hist[-1]["date"] + int(statistics.median(gaps))
+    return {
+        "sym": ysym, "ccy": ccy, "price": price,
+        "last": hist[-1] if hist else None,
+        "ttm": ttm,
+        "yieldPct": (ttm / price * 100) if price else 0.0,
+        "nextEst": next_est,
+    }
+
+
 @app.get("/")
 def health():
     return {"ok": True}  # host healthcheck pings this
@@ -140,6 +175,19 @@ def news(limit: int = 12):
         return []
 
 
+@app.get("/dividends")
+def dividends_route(sym: str):
+    """Trailing dividends + TTM yield + inferred next XD for a literal Yahoo symbol.
+    404 on error → web client just hides that symbol from the dividend calendar."""
+    try:
+        d = dividends(sym.upper())
+        if not d["last"]:
+            raise ValueError("no dividend history")
+        return d
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"no dividends for {sym}: {e}")
+
+
 @app.get("/candles")
 def candles_route(sym: str, range: str = "1m"):
     """OHLC bar series for a chart. `sym` is the literal Yahoo symbol (e.g. PTT.BK,
@@ -161,4 +209,6 @@ if __name__ == "__main__":
     assert cd["bars"] and cd["bars"][-1]["c"] > 0 and cd["ccy"] == "THB", cd
     g = yfetch("GC=F")  # gold futures, USD
     assert g["price"] > 0 and g["ccy"] == "USD", g
-    print("ok", d, len(cd["bars"]), "bars; gold", g["price"])
+    dv = dividends("SCHD")  # high-dividend ETF, USD
+    assert dv["last"] and dv["last"]["amount"] > 0 and dv["yieldPct"] > 0, dv
+    print("ok", d, len(cd["bars"]), "bars; gold", g["price"], "; SCHD yield", round(dv["yieldPct"], 2))

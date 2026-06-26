@@ -386,42 +386,30 @@
           <div style="font-size:13px;color:var(--sub)">รับแล้วในปีนี้</div>
           <div style="font-family:'Newsreader',serif;font-size:38px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:6px;letter-spacing:-.5px">{{ divReceived }}</div>
           <div style="display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
-            <div><div style="font-size:12px;color:var(--sub)">คาดทั้งปี</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">฿32,000</div></div>
-            <div><div style="font-size:12px;color:var(--sub)">อัตราผลตอบแทน</div><div style="font-size:16px;font-weight:600;color:var(--gold);margin-top:3px">3.20%</div></div>
-            <div><div style="font-size:12px;color:var(--sub)">รับ/เดือน</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">฿1,535</div></div>
-          </div>
-        </div>
-        <div style="margin:18px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px">
-          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:16px">ปันผลรายเดือน</div>
-          <div style="display:flex;align-items:flex-end;gap:8px;height:88px">
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">ม.ค.</span></div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:52px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">ก.พ.</span></div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:26px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">มี.ค.</span></div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:64px;background:var(--gold);border-radius:5px"></div><span style="font-size:10.5px;color:var(--gold);font-weight:600">เม.ย.</span></div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:30px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">พ.ค.</span></div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:46px;background:var(--goldsoft);border-radius:5px"></div><span style="font-size:10.5px;color:var(--sub)">มิ.ย.</span></div>
+            <div><div style="font-size:12px;color:var(--sub)">คาดทั้งปี</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">{{ divAnnual }}</div></div>
+            <div><div style="font-size:12px;color:var(--sub)">อัตราผลตอบแทน</div><div style="font-size:16px;font-weight:600;color:var(--gold);margin-top:3px">{{ divYield }}</div></div>
+            <div><div style="font-size:12px;color:var(--sub)">รับ/เดือน</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">{{ divMonthly }}</div></div>
           </div>
         </div>
         <div style="margin:18px 16px 28px">
-          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:9px">จ่ายเร็ว ๆ นี้</div>
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:9px">ปันผลของหุ้นที่ถือ</div>
+          <div style="font-size:12px;color:var(--faint);margin-bottom:9px">วันจ่ายถัดไปเป็นค่าประมาณจากรอบการจ่ายที่ผ่านมา · แตะเพื่อบันทึกรายการปันผล</div>
           <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
-            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
-              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">PT</div>
-              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">ปตท.</div><div style="font-size:12.5px;color:var(--sub)">XD 25 มิ.ย. · ฿2.00/หุ้น</div></div>
-              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+฿2,400</div><div style="font-size:12px;color:var(--sub)">2 ก.ค.</div></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)">
-              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">KB</div>
-              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">กสิกรไทย</div><div style="font-size:12.5px;color:var(--sub)">XD 28 มิ.ย. · ฿3.25/หุ้น</div></div>
-              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+฿1,625</div><div style="font-size:12px;color:var(--sub)">8 ก.ค.</div></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:13px;padding:13px 0">
-              <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">AA</div>
-              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">Apple</div><div style="font-size:12.5px;color:var(--sub)">XD 10 ก.ค. · $0.25/หุ้น</div></div>
-              <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">+$6.25</div><div style="font-size:12px;color:var(--sub)">17 ก.ค.</div></div>
-            </div>
+            <sc-for list="{{ divRows }}" as="dv">
+              <div onClick="{{ dv.onSuggest }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer">
+                <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">{{ dv.logo }}</div>
+                <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ dv.name }}</div><div style="font-size:12.5px;color:var(--sub)">{{ dv.xdSub }}</div></div>
+                <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">{{ dv.payout }}</div><div style="font-size:12px;color:var(--sub)">{{ dv.nextStr }}</div></div>
+              </div>
+            </sc-for>
           </div>
         </div>
+        <sc-if value="{{ divEmpty }}">
+        <div style="margin:6px 16px 28px;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:26px 18px;text-align:center">
+          <div style="font-size:14px;color:var(--sub)">ยังไม่มีข้อมูลปันผล</div>
+          <div style="font-size:12.5px;color:var(--faint);margin-top:5px">ถือหุ้นหรือกองทุนที่จ่ายปันผลเพื่อดูปฏิทินและผลตอบแทน</div>
+        </div>
+        </sc-if>
       </div>
       </sc-if>
 

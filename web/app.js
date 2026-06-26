@@ -81,7 +81,7 @@ class Component {
       screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
       range: '1d', watchFilter: 'all', txnFilter: 'all',
       selected: 'AAPL', starred: {}, notif: true,
-      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: []
+      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}
     };
   }
 
@@ -511,6 +511,37 @@ class Component {
     this.showToast('ลบแผนแล้ว');
   }
 
+  // ---- Dividend Calendar (Phase 5) ---------------------------------------
+  // On first visit to the Dividends screen, fetch trailing dividends for each held
+  // symbol (1 proxy call/symbol). Non-payers 404 → skipped. Cached for the session.
+  // ponytail: session cache keyed by nothing — a new holding added mid-session won't
+  // appear until reload. Fine for v1; key by held-set if it matters.
+  async loadDividends() {
+    if (this._divLoaded) return;
+    this._divLoaded = true;
+    const held = Object.keys(this.fifo(this.state.txns).holdings);
+    const out = {};
+    await Promise.all(held.map(async sym => {
+      try { const j = await MarketAPI.dividends(this.getInst(sym)); if (j && j.last) out[sym] = j; }
+      catch (e) { /* non-payer or error → omit */ }
+    }));
+    this.setState({ divInfo: out });
+  }
+
+  // One-tap: open the txn sheet prefilled as a dividend for a held symbol. Reuses the
+  // Phase 1 ledger form wholesale (amount/share already USD-canonical).
+  suggestDiv(info) {
+    const $ = id => document.getElementById(id);
+    this.openTxnForm(null);
+    const inst = this.getInst(info.sym);
+    $('tf-sym').value = info.sym;
+    $('tf-search').value = info.sym + (inst.name && inst.name !== info.sym ? ' · ' + inst.name : '');
+    $('tf-type').value = 'dividend';
+    $('tf-qty').value = info.qty;
+    $('tf-price').value = info.amountUsd.toFixed(4);
+    if (info.dateIso) $('tf-date').value = info.dateIso.slice(0, 10);
+  }
+
   // ---- formatters / math (verbatim from prototype; RATE now live) ----
   nf(n, d) { return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
   price(usd) {
@@ -696,6 +727,28 @@ class Component {
     const txnGroups = txnByDate, txnEmpty = !txnGroups.length;
     const divUsd = S.txns.filter(t => t.side === 'dividend').reduce((a, t) => a + Number(t.qty) * Number(t.price_usd), 0);
 
+    // Phase 5: dividend calendar — per held payer (XD date, amount/share, yield, est next
+    // payout) + portfolio annual estimate. divInfo amounts are native → USD-canonical.
+    const divInfo = S.divInfo || {};
+    const thDate = (epoch, opts) => new Date(epoch * 1000).toLocaleDateString('th-TH', opts || { day: 'numeric', month: 'short' });
+    let divAnnualUsd = 0;
+    const divRows = heldSyms.filter(sym => divInfo[sym] && divInfo[sym].last).map(sym => {
+      const j = divInfo[sym], inst = this.getInst(sym), qty = H[sym].qty;
+      const cf = j.ccy === 'THB' ? this.RATE : 1;          // native → USD-canonical
+      const amtUsd = j.last.amount / cf, ttmUsd = (j.ttm || 0) / cf;
+      divAnnualUsd += qty * ttmUsd;
+      const nextIso = j.nextEst ? new Date(j.nextEst * 1000).toISOString() : null;
+      return {
+        logo: inst.logo, name: inst.name,
+        xdSub: 'XD ' + thDate(j.last.date) + ' · ' + this.price(amtUsd) + '/หุ้น · ' + (j.yieldPct || 0).toFixed(2) + '%',
+        payout: '+' + this.val(qty * amtUsd),
+        nextStr: j.nextEst ? 'คาด ' + thDate(j.nextEst) : '—',
+        onSuggest: () => this.suggestDiv({ sym, qty, amountUsd: amtUsd, dateIso: nextIso })
+      };
+    });
+    const divEmpty = !divRows.length;
+    const divPortYield = totalUsd ? (divAnnualUsd / totalUsd * 100) : 0;
+
     // Phase 4: saved DCA plans list (Planner screen).
     const planList = (S.buyPlans || []).map(p => {
       const levels = p.levels || [];
@@ -741,6 +794,9 @@ class Component {
       ranges, holdings, alloc, d, watchTabs, watchRows, txnTabs, txnGroups, txnEmpty,
       marketStrip, newsItems, hasNews: newsItems.length > 0,
       divReceived: this.val(divUsd),
+      divRows, divEmpty,
+      divAnnual: this.val(divAnnualUsd), divMonthly: this.val(divAnnualUsd / 12),
+      divYield: divPortYield.toFixed(2) + '%',
       realizedStr: (F.realizedUsd >= 0 ? '+' : '−') + this.val(Math.abs(F.realizedUsd)),
       realizedCol: F.realizedUsd >= 0 ? 'var(--up)' : 'var(--down)',
       hasRealized: Math.abs(F.realizedUsd) > 1e-9,
@@ -756,7 +812,7 @@ class Component {
       goOverview: () => this.setState({ screen: 'overview' }),
       goWatch: () => this.setState({ screen: 'watch' }),
       goPlanner: () => this.setState({ screen: 'planner' }),
-      goDividends: () => this.setState({ screen: 'dividends' }),
+      goDividends: () => { this.setState({ screen: 'dividends' }); this.loadDividends(); },
       goTransactions: () => this.setState({ screen: 'transactions' }),
       goAccount: () => this.setState({ screen: 'account' }),
       back: () => this.setState(st => ({ screen: st.prevScreen || 'overview' })),

@@ -243,6 +243,26 @@ gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 
     save→reload→persist→delete. Until then `savePlan` shows "Could not find table
     public.buy_plans" and keeps the sheet open (graceful, no crash). Throwaway test user
     `sutest_p4_*@mun-test.dev` left in auth.users.
+- ✅ **Phase 5 — Dividend Calendar, CODE DONE + VERIFIED (local proxy) 2026-06-26 (awaiting push→deploy).**
+  Proxy `GET /dividends?sym=<yahooSym>` (Yahoo chart `events=div`, keyless): native-ccy
+  trailing dividends, TTM yield, last payment, **inferred** next XD (last date + median
+  payment interval — Yahoo's forward calendar is crumb-gated/flaky). `proxy/app.py`:
+  `dividends()` + `/dividends` route + SCHD smoke-test assert. Client: `MarketAPI.dividends(s)`;
+  `app.loadDividends()` (1 call/held symbol on first Dividends-screen visit, session-cached
+  via `_divLoaded`); `suggestDiv()` opens the Phase 1 ledger prefilled as a dividend. Dividends
+  screen wired real — stats (คาดทั้งปี/portfolio yield/รับ-เดือน) + per-held-payer list (XD,
+  amount/share, yield, est payout, est next XD), one-tap → prefilled dividend txn. Native
+  amounts → USD-canonical (÷FX for THB). Removed the fake monthly bar chart.
+  - **Verified:** local uvicorn proxy + live Supabase + browser. curl PTT.BK 6.57% / SCHD
+    3.28% / AAPL 0.38%; browser PTT(6000)+SCHD(100) → correct ccy conversion (PTT ฿1.40/sh,
+    SCHD ฿8.45/sh), annual ฿17,300, port yield 5.46%; one-tap → ledger prefilled
+    (PTT/dividend/6000/฿1.40/11 ก.ย.). Test txns deleted after. Only console errs = local
+    `/us` 404 (no local FINNHUB_KEY).
+  - ⚠️ **Browser caches `marketapi.js`/`app.js` hard** — when verifying locally, the new
+    `MarketAPI.dividends` method needed a forced reload (was served stale); had to inject it
+    inline for the test. On the live site a fresh deploy is fine.
+  - **TO FINISH:** push → Render auto-redeploys `mun-re6q`; live curl `/dividends?sym=SCHD` +
+    browser check. No env/migration (keyless, no DB).
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line
