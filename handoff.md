@@ -315,12 +315,14 @@ gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 
   - **TO FINISH (user):** run the migration (AFTER buy_plans + alerts), then verify 6th asset /
     2nd plan / 4th alert blocked + mock upgrade→Pro→caps lift→cancel→Free.
 
-- **PortPro milestone: all 8 phases code-complete + verified 2026-06-26.** Live site has
-  Phases 1–7 (pushed). **Pending user action:** (1) push Phase 8; (2) run the 4 new migrations
-  in the Supabase SQL editor IN ORDER — `buy_plans` → `alerts` → `portfolio_snapshots` →
-  `freemium_caps` (the last depends on the first two). External boundaries flagged for a
-  decision: **Telegram** (Phase 6 alert delivery) + **Stripe** (Phase 8 payment). Throwaway
-  test users left in auth.users: `sutest_p4/p6/p7/p8_*@mun-test.dev`.
+- **PortPro milestone: ALL 8 PHASES DONE + VERIFIED LIVE 2026-06-26.** All 4 migrations
+  applied (buy_plans, alerts, portfolio_snapshots, freemium_caps); all phases pushed + live on
+  mun-3skf.onrender.com. **Phase 8 verified live** (fresh signup): Free caps enforced (6th
+  asset/2nd plan/4th alert blocked with `FREE_*_CAP`; existing-asset buy at cap ok), mock
+  upgrade→Pro lifts all caps, cancel→Free re-enforces. External boundaries left for a decision:
+  **Telegram** (Phase 6 alert delivery — bot token + cron) + **Stripe** (Phase 8 payment —
+  schema ready, `functions/BILLING.md`). Throwaway test users in auth.users:
+  `sutest_p4/p6/p7/p8*@mun-test.dev`.
 
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it

@@ -116,7 +116,7 @@ Make Transactions a real editable ledger, not just buy-ticket output.
 - **TO FINISH (user):** run the `portfolio_snapshots` migration; trend fills in as daily rows
   accrue (seed a couple rows to see the line immediately).
 
-### Phase 8 — Freemium tiers ✅ CODE DONE + VERIFIED (client) 2026-06-26 (awaiting SQL; Stripe deferred)
+### Phase 8 — Freemium tiers ✅ DONE + VERIFIED LIVE 2026-06-26 (Stripe deferred)
 - Free (≤5 assets, limited planner/watchlist) vs Pro (unlimited + advanced).
 - Gate features client-side + enforce in Supabase RLS. Payment (Stripe) is its own
   decision/infra step — wire last.
@@ -137,12 +137,16 @@ Make Transactions a real editable ledger, not just buy-ticket output.
 - **TO FINISH (user):** run `20260626000004_freemium_caps.sql` (AFTER buy_plans + alerts
   migrations), then verify: 6th asset / 2nd plan / 4th alert blocked with upgrade prompt;
   mock upgrade → Pro → caps lift → cancel → Free.
+- **VERIFIED LIVE 2026-06-26** (mun-3skf.onrender.com, migrations applied, fresh signup):
+  Free caps enforced — 5 assets ok / 6th `FREE_ASSET_CAP` / existing-asset buy at cap ok;
+  1 plan ok / 2nd `FREE_PLAN_CAP`; 3 alerts ok / 4th `FREE_ALERT_CAP`. Mock upgrade → Pro,
+  all caps lift (6th asset / 2nd plan / 4th alert allowed); cancel → Free, caps re-enforce.
 
 ## Status
-**All 8 phases code-complete + verified.** Live site (pushed): Phases 1–7. Pending user
-action: run the 4 new migrations (buy_plans, alerts, portfolio_snapshots, freemium_caps) in
-the Supabase SQL editor, in that order; push Phase 8. External boundaries flagged for a
-decision: Telegram (Phase 6 delivery), Stripe (Phase 8 payment).
+**All 8 phases DONE + VERIFIED LIVE 2026-06-26.** Migrations applied. External boundaries left
+for a decision: Telegram (Phase 6 alert delivery), Stripe (Phase 8 payment). Phases 4 & 6 & 7
+self-verify on the live site now that their tables exist (save plan / set alert / trend
+snapshots). Throwaway test users in auth.users: `sutest_p4/p6/p7/p8*@mun-test.dev`.
 
 ## Notes
 - Copyright: clean-room. No PortPro assets/text/markup. Add a `© 2026 Mun` footer (Mun's own).
