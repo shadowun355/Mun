@@ -281,6 +281,21 @@ gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 
     gracefully. Console errs only expected `alerts`/`buy_plans` 404.
   - **TO FINISH (user):** run the `alerts` migration, then verify set→persist→trigger→
     deactivate→reload.
+- ✅ **Phase 7 — Portfolio analytics, CODE DONE + VERIFIED 2026-06-26 (awaiting SQL).**
+  Overview gains: (a) per-asset **concentration** card (each held sym's % of portfolio, sorted,
+  with a bar; >25% CAP → red bar + a warning banner listing over-cap syms), (b) **growth trend**
+  — the hero sparkline now draws from real daily `portfolio_snapshots` (green up/red down, flat
+  fallback <2 days). `portfolio_snapshots` table (PK user_id+date, total_usd, own-rows RLS) —
+  migration `web/supabase/migrations/20260626000003_portfolio_snapshots.sql`. `snapshotToday()`
+  upserts today's total on load + each 60s tick (onConflict user_id,date); `snapshots` in
+  `loadUserData`; renderVals builds `concRows`/`hasOverCap`/`overCapMsg` + `trend*` path.
+  **ponytail:** on-load/tick capture, no cron (daily granularity is enough for a trend line).
+  - **Verified (fresh build :8780, browser, injected holdings+snapshots, no DB):** AAPL 89.2%
+    over-cap (warning "AAPL เกิน 25% ของพอร์ต"), BTC 9.6%/NVDA 1.3% sorted; 3 snapshots → rising
+    green trend path (M0,56→L320,6) drawn; card+warning+line render in DOM. Errs only expected
+    `buy_plans`/`alerts`/`snapshots` 404.
+  - **TO FINISH (user):** run the `portfolio_snapshots` migration; trend fills as daily rows
+    accrue (seed a couple rows to see it immediately).
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line

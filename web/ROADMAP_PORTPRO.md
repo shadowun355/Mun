@@ -98,9 +98,23 @@ Make Transactions a real editable ledger, not just buy-ticket output.
 - **TO FINISH (user):** run the `alerts` migration in the Supabase SQL editor, then verify
   set→persist→trigger-on-tick→deactivate→survives reload.
 
-### Phase 7 — Portfolio analytics
+### Phase 7 — Portfolio analytics ✅ CODE DONE + VERIFIED 2026-06-26 (awaiting SQL)
 - Deeper analytics: allocation by class/asset, per-asset % cap + over-cap warning,
   growth trend over time (needs portfolio value snapshots — a daily job or on-load capture).
+- **Shipped on Overview:** (a) per-asset **concentration** card — each held symbol's % of
+  portfolio (sorted desc) with a bar; any asset >25% (CAP) turns red + a warning banner lists
+  the over-cap symbols. (b) **growth trend** — the hero sparkline now draws from real daily
+  `portfolio_snapshots` (green up / red down), flat fallback until ≥2 days exist.
+- **Snapshots:** `portfolio_snapshots` (PK user_id+date, total_usd, own-rows RLS) — migration
+  `web/supabase/migrations/20260626000003_portfolio_snapshots.sql`. `snapshotToday()` upserts
+  today's total on load + each 60s tick (on-conflict user_id,date). **ponytail:** on-load/tick
+  capture, no cron — daily granularity, enough for the trend; add a job for intraday.
+- **Verified (fresh build, browser, injected holdings+snapshots):** AAPL 89.2% flagged
+  over-cap (warning "AAPL เกิน 25% ของพอร์ต"), BTC 9.6% / NVDA 1.3% sorted; 3-point snapshot
+  series → rising green trend path drawn (M0,56→L320,6). Card + warning + line all render.
+  Console errors only the expected `buy_plans`/`alerts`/`snapshots` 404 (tables not migrated).
+- **TO FINISH (user):** run the `portfolio_snapshots` migration; trend fills in as daily rows
+  accrue (seed a couple rows to see the line immediately).
 
 ### Phase 8 — Freemium tiers
 - Free (≤5 assets, limited planner/watchlist) vs Pro (unlimited + advanced).

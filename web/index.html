@@ -204,7 +204,7 @@
             <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:{{ dayBg }};color:{{ dayCol }};font-size:13px;font-weight:600">{{ dayStr }}</span>
             <span style="font-size:12.5px;color:var(--sub)">วันนี้</span>
           </div>
-          <svg width="100%" height="62" viewBox="0 0 320 62" preserveAspectRatio="none" style="margin-top:14px;display:block"><path d="M0,48 C24,44 36,30 60,32 C88,34 96,46 124,40 C150,35 158,18 188,22 C214,25 224,34 250,28 C278,22 292,10 320,8" fill="none" stroke="var(--up)" stroke-width="2.2" stroke-linecap="round"></path><circle cx="320" cy="8" r="3.4" fill="var(--up)"></circle></svg>
+          <svg width="100%" height="62" viewBox="0 0 320 62" preserveAspectRatio="none" style="margin-top:14px;display:block"><path d="{{ trendPath }}" fill="none" stroke="{{ trendColor }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="{{ trendLastX }}" cy="{{ trendLastY }}" r="3.4" fill="{{ trendColor }}"></circle></svg>
           <div style="display:flex;gap:6px;margin-top:14px">
             <sc-for list="{{ ranges }}" as="r">
               <span onClick="{{ r.onClick }}" style="font-size:12px;font-weight:{{ r.weight }};cursor:pointer;border-radius:8px;padding:5px 0;width:38px;text-align:center;background:{{ r.bg }};color:{{ r.col }}">{{ r.label }}</span>
@@ -237,6 +237,29 @@
             </sc-for>
           </div>
         </div>
+        <!-- Phase 7: per-asset concentration + over-cap warning -->
+        <sc-if value="{{ hasConc }}">
+        <div style="margin:18px 16px 0">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:11px">การกระจุกตัวของสินทรัพย์</div>
+          <sc-if value="{{ hasOverCap }}">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;padding:10px 13px;border-radius:12px;background:color-mix(in oklab,var(--down) 12%,transparent);border:1px solid color-mix(in oklab,var(--down) 35%,transparent)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--down)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>
+            <span style="font-size:12.5px;color:var(--down);font-weight:600">{{ overCapMsg }}</span>
+          </div>
+          </sc-if>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 16px">
+            <sc-for list="{{ concRows }}" as="ca">
+              <div style="padding:11px 0;border-bottom:1px solid var(--line)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <span style="font-size:13.5px;font-weight:600;color:var(--ink)">{{ ca.sym }} <span style="color:var(--sub);font-weight:400">· {{ ca.valStr }}</span></span>
+                  <span style="font-size:13px;font-weight:700;color:{{ ca.barColor }}">{{ ca.pctLabel }}</span>
+                </div>
+                <div style="height:6px;border-radius:3px;background:var(--card2);overflow:hidden"><span style="display:block;height:100%;width:{{ ca.barPct }}%;background:{{ ca.barColor }}"></span></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
         <div style="margin:20px 16px 28px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
             <span style="font-size:14px;font-weight:600;color:var(--ink)">การถือครอง</span>

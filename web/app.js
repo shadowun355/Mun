@@ -81,7 +81,7 @@ class Component {
       screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
       range: '1d', watchFilter: 'all', txnFilter: 'all',
       selected: 'AAPL', starred: {}, notif: true,
-      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: []
+      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: [], snapshots: []
     };
   }
 
@@ -125,17 +125,34 @@ class Component {
 
   // ---- Supabase data layer (per-user; RLS scopes every row to this.user) ----
   async loadUserData() {
-    const [tx, wl, pf, bp, al] = await Promise.all([
+    const [tx, wl, pf, bp, al, sn] = await Promise.all([
       SB.from('transactions').select('*').order('ts', { ascending: false }),
       SB.from('watchlist').select('sym'),
       SB.from('prefs').select('*').maybeSingle(),
       SB.from('buy_plans').select('*').order('created_at', { ascending: false }),  // [] if migration not yet run
-      SB.from('alerts').select('*').order('created_at', { ascending: false })       // [] if migration not yet run
+      SB.from('alerts').select('*').order('created_at', { ascending: false }),      // [] if migration not yet run
+      SB.from('portfolio_snapshots').select('date,total_usd').order('date', { ascending: true }).limit(90)
     ]);
     const starred = {}; (wl.data || []).forEach(r => { starred[r.sym] = true; });
     const p = pf.data;
-    this.setState(Object.assign({ txns: tx.data || [], starred, buyPlans: bp.data || [], alerts: al.data || [] },
+    this.setState(Object.assign({ txns: tx.data || [], starred, buyPlans: bp.data || [], alerts: al.data || [], snapshots: sn.data || [] },
       p ? { dark: p.dark, cur: p.cur, notif: p.notif } : {}));
+  }
+
+  // Phase 7: capture today's portfolio value (USD-canonical). Upsert one row per
+  // (user, date) — on load + each refresh, today's row tracks the latest value.
+  // ponytail: on-load/tick capture, no cron — gives daily granularity, enough for a
+  // trend line. Add a scheduled job if intraday history is ever wanted.
+  async snapshotToday() {
+    const H = this.fifo(this.state.txns).holdings;
+    let total = 0; for (const s in H) total += H[s].qty * this.getInst(s).price;
+    if (!(total > 0)) return;
+    const date = new Date().toISOString().slice(0, 10);
+    const { error } = await SB.from('portfolio_snapshots')
+      .upsert({ user_id: this.user.id, date, total_usd: total }, { onConflict: 'user_id,date' });
+    if (error) return;                                   // table not migrated yet → skip
+    const rest = (this.state.snapshots || []).filter(r => r.date !== date);
+    this.setState({ snapshots: rest.concat([{ date, total_usd: total }]) });
   }
   async loadTxns() {
     const { data } = await SB.from('transactions').select('*').order('ts', { ascending: false });
@@ -723,6 +740,28 @@ class Component {
     ];
     const alloc = allocRaw.map(a => { const p = totalUsd ? Math.round(a.usd / totalUsd * 100) : 0; return { label: a.label, color: a.color, pct: p, pctLabel: p + '%' }; });
 
+    // Phase 7: per-asset concentration + over-cap warning (default cap 25%).
+    const CAP = 25;
+    const concRows = heldSyms.map(sym => { const s = this.getInst(sym); const v = H[sym].qty * s.price; const pct = totalUsd ? v / totalUsd * 100 : 0; return { sym, name: s.name, pct, v }; })
+      .sort((a, b) => b.pct - a.pct)
+      .map(a => ({ sym: a.sym, name: a.name, pctLabel: a.pct.toFixed(1) + '%', barPct: Math.min(100, a.pct), over: a.pct > CAP, barColor: a.pct > CAP ? 'var(--down)' : 'var(--gold)', valStr: this.val(a.v) }));
+    const overCapSyms = concRows.filter(r => r.over).map(r => r.sym);
+    const hasConc = concRows.length > 0;
+    const overCapMsg = overCapSyms.length ? overCapSyms.join(', ') + ' เกิน ' + CAP + '% ของพอร์ต' : '';
+
+    // Phase 7: growth-trend line from daily snapshots (USD-canonical → shape only).
+    const snaps = (S.snapshots || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1));
+    let trend = null;
+    if (snaps.length >= 2) {
+      const W = 320, Hh = 62, pad = 6, vals = snaps.map(s => Number(s.total_usd));
+      const lo = Math.min(...vals), hi = Math.max(...vals), span = (hi - lo) || 1;
+      const x = i => i * (W / (snaps.length - 1)), y = v => pad + (Hh - 2 * pad) * (1 - (v - lo) / span);
+      const path = vals.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+      const up = vals[vals.length - 1] >= vals[0];
+      trend = { path, lastX: x(vals.length - 1).toFixed(1), lastY: y(vals[vals.length - 1]).toFixed(1), color: up ? 'var(--up)' : 'var(--down)' };
+    }
+    const trendBag = trend || { path: 'M0,40 L320,40', lastX: '320', lastY: '40', color: 'var(--faint)' };
+
     const sel = this.getInst(S.selected);
     const selQty = H[sel.sym] ? H[sel.sym].qty : 0, selAvg = H[sel.sym] ? H[sel.sym].avg : 0;
     const selVal = selQty * sel.price;
@@ -878,6 +917,8 @@ class Component {
       darkTrack: mkTrack(S.dark), darkKnob: mkKnob(S.dark),
       notifTrack: mkTrack(S.notif), notifKnob: mkKnob(S.notif),
       ranges, holdings, alloc, d, watchTabs, watchRows, txnTabs, txnGroups, txnEmpty,
+      concRows, hasConc, hasOverCap: overCapSyms.length > 0, overCapMsg,
+      trendPath: trendBag.path, trendLastX: trendBag.lastX, trendLastY: trendBag.lastY, trendColor: trendBag.color,
       marketStrip, newsItems, hasNews: newsItems.length > 0,
       divReceived: this.val(divUsd),
       divRows, divEmpty,
@@ -968,6 +1009,7 @@ async function boot() {
   app.wireAlertForm();             // bind the (DOM) price-alert sheet
   await app.loadUserData();        // pull txns / watchlist / prefs, then re-render
   await app.hydrateHeldSymbols();  // recover discovered holdings (market+price) so totals aren't $0
+  await app.snapshotToday();       // capture today's portfolio value for the growth trend
   tick(); setInterval(tick, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 }
@@ -1008,7 +1050,7 @@ function wireGate() {
 }
 
 // Live data on load + every 60s + on tab refocus.
-async function tick() { try { await MarketAPI.refresh(app); if (app) await app.checkAlerts(); } catch (e) {} }
+async function tick() { try { await MarketAPI.refresh(app); if (app) { await app.checkAlerts(); await app.snapshotToday(); } } catch (e) {} }
 
 Auth.onChange(session => { if (session) boot(); });
 boot();
