@@ -10,3 +10,5 @@ Mun/Secrets/
 
 # Puppeteer/Playwright MCP scratch + verification screenshots
 .playwright-mcp/
+/*-verify.png
+/mun-desktop.jpg
