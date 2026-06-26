@@ -7,3 +7,6 @@ Mun/Secrets/
 
 # Supabase CLI scratch (link state, cli cache)
 **/supabase/.temp/
+
+# Puppeteer/Playwright MCP scratch + verification screenshots
+.playwright-mcp/

@@ -34,9 +34,25 @@ Make Transactions a real editable ledger, not just buy-ticket output.
 - Gold (ทองคำ) asset class via Yahoo `GC=F` (proxy `/yquote`), USD, tradeable.
 - Market overview strip (XAU/BTC/SPY/PTT, reused from catalog) + news list (Finnhub `/news`).
 
-### Phase 4 — Buy Planner (DCA)
+### Phase 4 — Buy Planner (DCA) ✅ CODE DONE + UI/MATH VERIFIED 2026-06-26 (awaiting SQL)
 - DCA / averaging-down calculator: target, levels (up to 7 support levels), per-level
   qty/price, resulting avg cost. Save plans per user.
+- New **วางแผน** (Planner) screen + nav item (gold). Plain-DOM `#plansheet`: free-text
+  symbol (+ live-price hint), 1–7 price/qty level rows (add/remove), live summary —
+  total qty, total invest, **avg cost**, and % vs live price. Saved plans list on the
+  screen; tap to reopen/edit/delete.
+- Persistence: new `buy_plans` table (`user_id`, `sym`, `levels jsonb`, `created_at`),
+  own-rows RLS. Migration: `web/supabase/migrations/20260626000001_buy_plans.sql`.
+- **ponytail:** skipped the quota-charging symbol *search* in the planner (levels are
+  user-typed; a calculator shouldn't burn the daily search quota) — free-text symbol +
+  live-price prefill instead. Add search if wanted.
+- Pure client math + one table; no proxy change.
+- **Verify done (live, local server + live Supabase):** planner screen + 6-item nav
+  render, calculator opens, 3 levels (200×10/180×10/150×5)→avg $182 (฿6,079), +51.2% vs
+  live, live hint resolves "Apple", remove/add level works, 0 unexpected console errors.
+  **Pending:** run the migration in the Supabase SQL editor, then verify save→reload→
+  persist→delete (save currently returns "Could not find table public.buy_plans",
+  handled gracefully — sheet stays open, no crash).
 
 ### Phase 5 — Dividend Calendar
 - Upcoming dividends / XD dates per held symbol (data source TBD — Finnhub/Yahoo).

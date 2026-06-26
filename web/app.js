@@ -81,7 +81,7 @@ class Component {
       screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
       range: '1d', watchFilter: 'all', txnFilter: 'all',
       selected: 'AAPL', starred: {}, notif: true,
-      ticket: null, txns: [], toast: '', submitting: false, candles: []
+      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: []
     };
   }
 
@@ -125,19 +125,24 @@ class Component {
 
   // ---- Supabase data layer (per-user; RLS scopes every row to this.user) ----
   async loadUserData() {
-    const [tx, wl, pf] = await Promise.all([
+    const [tx, wl, pf, bp] = await Promise.all([
       SB.from('transactions').select('*').order('ts', { ascending: false }),
       SB.from('watchlist').select('sym'),
-      SB.from('prefs').select('*').maybeSingle()
+      SB.from('prefs').select('*').maybeSingle(),
+      SB.from('buy_plans').select('*').order('created_at', { ascending: false })  // [] if migration not yet run
     ]);
     const starred = {}; (wl.data || []).forEach(r => { starred[r.sym] = true; });
     const p = pf.data;
-    this.setState(Object.assign({ txns: tx.data || [], starred },
+    this.setState(Object.assign({ txns: tx.data || [], starred, buyPlans: bp.data || [] },
       p ? { dark: p.dark, cur: p.cur, notif: p.notif } : {}));
   }
   async loadTxns() {
     const { data } = await SB.from('transactions').select('*').order('ts', { ascending: false });
     this.setState({ txns: data || [] });
+  }
+  async loadPlans() {
+    const { data } = await SB.from('buy_plans').select('*').order('created_at', { ascending: false });
+    this.setState({ buyPlans: data || [] });
   }
   savePrefs() {
     const { dark, cur, notif } = this.state;
@@ -392,6 +397,120 @@ class Component {
     URL.revokeObjectURL(url);
   }
 
+  // ---- Buy Planner (Phase 4): DCA / averaging-down calculator ------------
+  // Plain-DOM sheet (#plansheet) like #txnsheet. Levels are user-typed price/qty
+  // pairs (USD-canonical); avg cost = Σ(price·qty) / Σqty. Saved per user in buy_plans.
+  // ponytail: free-text symbol + a live-price hint, NOT the quota-charging search —
+  // a planning calculator shouldn't burn the daily search quota. Add search if asked.
+  planMath(levels) {
+    let qty = 0, cost = 0;
+    (levels || []).forEach(l => { const p = Number(l.price) || 0, n = Number(l.qty) || 0; qty += n; cost += p * n; });
+    return { totalQty: qty, totalCost: cost, avg: qty ? cost / qty : 0 };
+  }
+
+  openPlanForm(plan) {
+    const $ = id => document.getElementById(id);
+    this.editingPlanId = plan ? plan.id : null;
+    $('plansheet-title').textContent = plan ? 'แก้ไขแผน' : 'แผนซื้อเฉลี่ย';
+    $('pf-sym').value = plan ? plan.sym : '';
+    this.renderLevelRows(plan && plan.levels && plan.levels.length ? plan.levels : [{ price: '', qty: '' }]);
+    $('pf-delete').style.display = plan ? 'block' : 'none';
+    $('pf-err').style.display = 'none';
+    this.planLiveHint();
+    this.planRecompute();
+    $('plansheet').style.display = 'flex';
+  }
+  closePlanForm() { document.getElementById('plansheet').style.display = 'none'; }
+
+  // Build the level input rows (price + qty + remove). Max 7.
+  renderLevelRows(levels) {
+    const box = document.getElementById('pf-levels');
+    box.replaceChildren(...levels.slice(0, 7).map(l => this.levelRow(l.price, l.qty)));
+    this.planSyncAddBtn();
+  }
+  levelRow(price, qty) {
+    const row = document.createElement('div');
+    row.className = 'pf-row';
+    row.style.cssText = 'display:flex;gap:10px;align-items:center';
+    const inp = 'box-sizing:border-box;width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit';
+    row.innerHTML =
+      `<input class="pf-price" type="number" step="any" min="0" placeholder="ราคา" value="${price ?? ''}" style="flex:1;${inp}">` +
+      `<input class="pf-qty" type="number" step="any" min="0" placeholder="จำนวน" value="${qty ?? ''}" style="flex:1;${inp}">` +
+      `<span class="pf-rm" style="cursor:pointer;color:var(--sub);font-size:18px;padding:0 4px;line-height:1">✕</span>`;
+    return row;
+  }
+  planSyncAddBtn() {
+    const n = document.querySelectorAll('#pf-levels .pf-row').length;
+    document.getElementById('pf-add').style.display = n >= 7 ? 'none' : 'inline';
+  }
+  readLevels() {
+    return Array.from(document.querySelectorAll('#pf-levels .pf-row')).map(r => ({
+      price: r.querySelector('.pf-price').value, qty: r.querySelector('.pf-qty').value }));
+  }
+  planRecompute() {
+    const m = this.planMath(this.readLevels());
+    const inst = this.getInst((document.getElementById('pf-sym').value || '').trim().toUpperCase());
+    const delta = inst.price && m.avg ? (inst.price / m.avg - 1) * 100 : null;
+    document.getElementById('pf-summary').innerHTML =
+      `<div style="display:flex;justify-content:space-between;margin-bottom:7px"><span style="color:var(--sub)">จำนวนรวม</span><span style="font-weight:600;color:var(--ink)">${this.nf(m.totalQty, m.totalQty % 1 ? 2 : 0)}</span></div>` +
+      `<div style="display:flex;justify-content:space-between;margin-bottom:7px"><span style="color:var(--sub)">เงินลงทุนรวม</span><span style="font-weight:600;color:var(--ink)">${this.val(m.totalCost)}</span></div>` +
+      `<div style="display:flex;justify-content:space-between"><span style="color:var(--sub)">ต้นทุนเฉลี่ย</span><span style="font-weight:700;color:var(--gold)">${this.price(m.avg)}</span></div>` +
+      (delta == null ? '' : `<div style="display:flex;justify-content:space-between;margin-top:7px;padding-top:7px;border-top:1px solid var(--line)"><span style="color:var(--sub)">เทียบราคาล่าสุด ${this.price(inst.price)}</span><span style="font-weight:600;color:${delta <= 0 ? 'var(--up)' : 'var(--down)'}">${(delta >= 0 ? '+' : '−') + Math.abs(delta).toFixed(1)}%</span></div>`);
+  }
+  planLiveHint() {
+    const sym = (document.getElementById('pf-sym').value || '').trim().toUpperCase();
+    const inst = sym ? this.getInst(sym) : null;
+    document.getElementById('pf-live').textContent =
+      inst && inst.price ? `${inst.name !== sym ? inst.name + ' · ' : ''}ราคาล่าสุด ${this.price(inst.price)}` : '';
+  }
+
+  wirePlanForm() {
+    const $ = id => document.getElementById(id);
+    if ($('pf-save')._wired) return; $('pf-save')._wired = true;
+    $('pf-save').addEventListener('click', () => this.savePlan());
+    $('pf-delete').addEventListener('click', () => this.deletePlan());
+    $('plansheet-close').addEventListener('click', () => this.closePlanForm());
+    $('plansheet-bg').addEventListener('click', () => this.closePlanForm());
+    $('pf-add').addEventListener('click', () => {
+      if (document.querySelectorAll('#pf-levels .pf-row').length >= 7) return;
+      $('pf-levels').appendChild(this.levelRow('', '')); this.planSyncAddBtn();
+    });
+    // Delegated: recompute on any level edit; remove a row on ✕.
+    $('pf-levels').addEventListener('input', () => this.planRecompute());
+    $('pf-levels').addEventListener('click', e => {
+      if (!e.target.classList.contains('pf-rm')) return;
+      if (document.querySelectorAll('#pf-levels .pf-row').length <= 1) return;  // keep at least one
+      e.target.closest('.pf-row').remove(); this.planSyncAddBtn(); this.planRecompute();
+    });
+    $('pf-sym').addEventListener('input', () => { this.planLiveHint(); this.planRecompute(); });
+  }
+
+  async savePlan() {
+    const $ = id => document.getElementById(id);
+    const err = $('pf-err'); const showErr = m => { err.textContent = m; err.style.display = 'block'; };
+    const sym = ($('pf-sym').value || '').trim().toUpperCase();
+    const levels = this.readLevels()
+      .map(l => ({ price: Number(l.price) || 0, qty: Number(l.qty) || 0 }))
+      .filter(l => l.qty > 0 && l.price >= 0);
+    if (!sym) return showErr('กรอกสัญลักษณ์สินทรัพย์');
+    if (!levels.length) return showErr('กรอกอย่างน้อยหนึ่งระดับ (ราคาและจำนวน)');
+    const rowData = { user_id: this.user.id, sym, levels };
+    const res = this.editingPlanId
+      ? await SB.from('buy_plans').update(rowData).eq('id', this.editingPlanId)
+      : await SB.from('buy_plans').insert(rowData);
+    if (res.error) return showErr(res.error.message);
+    this.closePlanForm();
+    await this.loadPlans();
+    this.showToast(this.editingPlanId ? 'แก้ไขแผนแล้ว' : 'บันทึกแผนแล้ว');
+  }
+  async deletePlan() {
+    if (!this.editingPlanId) return;
+    await SB.from('buy_plans').delete().eq('id', this.editingPlanId);
+    this.closePlanForm();
+    await this.loadPlans();
+    this.showToast('ลบแผนแล้ว');
+  }
+
   // ---- formatters / math (verbatim from prototype; RATE now live) ----
   nf(n, d) { return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
   price(usd) {
@@ -450,7 +569,7 @@ class Component {
     for (const k in rootStyle) if (k.startsWith('--')) rootEl.style.setProperty(k, rootStyle[k]);
 
     const ac = (n) => (scr === n ? t.gold : t.faint);
-    const c = { overview: ac('overview'), watch: ac('watch'), dividends: ac('dividends'), transactions: ac('transactions'), account: ac('account') };
+    const c = { overview: ac('overview'), watch: ac('watch'), planner: ac('planner'), dividends: ac('dividends'), transactions: ac('transactions'), account: ac('account') };
 
     const onSeg = S.cur === 'thb';
     const thbBg = onSeg ? t.gold : 'transparent', thbCol = onSeg ? t.ongold : t.sub;
@@ -577,6 +696,24 @@ class Component {
     const txnGroups = txnByDate, txnEmpty = !txnGroups.length;
     const divUsd = S.txns.filter(t => t.side === 'dividend').reduce((a, t) => a + Number(t.qty) * Number(t.price_usd), 0);
 
+    // Phase 4: saved DCA plans list (Planner screen).
+    const planList = (S.buyPlans || []).map(p => {
+      const levels = p.levels || [];
+      const m = this.planMath(levels);
+      const inst = this.getInst(p.sym);
+      const delta = inst.price && m.avg ? (inst.price / m.avg - 1) * 100 : null;
+      return {
+        sym: p.sym, name: inst.name && inst.name !== p.sym ? inst.name : '',
+        sub: levels.length + ' ระดับ · ' + this.qtyLabel(inst, m.totalQty),
+        avgStr: this.price(m.avg), costStr: this.val(m.totalCost),
+        hasDelta: delta != null,
+        deltaStr: delta == null ? '' : (delta >= 0 ? '+' : '−') + Math.abs(delta).toFixed(1) + '% เทียบราคาล่าสุด',
+        deltaCol: delta != null && delta <= 0 ? 'var(--up)' : 'var(--down)',
+        onOpen: () => this.openPlanForm(p)
+      };
+    });
+    const planEmpty = !planList.length;
+
     const tkState = S.ticket; let tk = {}, showTicket = false;
     if (tkState) {
       showTicket = true; const s = this.getInst(tkState.sym); const buy = tkState.mode === 'buy';
@@ -594,8 +731,10 @@ class Component {
     return {
       rootStyle, c,
       isOverview: scr === 'overview', isDetail: scr === 'detail', isWatch: scr === 'watch',
+      isPlanner: scr === 'planner',
       isDividends: scr === 'dividends', isTransactions: scr === 'transactions', isAccount: scr === 'account',
       showTabs: scr !== 'detail',
+      planList, planEmpty, newPlan: () => this.openPlanForm(null),
       thbBg, thbCol, usdBg, usdCol,
       darkTrack: mkTrack(S.dark), darkKnob: mkKnob(S.dark),
       notifTrack: mkTrack(S.notif), notifKnob: mkKnob(S.notif),
@@ -616,6 +755,7 @@ class Component {
       showTicket, tk, showToast: !!S.toast, toastMsg: S.toast,
       goOverview: () => this.setState({ screen: 'overview' }),
       goWatch: () => this.setState({ screen: 'watch' }),
+      goPlanner: () => this.setState({ screen: 'planner' }),
       goDividends: () => this.setState({ screen: 'dividends' }),
       goTransactions: () => this.setState({ screen: 'transactions' }),
       goAccount: () => this.setState({ screen: 'account' }),
@@ -681,6 +821,7 @@ async function boot() {
   app.user = session.user;
   app.render();
   app.wireTxnForm();               // bind the (DOM) add/edit transaction sheet
+  app.wirePlanForm();              // bind the (DOM) buy-planner sheet
   await app.loadUserData();        // pull txns / watchlist / prefs, then re-render
   await app.hydrateHeldSymbols();  // recover discovered holdings (market+price) so totals aren't $0
   tick(); setInterval(tick, 60000);

@@ -221,6 +221,28 @@ gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 
     `FINNHUB_KEY` env, already set), browser: gold in watchlist/strip, gold detail candles,
     news list renders, 0 console errors. SET-index strip ticker skipped (THB index breaks
     USD-canonical reuse) — add later if wanted (`^SET.BK` resolves).
+- ✅ **Phase 4 — Buy Planner (DCA), CODE DONE + UI/MATH VERIFIED LIVE 2026-06-26 (awaiting SQL).**
+  New **วางแผน** (Planner) screen + 6th nav item (gold ladder icon). Plain-DOM `#plansheet`
+  (outside the reactive template, like `#txnsheet`): free-text symbol + live-price hint,
+  1–7 price/qty level rows (add/remove, ✕), live summary card — total qty, total invest,
+  **avg cost** (=Σ price·qty / Σqty), and % vs live price. Saved-plans list on the screen;
+  tap to reopen/edit/delete. Persistence: new `buy_plans` table (`user_id`,`sym`,
+  `levels jsonb`,`created_at`, own-rows RLS) — migration
+  `web/supabase/migrations/20260626000001_buy_plans.sql`. app.js: `planMath`/`openPlanForm`/
+  `renderLevelRows`/`planRecompute`/`savePlan`/`deletePlan`/`loadPlans`; `buy_plans` added to
+  `loadUserData` Promise.all; `wirePlanForm()` bound at boot; `isPlanner`/`goPlanner`/
+  `c.planner`/`planList` in renderVals.
+  - **ponytail:** skipped the quota-charging symbol search in the planner — levels are
+    user-typed, a calculator shouldn't burn the daily search quota. Free-text symbol +
+    live-price prefill. Add search if wanted.
+  - **Verified (Puppeteer, fresh signup `sutest_p4_*@mun-test.dev`, local static server +
+    live Supabase):** planner + 6-item nav render, sheet opens, 3 levels (200×10/180×10/
+    150×5) → avg $182 / ฿6,079, +51.2% vs live ฿9,190, live hint "Apple", add/remove level
+    works. Only console errors = `buy_plans` 404 (table not yet created — expected).
+  - **TO FINISH (user):** run the migration in the Supabase SQL editor, then verify
+    save→reload→persist→delete. Until then `savePlan` shows "Could not find table
+    public.buy_plans" and keeps the sheet open (graceful, no crash). Throwaway test user
+    `sutest_p4_*@mun-test.dev` left in auth.users.
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line
