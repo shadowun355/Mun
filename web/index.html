@@ -132,6 +132,28 @@
   </div>
 </div>
 
+<!-- Price-alert sheet (Phase 6). Plain DOM like #txnsheet. Thresholds entered in the
+     display currency, stored USD-canonical. Wired in app.js (wireAlertForm). -->
+<div id="alertsheet" style="display:none;position:fixed;inset:0;z-index:60;align-items:flex-end;justify-content:center;font-family:'Anuphan',sans-serif">
+  <div id="alertsheet-bg" style="position:absolute;inset:0;background:rgba(20,16,8,.42)"></div>
+  <div style="position:relative;width:100%;max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:24px 24px 0 0;padding:22px 20px 28px;max-height:92vh;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div id="alertsheet-title" style="font-size:18px;font-weight:700;color:var(--ink)">แจ้งเตือนราคา</div>
+      <div id="alertsheet-close" style="cursor:pointer;font-size:20px;color:var(--sub);line-height:1;padding:4px 8px">✕</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end">
+      <div style="flex:none"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">เงื่อนไข</div>
+        <select id="af-op" style="box-sizing:border-box;padding:12px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit">
+          <option value="above">ขึ้นถึง</option><option value="below">ลงถึง</option></select></div>
+      <div style="flex:1"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">ราคา (<span id="af-cur">฿</span>)</div>
+        <input id="af-price" type="number" step="any" min="0" placeholder="0.00" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></div>
+      <button id="af-add" style="flex:none;padding:12px 18px;border:none;border-radius:12px;background:var(--gold);color:var(--ongold);font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit">เพิ่ม</button>
+    </div>
+    <div id="af-err" style="display:none;font-size:13px;color:var(--down);margin-top:10px"></div>
+    <div id="af-list" style="margin-top:16px"></div>
+  </div>
+</div>
+
 <!-- Phone markup, lifted from the design prototype. Bound by the engine in app.js:
      {{ expr }} interpolation, <sc-if>, <sc-for as=>, onClick. -->
 <template id="tpl">
@@ -253,7 +275,10 @@
         <div style="padding:6px 20px 4px;display:flex;align-items:center;justify-content:space-between">
           <div onClick="{{ back }}" style="cursor:pointer;width:36px;height:36px;display:flex;align-items:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></div>
           <div style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--ink);letter-spacing:.5px">{{ d.sym }}</div><div style="font-size:11.5px;color:var(--sub)">{{ d.name2 }}</div></div>
-          <div onClick="{{ toggleStar }}" style="cursor:pointer;width:30px;display:flex;justify-content:flex-end"><svg width="23" height="23" viewBox="0 0 24 24" fill="{{ d.starFill }}" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 21l-5.3 1 1.3-5.9-4.5-4 6-.6z"></path></svg></div>
+          <div style="display:flex;align-items:center;gap:14px;justify-content:flex-end">
+            <div onClick="{{ openAlert }}" style="cursor:pointer;position:relative;display:flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="{{ d.bellFill }}" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 01-3.4 0"></path></svg><sc-if value="{{ d.hasAlert }}"><span style="position:absolute;top:-3px;right:-4px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--gold);color:var(--ongold);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ d.alertCount }}</span></sc-if></div>
+            <div onClick="{{ toggleStar }}" style="cursor:pointer;display:flex"><svg width="23" height="23" viewBox="0 0 24 24" fill="{{ d.starFill }}" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 21l-5.3 1 1.3-5.9-4.5-4 6-.6z"></path></svg></div>
+          </div>
         </div>
         <div style="padding:14px 24px 0">
           <div style="font-size:12.5px;color:var(--sub)">{{ d.subline }}</div>

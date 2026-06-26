@@ -81,7 +81,7 @@ class Component {
       screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
       range: '1d', watchFilter: 'all', txnFilter: 'all',
       selected: 'AAPL', starred: {}, notif: true,
-      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}
+      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: []
     };
   }
 
@@ -125,15 +125,16 @@ class Component {
 
   // ---- Supabase data layer (per-user; RLS scopes every row to this.user) ----
   async loadUserData() {
-    const [tx, wl, pf, bp] = await Promise.all([
+    const [tx, wl, pf, bp, al] = await Promise.all([
       SB.from('transactions').select('*').order('ts', { ascending: false }),
       SB.from('watchlist').select('sym'),
       SB.from('prefs').select('*').maybeSingle(),
-      SB.from('buy_plans').select('*').order('created_at', { ascending: false })  // [] if migration not yet run
+      SB.from('buy_plans').select('*').order('created_at', { ascending: false }),  // [] if migration not yet run
+      SB.from('alerts').select('*').order('created_at', { ascending: false })       // [] if migration not yet run
     ]);
     const starred = {}; (wl.data || []).forEach(r => { starred[r.sym] = true; });
     const p = pf.data;
-    this.setState(Object.assign({ txns: tx.data || [], starred, buyPlans: bp.data || [] },
+    this.setState(Object.assign({ txns: tx.data || [], starred, buyPlans: bp.data || [], alerts: al.data || [] },
       p ? { dark: p.dark, cur: p.cur, notif: p.notif } : {}));
   }
   async loadTxns() {
@@ -542,6 +543,88 @@ class Component {
     if (info.dateIso) $('tf-date').value = info.dateIso.slice(0, 10);
   }
 
+  // ---- Price Alerts (Phase 6): in-app threshold alerts -------------------
+  // Plain-DOM sheet (#alertsheet) listing this symbol's alerts + an add form. Thresholds
+  // are entered in the DISPLAY currency (what the user sees) and stored USD-canonical.
+  // The 60s tick checks active alerts against live prices → toast + one-shot deactivate.
+  // ponytail: Telegram/push deferred (needs a bot token + server cron). In-app only for v1.
+  async loadAlerts() {
+    const { data } = await SB.from('alerts').select('*').order('created_at', { ascending: false });
+    this.setState({ alerts: data || [] });
+  }
+  openAlertForm(sym) {
+    const $ = id => document.getElementById(id);
+    const inst = this.getInst(sym);
+    this.alertSym = sym;
+    $('alertsheet-title').textContent = 'แจ้งเตือนราคา · ' + sym;
+    $('af-op').value = 'above';
+    $('af-price').value = inst.price ? this.price(inst.price).replace(/[^\d.]/g, '') : '';
+    $('af-cur').textContent = this.state.cur === 'thb' ? '฿' : '$';
+    $('af-err').style.display = 'none';
+    $('alertsheet').style.display = 'flex';
+    this.renderAlertList();
+  }
+  closeAlertForm() { document.getElementById('alertsheet').style.display = 'none'; }
+  renderAlertList() {
+    const box = document.getElementById('af-list');
+    const mine = (this.state.alerts || []).filter(a => a.sym === this.alertSym);
+    if (!mine.length) { box.innerHTML = '<div style="font-size:13px;color:var(--sub);padding:4px 0">ยังไม่มีการแจ้งเตือน</div>'; return; }
+    box.replaceChildren(...mine.map(a => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)';
+      const opTxt = a.op === 'above' ? 'ขึ้นถึง' : 'ลงถึง';
+      const state = a.active ? '' : ' <span style="color:var(--faint)">· แจ้งแล้ว</span>';
+      row.innerHTML = `<span style="font-size:14px;color:${a.active ? 'var(--ink)' : 'var(--faint)'}">${opTxt} ${this.price(Number(a.price))}${state}</span>` +
+        `<span data-del="${a.id}" style="cursor:pointer;color:var(--down);font-size:13px;font-weight:600">ลบ</span>`;
+      return row;
+    }));
+  }
+  wireAlertForm() {
+    const $ = id => document.getElementById(id);
+    if ($('af-add')._wired) return; $('af-add')._wired = true;
+    $('af-add').addEventListener('click', () => this.saveAlert());
+    $('alertsheet-close').addEventListener('click', () => this.closeAlertForm());
+    $('alertsheet-bg').addEventListener('click', () => this.closeAlertForm());
+    $('af-list').addEventListener('click', e => {
+      const id = e.target.getAttribute('data-del'); if (id) this.deleteAlert(id);
+    });
+  }
+  async saveAlert() {
+    const $ = id => document.getElementById(id);
+    const err = $('af-err'); const showErr = m => { err.textContent = m; err.style.display = 'block'; };
+    const disp = parseFloat($('af-price').value);
+    if (!(disp > 0)) return showErr('กรอกราคาที่ถูกต้อง');
+    const priceUsd = this.state.cur === 'thb' ? disp / this.RATE : disp;   // → USD-canonical
+    const res = await SB.from('alerts').insert({ user_id: this.user.id, sym: this.alertSym, op: $('af-op').value, price: priceUsd });
+    if (res.error) return showErr(res.error.message);
+    $('af-price').value = '';
+    await this.loadAlerts();
+    this.renderAlertList();
+    this.showToast('ตั้งการแจ้งเตือนแล้ว');
+  }
+  async deleteAlert(id) {
+    await SB.from('alerts').delete().eq('id', id);
+    await this.loadAlerts();
+    this.renderAlertList();
+  }
+  // Called after each live refresh. Fire any active alert whose threshold is crossed:
+  // toast, mark triggered_at + deactivate (one-shot). Compare in USD-canonical.
+  async checkAlerts() {
+    const active = (this.state.alerts || []).filter(a => a.active);
+    if (!active.length) return;
+    const fired = active.filter(a => {
+      const p = this.getInst(a.sym).price; if (!p) return false;
+      return a.op === 'above' ? p >= Number(a.price) : p <= Number(a.price);
+    });
+    if (!fired.length) return;
+    const nowIso = new Date().toISOString();
+    await Promise.all(fired.map(a => SB.from('alerts').update({ active: false, triggered_at: nowIso }).eq('id', a.id)));
+    await this.loadAlerts();
+    const a = fired[0];
+    this.showToast('⏰ ' + a.sym + ' ' + (a.op === 'above' ? 'ขึ้นถึง' : 'ลงถึง') + ' ' + this.price(Number(a.price)) +
+      (fired.length > 1 ? ' +' + (fired.length - 1) : ''));
+  }
+
   // ---- formatters / math (verbatim from prototype; RATE now live) ----
   nf(n, d) { return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
   price(usd) {
@@ -677,7 +760,10 @@ class Component {
       hasRealized: Math.abs(selRealized) > 1e-9,
       realizedStr: (selRealized >= 0 ? '+' : '−') + this.val(Math.abs(selRealized)),
       realizedCol: selRealized >= 0 ? 'var(--up)' : 'var(--down)',
-      starFill: S.starred[sel.sym] ? 'var(--gold)' : 'none'
+      starFill: S.starred[sel.sym] ? 'var(--gold)' : 'none',
+      alertCount: (S.alerts || []).filter(a => a.active && a.sym === sel.sym).length,
+      hasAlert: (S.alerts || []).some(a => a.active && a.sym === sel.sym),
+      bellFill: (S.alerts || []).some(a => a.active && a.sym === sel.sym) ? 'var(--goldsoft)' : 'none'
     };
 
     // iOS delta: 'etf' (กองทุน) filter chip
@@ -812,6 +898,7 @@ class Component {
       goOverview: () => this.setState({ screen: 'overview' }),
       goWatch: () => this.setState({ screen: 'watch' }),
       goPlanner: () => this.setState({ screen: 'planner' }),
+      openAlert: () => this.openAlertForm(this.state.selected),
       goDividends: () => { this.setState({ screen: 'dividends' }); this.loadDividends(); },
       goTransactions: () => this.setState({ screen: 'transactions' }),
       goAccount: () => this.setState({ screen: 'account' }),
@@ -878,6 +965,7 @@ async function boot() {
   app.render();
   app.wireTxnForm();               // bind the (DOM) add/edit transaction sheet
   app.wirePlanForm();              // bind the (DOM) buy-planner sheet
+  app.wireAlertForm();             // bind the (DOM) price-alert sheet
   await app.loadUserData();        // pull txns / watchlist / prefs, then re-render
   await app.hydrateHeldSymbols();  // recover discovered holdings (market+price) so totals aren't $0
   tick(); setInterval(tick, 60000);
@@ -920,7 +1008,7 @@ function wireGate() {
 }
 
 // Live data on load + every 60s + on tab refocus.
-async function tick() { try { await MarketAPI.refresh(app); } catch (e) {} }
+async function tick() { try { await MarketAPI.refresh(app); if (app) await app.checkAlerts(); } catch (e) {} }
 
 Auth.onChange(session => { if (session) boot(); });
 boot();

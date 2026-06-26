@@ -77,9 +77,26 @@ Make Transactions a real editable ledger, not just buy-ticket output.
 - **TO FINISH (user/push):** push → Render redeploys proxy (`mun-re6q`); then live curl
   `/dividends?sym=SCHD` + browser check. No env/migration needed (keyless, no DB).
 
-### Phase 6 — Watchlist alerts
+### Phase 6 — Watchlist alerts ✅ IN-APP SLICE DONE + VERIFIED 2026-06-26 (awaiting SQL; Telegram deferred)
 - Price alert thresholds per symbol. Delivery: in-app first; Telegram bot optional
   (needs a bot token + a server cron — separate infra, decide then).
+- **In-app slice shipped:** new `alerts` table (`user_id`,`sym`,`op` above/below,`price`
+  USD-canonical,`active`,`triggered_at`), own-rows RLS — migration
+  `web/supabase/migrations/20260626000002_alerts.sql`. Detail-header **bell** (gold badge =
+  active count) opens `#alertsheet` (plain DOM): op select + price (entered in display
+  currency, stored USD-canonical) + add; list with delete. The 60s `tick()` calls
+  `checkAlerts()` → fires any active alert whose threshold is crossed: toast + mark
+  `triggered_at` + deactivate (one-shot). `loadAlerts`/`openAlertForm`/`saveAlert`/
+  `deleteAlert`/`checkAlerts`, alerts added to `loadUserData`, `wireAlertForm` at boot.
+- **ponytail / STOP boundary:** Telegram/push deferred — needs a bot token + a server cron
+  (the browser tick only fires while the tab is open). In-app only for v1. Also skipped a
+  global bell badge (per-symbol count only).
+- **Verified (fresh build, browser):** bell renders on detail, sheet opens (title/currency/
+  prefill correct ฿9,190 for AAPL), injected below-threshold alert → `checkAlerts` fires
+  toast "⏰ AAPL ลงถึง …" one-shot; DB write on missing table handled gracefully (toast still
+  fires). Console errors only the expected `alerts`/`buy_plans` 404 (tables not yet migrated).
+- **TO FINISH (user):** run the `alerts` migration in the Supabase SQL editor, then verify
+  set→persist→trigger-on-tick→deactivate→survives reload.
 
 ### Phase 7 — Portfolio analytics
 - Deeper analytics: allocation by class/asset, per-asset % cap + over-cap warning,

@@ -263,6 +263,24 @@ gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 
     inline for the test. On the live site a fresh deploy is fine.
   - **TO FINISH:** push → Render auto-redeploys `mun-re6q`; live curl `/dividends?sym=SCHD` +
     browser check. No env/migration (keyless, no DB).
+- ✅ **Phase 6 — Watchlist alerts (in-app slice), DONE + VERIFIED 2026-06-26 (awaiting SQL; Telegram deferred).**
+  New `alerts` table (`user_id`,`sym`,`op` above/below,`price` USD-canonical,`active`,
+  `triggered_at`, own-rows RLS) — migration `web/supabase/migrations/20260626000002_alerts.sql`.
+  Detail-header **bell** (gold badge = active-alert count) → `#alertsheet` (plain DOM): op
+  select + price (entered in DISPLAY currency, stored USD-canonical) + add; list w/ delete.
+  60s `tick()` now calls `checkAlerts()` → fires active alerts whose threshold is crossed:
+  toast + `triggered_at` + deactivate (one-shot, compared USD-canonical). app.js:
+  `loadAlerts`/`openAlertForm`/`renderAlertList`/`wireAlertForm`/`saveAlert`/`deleteAlert`/
+  `checkAlerts`; `alerts` in `loadUserData` Promise.all; `wireAlertForm` at boot;
+  `d.alertCount`/`hasAlert`/`bellFill` + `openAlert` in renderVals.
+  - **STOP boundary (Telegram):** deferred — needs a bot token + server cron (the browser
+    tick only fires with the tab open). In-app only for v1. Decide Telegram when wanted.
+  - **Verified (fresh build on :8779, browser, throwaway `sutest_p6_*@mun-test.dev`):** bell
+    renders, sheet opens (title/฿-currency/prefill ฿9,190 ok), injected below-threshold alert
+    → checkAlerts fires toast "⏰ AAPL ลงถึง …" one-shot; missing-table DB write handled
+    gracefully. Console errs only expected `alerts`/`buy_plans` 404.
+  - **TO FINISH (user):** run the `alerts` migration, then verify set→persist→trigger→
+    deactivate→reload.
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line
