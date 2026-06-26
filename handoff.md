@@ -296,6 +296,32 @@ gold design). Phases: 1 Transactions ledger · 2 FIFO/tax · 3 gold+market · 4 
     `buy_plans`/`alerts`/`snapshots` 404.
   - **TO FINISH (user):** run the `portfolio_snapshots` migration; trend fills as daily rows
     accrue (seed a couple rows to see it immediately).
+- ✅ **Phase 8 — Freemium tiers, CODE DONE + VERIFIED (client) 2026-06-26 (awaiting SQL; Stripe deferred).**
+  Reuses SymbolUniverse `plans`/`subscriptions` (no sub/`free` → Free; active non-free → Pro).
+  **DB is source of truth:** `BEFORE INSERT` triggers enforce Free caps — ≤5 distinct traded
+  assets, ≤1 buy plan, ≤3 alerts — raising `FREE_*_CAP`; client `capMsg()` translates to a Thai
+  upgrade prompt (saveTxn/savePlan/saveAlert route errors through it). Migration
+  `web/supabase/migrations/20260626000004_freemium_caps.sql` = `user_is_pro()` + 3 trigger fns +
+  a `subs_own_mock_write` RLS policy (lets a user self-serve a `provider='mock'` sub). app.js:
+  `subscriptions` in loadUserData → `isPro`; `setMockTier(pro)` upgrade/downgrade; renderVals
+  `tierLabel`/`isPro`/`isFree` + handlers. Account screen: tier badge + upgrade card (Free) /
+  cancel card (Pro).
+  - **STOP boundary (Stripe):** real payment deferred — schema provider-agnostic
+    (`functions/BILLING.md`); mock path RLS-gated to `provider='mock'`, real billing stays
+    service-role + webhook. Wire Stripe when wanted.
+  - **Verified (fresh build :8781, browser, throwaway `sutest_p8_*`):** Free badge + upgrade
+    card + free-caps text render; mock upgrade pre-migration fails gracefully (RLS policy not
+    applied → toast "violates RLS", no flip); injected Pro → Pro card + cancel; capMsg unit-ok.
+  - **TO FINISH (user):** run the migration (AFTER buy_plans + alerts), then verify 6th asset /
+    2nd plan / 4th alert blocked + mock upgrade→Pro→caps lift→cancel→Free.
+
+- **PortPro milestone: all 8 phases code-complete + verified 2026-06-26.** Live site has
+  Phases 1–7 (pushed). **Pending user action:** (1) push Phase 8; (2) run the 4 new migrations
+  in the Supabase SQL editor IN ORDER — `buy_plans` → `alerts` → `portfolio_snapshots` →
+  `freemium_caps` (the last depends on the first two). External boundaries flagged for a
+  decision: **Telegram** (Phase 6 alert delivery) + **Stripe** (Phase 8 payment). Throwaway
+  test users left in auth.users: `sutest_p4/p6/p7/p8_*@mun-test.dev`.
+
 - **Reuse:** the interactive `.dc.html` prototype already held the whole app as a
   vanilla JS class (data model, portfolio math, both themes, full markup). Lifted it
   into `web/`; only the proprietary `DCLogic` runtime was rebuilt as an ~120-line

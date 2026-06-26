@@ -516,7 +516,24 @@
         <div style="margin:14px 16px 0;display:flex;align-items:center;gap:15px;padding:18px 20px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
           <div style="width:56px;height:56px;border-radius:50%;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:600;font-size:20px;border:1px solid var(--line)">{{ userInitial }}</div>
           <div style="flex:1"><div style="font-size:18px;font-weight:600;color:var(--ink)">{{ userName }}</div><div style="font-size:13px;color:var(--sub)">{{ userEmail }}</div></div>
+          <span style="font-size:12px;font-weight:700;color:var(--gold);background:var(--goldsoft);border:1px solid var(--line);padding:5px 11px;border-radius:9px">{{ tierLabel }}</span>
         </div>
+        <!-- Phase 8: freemium tier card -->
+        <sc-if value="{{ isPro }}">
+        <div style="margin:14px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:15px;font-weight:700;color:var(--ink)">Mun Pro</div><div style="font-size:12.5px;color:var(--sub);margin-top:2px">สินทรัพย์ แผน และการแจ้งเตือนไม่จำกัด</div></div>
+            <span onClick="{{ downgradeMock }}" style="font-size:12.5px;font-weight:600;color:var(--down);cursor:pointer;padding:8px 12px;border:1px solid var(--line);border-radius:10px">ยกเลิก</span>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ isFree }}">
+        <div style="margin:14px 16px 0;background:linear-gradient(135deg,var(--goldsoft),var(--card));border:1px solid var(--gold);border-radius:20px;padding:18px">
+          <div style="font-size:16px;font-weight:700;color:var(--ink)">อัปเกรดเป็น Mun Pro</div>
+          <div style="font-size:12.5px;color:var(--sub);margin-top:4px;line-height:1.5">แผนฟรี: สูงสุด 5 สินทรัพย์ · 1 แผนซื้อ · 3 การแจ้งเตือน<br>Pro: ไม่จำกัดทั้งหมด + การวิเคราะห์ขั้นสูง</div>
+          <div onClick="{{ upgradeMock }}" style="margin-top:14px;height:46px;border-radius:13px;background:var(--gold);color:var(--ongold);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;cursor:pointer">อัปเกรด (จำลอง)</div>
+        </div>
+        </sc-if>
         <div style="margin:18px 16px 0;font-size:12.5px;font-weight:600;color:var(--sub);padding-left:6px">การแสดงผล</div>
         <div style="margin:9px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 18px">
           <div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--line)">

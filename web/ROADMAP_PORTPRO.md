@@ -116,10 +116,33 @@ Make Transactions a real editable ledger, not just buy-ticket output.
 - **TO FINISH (user):** run the `portfolio_snapshots` migration; trend fills in as daily rows
   accrue (seed a couple rows to see the line immediately).
 
-### Phase 8 — Freemium tiers
+### Phase 8 — Freemium tiers ✅ CODE DONE + VERIFIED (client) 2026-06-26 (awaiting SQL; Stripe deferred)
 - Free (≤5 assets, limited planner/watchlist) vs Pro (unlimited + advanced).
 - Gate features client-side + enforce in Supabase RLS. Payment (Stripe) is its own
   decision/infra step — wire last.
+- **Reuses** the SymbolUniverse `plans`/`subscriptions` tables (no sub / `free` → Free;
+  active non-free sub → Pro). **DB is the source of truth:** `BEFORE INSERT` triggers enforce
+  Free caps — ≤5 distinct traded assets (`transactions`), ≤1 buy plan, ≤3 alerts — raising
+  `FREE_*_CAP`; the client `capMsg()` translates that into a Thai upgrade prompt (no fragile
+  client counting). Migration `web/supabase/migrations/20260626000004_freemium_caps.sql`
+  (`user_is_pro()` + 3 trigger fns + a `subs_own_mock_write` RLS policy). Account screen: tier
+  badge + an upgrade card (Free) / cancel card (Pro); `setMockTier()` self-serves a
+  `provider='mock'` subscription.
+- **STOP boundary (Stripe):** real payment deferred — schema is already provider-agnostic
+  (`functions/BILLING.md`); the mock path is RLS-gated to `provider='mock'`, real billing stays
+  service-role + webhook. Flag for the user to wire Stripe when wanted.
+- **Verified (fresh build, browser):** Account shows Free badge + upgrade card + free-caps
+  text; mock upgrade pre-migration fails gracefully (RLS policy not yet applied → toast, no
+  state flip); injecting Pro renders the Pro card + cancel; `capMsg` unit-checked.
+- **TO FINISH (user):** run `20260626000004_freemium_caps.sql` (AFTER buy_plans + alerts
+  migrations), then verify: 6th asset / 2nd plan / 4th alert blocked with upgrade prompt;
+  mock upgrade → Pro → caps lift → cancel → Free.
+
+## Status
+**All 8 phases code-complete + verified.** Live site (pushed): Phases 1–7. Pending user
+action: run the 4 new migrations (buy_plans, alerts, portfolio_snapshots, freemium_caps) in
+the Supabase SQL editor, in that order; push Phase 8. External boundaries flagged for a
+decision: Telegram (Phase 6 delivery), Stripe (Phase 8 payment).
 
 ## Notes
 - Copyright: clean-room. No PortPro assets/text/markup. Add a `© 2026 Mun` footer (Mun's own).

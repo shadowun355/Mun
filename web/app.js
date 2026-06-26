@@ -81,7 +81,7 @@ class Component {
       screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
       range: '1d', watchFilter: 'all', txnFilter: 'all',
       selected: 'AAPL', starred: {}, notif: true,
-      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: [], snapshots: []
+      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: [], snapshots: [], isPro: false
     };
   }
 
@@ -125,18 +125,41 @@ class Component {
 
   // ---- Supabase data layer (per-user; RLS scopes every row to this.user) ----
   async loadUserData() {
-    const [tx, wl, pf, bp, al, sn] = await Promise.all([
+    const [tx, wl, pf, bp, al, sn, sub] = await Promise.all([
       SB.from('transactions').select('*').order('ts', { ascending: false }),
       SB.from('watchlist').select('sym'),
       SB.from('prefs').select('*').maybeSingle(),
       SB.from('buy_plans').select('*').order('created_at', { ascending: false }),  // [] if migration not yet run
       SB.from('alerts').select('*').order('created_at', { ascending: false }),      // [] if migration not yet run
-      SB.from('portfolio_snapshots').select('date,total_usd').order('date', { ascending: true }).limit(90)
+      SB.from('portfolio_snapshots').select('date,total_usd').order('date', { ascending: true }).limit(90),
+      SB.from('subscriptions').select('plan_id,status,expires_at').in('status', ['active', 'trialing']).maybeSingle()
     ]);
     const starred = {}; (wl.data || []).forEach(r => { starred[r.sym] = true; });
     const p = pf.data;
-    this.setState(Object.assign({ txns: tx.data || [], starred, buyPlans: bp.data || [], alerts: al.data || [], snapshots: sn.data || [] },
+    const isPro = !!(sub.data && sub.data.plan_id !== 'free');
+    this.setState(Object.assign({ txns: tx.data || [], starred, buyPlans: bp.data || [], alerts: al.data || [], snapshots: sn.data || [], isPro },
       p ? { dark: p.dark, cur: p.cur, notif: p.notif } : {}));
+  }
+
+  // Phase 8: translate a server cap exception into a Thai upgrade prompt. The DB triggers
+  // are the source of truth; the client only relays the message.
+  capMsg(error) {
+    const m = (error && error.message) || '';
+    if (m.includes('FREE_ASSET_CAP')) return 'แผนฟรีถือได้สูงสุด 5 สินทรัพย์ — อัปเกรดเป็น Pro ที่หน้าบัญชี';
+    if (m.includes('FREE_PLAN_CAP')) return 'แผนฟรีบันทึกได้ 1 แผน — อัปเกรดเป็น Pro';
+    if (m.includes('FREE_ALERT_CAP')) return 'แผนฟรีตั้งเตือนได้ 3 รายการ — อัปเกรดเป็น Pro';
+    return m;
+  }
+  // Mock upgrade/downgrade (demo). Real billing is Stripe via service-role webhook — this
+  // self-serve path is gated to provider='mock' by RLS. ponytail: no payment, no proration.
+  async setMockTier(pro) {
+    await SB.from('subscriptions').update({ status: 'canceled' }).eq('user_id', this.user.id).in('status', ['active', 'trialing']);
+    if (pro) {
+      const { error } = await SB.from('subscriptions').insert({ user_id: this.user.id, plan_id: 'pro', status: 'active', provider: 'mock' });
+      if (error) { this.showToast(error.message); return; }
+    }
+    this.setState({ isPro: pro });
+    this.showToast(pro ? 'อัปเกรดเป็น Pro แล้ว (จำลอง)' : 'กลับสู่แผนฟรีแล้ว');
   }
 
   // Phase 7: capture today's portfolio value (USD-canonical). Upsert one row per
@@ -380,7 +403,7 @@ class Component {
     const res = this.editingId
       ? await SB.from('transactions').update(rowData).eq('id', this.editingId)
       : await SB.from('transactions').insert(rowData);
-    if (res.error) return showErr(res.error.message);
+    if (res.error) return showErr(this.capMsg(res.error));
     this.closeTxnForm();
     await this.loadTxns();
     this.showToast(this.editingId ? 'แก้ไขรายการแล้ว' : 'เพิ่มรายการแล้ว');
@@ -516,7 +539,7 @@ class Component {
     const res = this.editingPlanId
       ? await SB.from('buy_plans').update(rowData).eq('id', this.editingPlanId)
       : await SB.from('buy_plans').insert(rowData);
-    if (res.error) return showErr(res.error.message);
+    if (res.error) return showErr(this.capMsg(res.error));
     this.closePlanForm();
     await this.loadPlans();
     this.showToast(this.editingPlanId ? 'แก้ไขแผนแล้ว' : 'บันทึกแผนแล้ว');
@@ -613,7 +636,7 @@ class Component {
     if (!(disp > 0)) return showErr('กรอกราคาที่ถูกต้อง');
     const priceUsd = this.state.cur === 'thb' ? disp / this.RATE : disp;   // → USD-canonical
     const res = await SB.from('alerts').insert({ user_id: this.user.id, sym: this.alertSym, op: $('af-op').value, price: priceUsd });
-    if (res.error) return showErr(res.error.message);
+    if (res.error) return showErr(this.capMsg(res.error));
     $('af-price').value = '';
     await this.loadAlerts();
     this.renderAlertList();
@@ -930,6 +953,9 @@ class Component {
       addTxn: () => this.openTxnForm(null),
       exportCSV: () => this.exportCSV(),
       exportTax: () => this.exportTax(),
+      isPro: S.isPro, isFree: !S.isPro, tierLabel: S.isPro ? 'Pro' : 'Free',
+      upgradeMock: () => this.setMockTier(true),
+      downgradeMock: () => this.setMockTier(false),
       userEmail: (this.user && this.user.email) || '',
       userName: (this.user && (this.user.email || '').split('@')[0]) || 'นักลงทุน',
       userInitial: (this.user && (this.user.email || 'M')[0].toUpperCase()) || 'M',
