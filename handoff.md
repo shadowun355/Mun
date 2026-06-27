@@ -1,5 +1,19 @@
 # Handoff
 
+## Latest (2026-06-27 #6) — Thai ticker labels + Thai logos (PUSHED, redeploying)
+User report: `.BK` leaking into UI labels (e.g. `SCB.BK เกิน 25%`) + Thai stocks no logo.
+Commit `7ec1bff`, pushed (static redeploy).
+- `dispSym(sym)` = strip trailing `.BK` for **human-facing labels only** (holdings holdSub,
+  concentration `concRows`/`overCapMsg`, detail header, alert toast). Catalog key stays
+  `.BK`-qualified for quote/candle calls (the GLD-collision key scheme is untouched).
+- `logoUrl(inst)` now **re-adds `.BK` for Thai** (`cat==='thai'||native==='thb'||sym .BK`).
+  Parqet keys SET logos by the `.BK` ticker — verified: `PTT.BK/CPALL.BK/KBANK.BK/ADVANC.BK/
+  DELTA.BK/SCB.BK` → 200, bare `PTT/CPALL` → 404. US stays bare (AAPL/JEPQ/SCHD 200). 404s
+  still drop the img → gold initials fallback (no broken images).
+- `demo()` asserts added (dispSym + TH/US logoUrl). Node sanity-check passed.
+- **จัดกลุ่ม button "missing" was a stale browser cache** — live HTML was correct; after a
+  hard refresh (Cmd+Shift+R) the user saw it. No code change needed for that.
+
 ## Latest (2026-06-27 #5) — Phase B: custom allocation groups (VERIFIED LIVE 2026-06-27)
 **Migration applied + persistence verified live on mun-3skf.onrender.com** (commit `3f4f561`,
 pushed). Fresh signup `sutest_alloc_v1@mun-test.dev`: add group (live `alloc_groups` insert,
