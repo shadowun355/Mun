@@ -1,5 +1,24 @@
 # Handoff
 
+## Latest (2026-06-27 #9) — fix: Thai (.BK) symbols stubbed as foreign (PUSHED, redeploying)
+Commit `36f6ce3`. User: TISCO showing ต่างประเทศ instead of หุ้นไทย. Root cause = `stubInst()`
+hardcoded `cat:'foreign'/native:'usd'`. A `.BK`-qualified key is ALWAYS Thai SET, but a
+not-yet-hydrated one fell to `getInst → stubInst` → foreign. **Why watchlist-only:**
+`hydrateHeldSymbols` only rebuilds HELD (txn-derived) syms from `symbol_metadata`, NOT
+watchlist-only starred syms — so a starred `TISCO.BK` after reload had no seed/hydrated row
+→ stub → foreign. Fix: `stubInst` infers `thai/thb/SET` from a trailing `.BK`.
+- **Diagnosed live (Puppeteer + throwaway signup `sutest_tisco_v1@mun-test.dev`, live edge):**
+  search `tisco` → top hit TISCO (TH), TISCO-R (TH), then foreign cross-listings (47T.F FRA,
+  47T.SG, TSCFY PNK = US); registerHit(top) → `TISCO.BK` cat thai (correct); `symbol_metadata`
+  cache has TISCO market TH (correct). So search/register/cache/hydrate all fine — ONLY the
+  stub was wrong. Verified post-fix: starred `TISCO.BK` (unhydrated) → getInst cat thai/thb/SET,
+  dispSym "TISCO", demo() 0 fails.
+- **ponytail follow-up (not done):** watchlist-only discovered syms still aren't hydrated with
+  live price on reload (they render at stub price 0 until quoted). The stub fix makes the
+  CATEGORY correct regardless; live-price hydration for watched-but-unheld syms is a separate
+  enhancement. Throwaway user `sutest_tisco_v1@mun-test.dev` left in auth.users.
+- File: `web/app.js` (stubInst + demo assert).
+
 ## Latest (2026-06-27 #8) — เครื่องมือ Tools hub + Pro-gating + DCA sim (PUSHED, redeploying)
 Commit `77c8522`. PortPro-style Tools hub (screenshots: portpro.app/Tools/*). Plan:
 `~/.claude/plans/inherited-meandering-pike.md`.
