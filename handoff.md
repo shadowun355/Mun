@@ -1,5 +1,33 @@
 # Handoff
 
+## Latest (2026-06-27 #3) — news sentiment tags (CODE DONE + VERIFIED, awaiting commit/push)
+Each translated news item now tags which of the user's assets it affects, colored by
+direction: green (positive) / red (negative). Proxy `/news` adds `en` (English headline+
+summary) + `sentiment` ('pos'/'neg'/'' from a keyword lexicon `_sentiment()` on the English
+text). Client `renderVals` builds a ticker/name index over the catalog, scans each story's
+`en` text, emits `tags` (≤4 symbol chips) colored `var(--up)`/`var(--down)`/`var(--sub)` by
+sentiment; `index.html` renders a chip row (nested `sc-for`) between the Thai brief and the
+source credit. Verified in-browser: "Apple surge"→green AAPL; "Tesla plunges, Nvidia slips"→
+red NVDA+TSLA; "markets mixed/Fed"→no tags; "Bitcoin rallies"→green BTC. Screenshot matched.
+- **ponytail:** lexicon sentiment + substring symbol match — keyless, good enough. Upgrade to
+  Finnhub news-sentiment API or an LLM pass if accuracy matters. Article-level sentiment colors
+  all its chips (one tone per story).
+- Files: `proxy/app.py`, `web/app.js`, `web/index.html` (uncommitted; push redeploys proxy).
+
+## Latest (2026-06-27 #2) — real brand logos (CODE DONE + VERIFIED, awaiting commit/push)
+Holdings/dividends/ticket badges now show real issuer/brand logos (J.P.Morgan, Schwab,
+SPDR, Tesla, …) instead of 2-letter initials, matching a target reference design. Source:
+keyless Parqet logo CDN (`assets.parqet.com/logos/symbol/<TICKER>?format=png&size=96`).
+`app.js` `logoUrl(inst)` (bare ticker, strips `.BK`/`-USD`) + `logoUrl` added to the holdings,
+dividends, and ticket item builders. `index.html`: each badge overlays `<img>` absolutely over
+the existing initials badge; static `onerror="this.remove()"` → on 404 the img drops and the
+gold initials show through (no broken images). Verified in-browser: JEPQ→J.P.M, GLD→SPDR,
+TSLA→Tesla, SCHD→Schwab render; Thai PTT + junk ticker fall back to initials. Only console
+noise = the expected fallback 404s.
+- **ponytail:** unofficial keyless CDN (same style as Yahoo/gtx). Thai SET tickers mostly absent
+  on Parqet → graceful initials fallback. Swap CDN if coverage/quality matters.
+- Files: `web/app.js`, `web/index.html` (uncommitted).
+
 ## Latest (2026-06-27) — Thai news brief + GLD collision fix (CODE DONE + VERIFIED, awaiting push→deploy)
 Two changes, not yet committed/pushed (push redeploys Render proxy = needed for news live).
 - **News = Thai brief, no click-through.** Proxy `/news` now translates each Finnhub

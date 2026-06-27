@@ -243,6 +243,14 @@ class Component {
   // stub so renderVals never dereferences undefined. Real prices arrive when the
   // symbol is registered (search pick) or, for seeded symbols, via the proxy refresh.
   getInst(sym) { return this.data[sym] || this.stubInst(sym); }
+
+  // Real brand/issuer logo (J.P.Morgan, Schwab, SPDR, …) by ticker, keyless via the
+  // Parqet logo CDN. Markup overlays this <img> on the initials badge; on 404 the img
+  // removes itself and the 2-letter fallback shows through. Bare ticker (no .BK/-USD).
+  logoUrl(inst) {
+    const t = (inst.bare || inst.sym).replace(/\.BK$/, '').replace(/-USD$/, '');
+    return `https://assets.parqet.com/logos/symbol/${encodeURIComponent(t)}?format=png&size=96`;
+  }
   stubInst(sym) {
     return { sym, name: sym, name2: sym, logo: sym.slice(0, 2).toUpperCase(),
       exch: '', native: 'usd', cat: 'foreign', kind: 'stock', price: 0, dayPct: 0,
@@ -768,7 +776,7 @@ class Component {
 
     const holdings = heldSyms.map(sym => {
       const s = this.getInst(sym); const qty = H[sym].qty; const v = qty * s.price;
-      return { logo: s.logo, name: s.name, holdSub: s.sym + ' · ' + this.qtyLabel(s, qty), valStr: this.val(v), pct: this.pctStr(s.dayPct), pctColor: s.dayPct >= 0 ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
+      return { logo: s.logo, logoUrl: this.logoUrl(s), name: s.name, holdSub: s.sym + ' · ' + this.qtyLabel(s, qty), valStr: this.val(v), pct: this.pctStr(s.dayPct), pctColor: s.dayPct >= 0 ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
     });
 
     let totalUsd = 0, dayAbsUsd = 0;   // no cash — total is the sum of holdings
@@ -866,7 +874,25 @@ class Component {
       return { sym: s.sym, name: s.name, priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: up ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
     });
     // Phase 3: news list (from MarketAPI.refresh → S.news; [] until first load / on failure).
-    const newsItems = (S.news || []).map(n => ({ headline: n.headline, summary: n.summary || '', hasSummary: !!(n.summary && n.summary !== n.headline), source: n.source || 'ข่าว', url: n.url }));
+    // News → which of the user's assets it affects + sentiment color. Build a ticker/name
+    // index over the catalog (held/watched/seed), scan each story's English text, color the
+    // matched chips green (pos) / red (neg) by the article's sentiment. ponytail: name/ticker
+    // substring match + lexicon sentiment — good enough; no per-symbol NLP.
+    const newsIdx = Object.keys(this.data).map(sym => {
+      const s = this.data[sym];
+      const ticker = (s.bare || s.sym).replace(/\.BK$/, '').toLowerCase();
+      const names = [s.name, s.name2].filter(nm => nm && /[a-z]{3}/i.test(nm)).map(nm => nm.toLowerCase());
+      return { sym, ticker, names, re: new RegExp('\\b' + ticker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b') };
+    });
+    const newsItems = (S.news || []).map(n => {
+      const en = (n.en || '').toLowerCase();
+      const col = n.sentiment === 'pos' ? 'var(--up)' : n.sentiment === 'neg' ? 'var(--down)' : 'var(--sub)';
+      const tags = en ? [...new Set(newsIdx
+        .filter(e => (e.ticker.length >= 3 && e.re.test(en)) || e.names.some(nm => nm.length >= 3 && en.includes(nm)))
+        .map(e => e.sym))].slice(0, 4).map(sym => ({ sym, color: col })) : [];
+      return { headline: n.headline, summary: n.summary || '', hasSummary: !!(n.summary && n.summary !== n.headline),
+        source: n.source || 'ข่าว', url: n.url, tags, hasTags: tags.length > 0 };
+    });
 
     const tfDefs = [['all','ทั้งหมด'],['buy','ซื้อ'],['sell','ขาย'],['dividend','ปันผล']];
     const txnTabs = tfDefs.map(([k, label]) => { const on = S.txnFilter === k; return { label, weight: on ? '600' : '400', bg: on ? t.gold : t.card, col: on ? t.ongold : t.sub, bd: on ? t.gold : t.line, onClick: () => this.setState({ txnFilter: k }) }; });
@@ -911,7 +937,7 @@ class Component {
       divAnnualUsd += qty * ttmUsd;
       const nextIso = j.nextEst ? new Date(j.nextEst * 1000).toISOString() : null;
       return {
-        logo: inst.logo, name: inst.name,
+        logo: inst.logo, logoUrl: this.logoUrl(inst), name: inst.name,
         xdSub: 'XD ' + thDate(j.last.date) + ' · ' + this.price(amtUsd) + '/หุ้น · ' + (j.yieldPct || 0).toFixed(2) + '%',
         payout: '+' + this.val(qty * amtUsd),
         nextStr: j.nextEst ? 'คาด ' + thDate(j.nextEst) : '—',
@@ -945,7 +971,7 @@ class Component {
       const totalUsd2 = tkState.qty * s.price;
       const label = buy ? 'ยืนยันการซื้อ' : 'ยืนยันการขาย';
       tk = {
-        logo: s.logo, title: (buy ? 'ซื้อ ' : 'ขาย ') + s.sym, sub: s.name2,
+        logo: s.logo, logoUrl: this.logoUrl(s), title: (buy ? 'ซื้อ ' : 'ขาย ') + s.sym, sub: s.name2,
         priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: s.dayPct >= 0 ? 'var(--up)' : 'var(--down)',
         qty: tkState.qty, total: this.val(totalUsd2),
         btnBg: buy ? t.gold : t.down, btnCol: buy ? t.ongold : '#fff',

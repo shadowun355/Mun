@@ -187,11 +187,35 @@ def _to_thai(text):
         return text  # fall back to English for this field only
 
 
+# ponytail: keyword-lexicon sentiment on the English text — crude but keyless and good
+# enough to color a news item green/red. Upgrade path: Finnhub news-sentiment API (premium)
+# or an LLM pass if accuracy matters.
+_POS = {"surge", "surges", "surged", "gain", "gains", "gained", "rise", "rises", "rose",
+        "rally", "rallies", "rallied", "jump", "jumps", "jumped", "beat", "beats", "record",
+        "soar", "soars", "soared", "climb", "climbs", "climbed", "strong", "growth", "boost",
+        "boosts", "profit", "profits", "upgrade", "upgraded", "win", "wins", "tops", "outperform",
+        "bullish", "high", "highs", "optimism", "rebound", "recover", "recovers"}
+_NEG = {"fall", "falls", "fell", "drop", "drops", "dropped", "plunge", "plunges", "plunged",
+        "miss", "misses", "missed", "cut", "cuts", "loss", "losses", "weak", "weaker", "decline",
+        "declines", "declined", "slump", "slumps", "slip", "slips", "slid", "downgrade", "fear",
+        "fears", "risk", "risks", "sink", "sinks", "tumble", "tumbles", "tumbled", "crash",
+        "bearish", "warn", "warns", "warning", "lawsuit", "probe", "selloff", "low", "lows", "fraud"}
+
+
+def _sentiment(text):
+    """'pos' | 'neg' | '' from a positive/negative word count on the English text."""
+    words = "".join(c.lower() if c.isalnum() else " " for c in (text or "")).split()
+    score = sum(w in _POS for w in words) - sum(w in _NEG for w in words)
+    return "pos" if score > 0 else "neg" if score < 0 else ""
+
+
 @app.get("/news")
 def news(limit: int = 10):
     """General market news, Finnhub key hidden server-side. Each item's headline +
     summary are translated to Thai (brief = the main idea, no click-through needed);
-    `source`/`url` are kept only for credit. Returns [] on failure (UI hides news)."""
+    `source`/`url` are kept only for credit. `en` (English headline+summary) + `sentiment`
+    let the client tag which of the user's symbols a story affects, colored by direction.
+    Returns [] on failure (UI hides news)."""
     if not FINNHUB_KEY:
         return []
     try:
@@ -203,8 +227,10 @@ def news(limit: int = 10):
 
     def render(a):
         # Per-article try: a single translation hiccup degrades to English, not blank.
+        en = (a["headline"] + ". " + a.get("summary", "")).strip()
         return {"headline": _to_thai(a["headline"]),
                 "summary": _to_thai(a.get("summary", "")),
+                "en": en, "sentiment": _sentiment(en),
                 "source": a.get("source", ""), "url": a["url"],
                 "datetime": a.get("datetime", 0)}
 

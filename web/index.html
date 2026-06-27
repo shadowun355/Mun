@@ -268,7 +268,7 @@
           <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 16px">
             <sc-for list="{{ holdings }}" as="h">
               <div onClick="{{ h.onOpen }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer">
-                <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">{{ h.logo }}</div>
+                <div style="position:relative;width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px;overflow:hidden">{{ h.logo }}<img src="{{ h.logoUrl }}" onerror="this.remove()" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff"></div>
                 <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ h.name }}</div><div style="font-size:12.5px;color:var(--sub)">{{ h.holdSub }}</div></div>
                 <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ h.valStr }}</div><div style="font-size:12.5px;font-weight:600;color:{{ h.pctColor }}">{{ h.pct }}</div></div>
               </div>
@@ -287,7 +287,14 @@
                 <sc-if value="{{ n.hasSummary }}">
                   <div style="font-size:13px;color:var(--sub);margin-top:5px;line-height:1.5">{{ n.summary }}</div>
                 </sc-if>
-                <a href="{{ n.url }}" target="_blank" rel="noopener" style="display:inline-block;font-size:11px;color:var(--faint);margin-top:6px;text-decoration:none">ที่มา: {{ n.source }} ↗</a>
+                <sc-if value="{{ n.hasTags }}">
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+                    <sc-for list="{{ n.tags }}" as="g">
+                      <span style="font-size:11px;font-weight:700;color:{{ g.color }};border:1px solid {{ g.color }};border-radius:7px;padding:2px 8px">{{ g.sym }}</span>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <a href="{{ n.url }}" target="_blank" rel="noopener" style="display:inline-block;font-size:11px;color:var(--faint);margin-top:8px;text-decoration:none">ที่มา: {{ n.source }} ↗</a>
               </div>
             </sc-for>
           </div>
@@ -449,7 +456,7 @@
           <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
             <sc-for list="{{ divRows }}" as="dv">
               <div onClick="{{ dv.onSuggest }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer">
-                <div style="width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px">{{ dv.logo }}</div>
+                <div style="position:relative;width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px;overflow:hidden">{{ dv.logo }}<img src="{{ dv.logoUrl }}" onerror="this.remove()" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff"></div>
                 <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ dv.name }}</div><div style="font-size:12.5px;color:var(--sub)">{{ dv.xdSub }}</div></div>
                 <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">{{ dv.payout }}</div><div style="font-size:12px;color:var(--sub)">{{ dv.nextStr }}</div></div>
               </div>
@@ -593,7 +600,7 @@
       <div style="position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:28px 28px 0 0;border-top:1px solid var(--line);padding:10px 22px 30px">
         <div style="width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 16px"></div>
         <div style="display:flex;align-items:center;gap:13px;margin-bottom:20px">
-          <div style="width:44px;height:44px;border-radius:13px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:15px">{{ tk.logo }}</div>
+          <div style="position:relative;width:44px;height:44px;border-radius:13px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:15px;overflow:hidden">{{ tk.logo }}<img src="{{ tk.logoUrl }}" onerror="this.remove()" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff"></div>
           <div style="flex:1"><div style="font-size:17px;font-weight:700;color:var(--ink)">{{ tk.title }}</div><div style="font-size:12.5px;color:var(--sub)">{{ tk.sub }}</div></div>
           <div style="text-align:right"><div style="font-size:16px;font-weight:600;color:var(--ink)">{{ tk.priceStr }}</div><div style="font-size:12px;color:{{ tk.pctColor }};font-weight:600">{{ tk.pct }}</div></div>
         </div>
