@@ -423,13 +423,14 @@ class Component {
     } catch (e) { /* leave stub price; user can type it in the form */ }
   }
 
-  // On load, held symbols absent from the seed catalog (discovered in a past session)
-  // would render at $0 and zero out the portfolio total. Recover them: pull their
-  // market/name from the public symbol_metadata cache, register, and fetch one quote.
-  // The quote is FREE — these symbols are already cached, so it's a cache hit (no charge).
+  // On load, discovered symbols absent from the seed catalog (held OR watchlist-only,
+  // added in a past session) would render at $0. Recover them: pull their market/name from
+  // the public symbol_metadata cache, register, and fetch one quote. The quote is FREE —
+  // these symbols are already cached, so it's a cache hit (no charge).
   async hydrateHeldSymbols() {
     const held = Object.keys(this.fifo(this.state.txns).holdings);
-    const missing = held.filter(s => !this.data[s]);
+    const starred = Object.keys(this.state.starred || {}).filter(s => this.state.starred[s]);
+    const missing = [...new Set([...held, ...starred])].filter(s => !this.data[s]);
     if (!missing.length) return;
     // A held key may be market-qualified (e.g. 'GLD.BK' = Thai KTAM gold); symbol_metadata
     // stores the bare ticker ('GLD'). Look up by bare, then re-key the same way registerHit
