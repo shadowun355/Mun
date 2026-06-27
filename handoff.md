@@ -1,5 +1,16 @@
 # Handoff
 
+## Latest (2026-06-27 #7) — Polish: full .BK label sweep (PUSHED, redeploying)
+Commit `54b72d3`. `dispSym()` now applied to ALL user-facing ticker surfaces missed in #6:
+watchlist rows, transaction-list titles (`ซื้อ SCB.BK`→`ซื้อ SCB`), alloc-assign sheet labels,
+txn-form search-box prefill (pick/native-edit/dividend paths), alert-sheet title. Confirmed
+`saveTxn` reads the hidden `tf-sym` (catalog key, stays `.BK`) not the visible search box, so
+stripping the display is safe. Search-results dropdown intentionally keeps the raw provider
+ticker (shown next to a `· TH` market tag — disambiguates). `node --check` clean.
+- **No browser verify this round** — Claude-in-Chrome extension not connected ("Browser
+  extension is not connected"). Pure code review + node syntax/logic checks. User should
+  hard-refresh + eyeball holdings/watchlist/txn list for clean Thai tickers + logos.
+
 ## Latest (2026-06-27 #6) — Thai ticker labels + Thai logos (PUSHED, redeploying)
 User report: `.BK` leaking into UI labels (e.g. `SCB.BK เกิน 25%`) + Thai stocks no logo.
 Commit `7ec1bff`, pushed (static redeploy).
