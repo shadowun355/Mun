@@ -1,5 +1,32 @@
 # Handoff
 
+## Latest (2026-06-27 #8) — เครื่องมือ Tools hub + Pro-gating + DCA sim (PUSHED, redeploying)
+Commit `77c8522`. PortPro-style Tools hub (screenshots: portpro.app/Tools/*). Plan:
+`~/.claude/plans/inherited-meandering-pike.md`.
+- **New `tools` screen** (`<sc-if isTools>`) = header + 5-tab pill bar (`toolTabs`, state
+  `S.toolTab` default `avg`): ถัวเฉลี่ย · DCA · ปันผล · จัดสรร · ภาษี.
+- **Nav folded:** removed standalone `วางแผน` + `ปันผล` nav items, replaced by ONE
+  `เครื่องมือ` item (wrench icon). Nav now 5: ภาพรวม · เฝ้าดู · เครื่องมือ · รายการ · บัญชี.
+  Deleted dead `goPlanner`/`goDividends` + the standalone dividends screen block.
+- **Tabs:** ถัวเฉลี่ย (free) = the existing Buy Planner (planList/openPlanForm reused).
+  DCA (free) = NEW `dcaSim()` compound projection → `#dcasheet` (plain DOM, presets
+  VOO/SPY/QQQ/กำหนดเอง + initial/monthly/growth%/years → FV, invested, growth%, yearly
+  growth-curve SVG). ปันผล/จัดสรร/ภาษี (**Pro**) reuse divRows/alloc/exportTax; free users
+  get an upgrade paywall card (reuses Phase 8 `isPro`/`upgradeMock`).
+- **Bypass closed:** Overview `จัดกลุ่ม` (`openAlloc`) + Transactions `ภาษี` (`exportTax`)
+  route free users to the paywalled hub tab instead of running. Gating is client-side UX
+  (note: alloc_groups writes could be server-gated later like Phase 8 caps).
+- **Payment still MOCK** (`setMockTier`). Real provider deferred — recommend **Lemon
+  Squeezy/Paddle** (merchant-of-record, no Thai company) over Omise/Stripe (PromptPay but
+  need a business entity). Separate later phase.
+- **Verified (Puppeteer, no login, `new Component()` + seeded txns):** demo() 0 fails;
+  5-item nav + 5 tabs render; Free → paywall on ปันผล/จัดสรร/ภาษี; DCA VOO 10k/500/10%/10y →
+  ฿4,713,542 (=$129,493×36.4) / invested ฿2,548,000 / +85.0% + curve drawn; Pro flip →
+  all 3 tabs unlock real tools. `dcaSim` math node-checked. Screenshots confirmed
+  (DCA sheet + dividend paywall match PortPro).
+- Files: `web/app.js` (dcaSim, hub state/handlers, DCA sheet controller, gating), `web/index.html`
+  (hub screen, nav swap, #dcasheet). No migration/proxy/deps.
+
 ## Latest (2026-06-27 #7) — Polish: full .BK label sweep (PUSHED, redeploying)
 Commit `54b72d3`. `dispSym()` now applied to ALL user-facing ticker surfaces missed in #6:
 watchlist rows, transaction-list titles (`ซื้อ SCB.BK`→`ซื้อ SCB`), alloc-assign sheet labels,
