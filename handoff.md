@@ -1,5 +1,24 @@
 # Handoff
 
+## Latest (2026-06-27 #4) — Phase A: Thai-native txn price + watchlist add/delete (DONE+VERIFIED)
+Plan: `~/.claude/plans/generic-yawning-grove.md` (3 tasks; this is Phase A, client-only).
+- **Txn price/fee in the asset's native currency.** `เพิ่มรายการ` price/fee now show `฿` for
+  Thai assets, `$` else — keyed on `getInst(sym).native` (NOT the `S.cur` display toggle).
+  `setPriceCcy(sym)` sets the `tf-cur`/`tf-cur2` glyphs; `openTxnForm`/`pickHit` prefill in
+  native units (×RATE for Thai); `saveTxn` converts native→USD-canonical (`/RATE`) before
+  storing `price_usd`+`fee`. Round-trip ฿ may drift if RATE moved (USD-canonical store) —
+  consistent with how all THB holdings reprice.
+- **Watchlist add/delete.** `เฝ้าดู` is now driven by the user's `starred` set (was a hardcoded
+  class array). "+" → `#watchsheet` (plain DOM, reuses `Fn.call('/search')`) → pick stars the
+  symbol; each row has a ✕ delete (`removeWatch` → `saveStar(sym,false)`); empty-state when
+  none. `watchRows` uses `getInst` (discovered/uncataloged starred syms render a stub, no
+  crash). `wireWatchAdd()` bound at boot.
+- **Verified (Puppeteer, no login needed — `new Component()`):** demo() 0 fails; Thai PTT edit
+  → ฿ glyph + 32.98 / 132.5 prefill (×36.4), screenshot confirmed; US AAPL → $ unchanged;
+  ฿→USD conversion round-trips; watchlist renders from starred incl. uncataloged ZZZZ, empty
+  state, add-sheet opens. Live Supabase save round-trip not tested here (same div formula).
+- Files: `web/app.js`, `web/index.html`. **Phase B (custom allocation groups + migration) NEXT.**
+
 ## Latest (2026-06-27 #3) — news sentiment tags (CODE DONE + VERIFIED, awaiting commit/push)
 Each translated news item now tags which of the user's assets it affects, colored by
 direction: green (positive) / red (negative). Proxy `/news` adds `en` (English headline+

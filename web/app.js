@@ -194,6 +194,51 @@ class Component {
     else SB.from('watchlist').delete().eq('sym', sym).then(() => {});
   }
 
+  // ---- Watchlist add/delete (the screen is driven by S.starred) -------------
+  removeWatch(sym) {
+    this.setState(st => { const n = Object.assign({}, st.starred); delete n[sym]; return { starred: n }; });
+    this.saveStar(sym, false);
+  }
+  openWatchAdd() { const b = document.getElementById('wa-search'); document.getElementById('watchsheet').style.display = 'flex'; if (b) { b.value = ''; b.focus(); } document.getElementById('wa-results').style.display = 'none'; }
+  closeWatchAdd() { document.getElementById('watchsheet').style.display = 'none'; }
+  wireWatchAdd() {
+    const $ = id => document.getElementById(id);
+    if (!$('wa-search') || $('wa-search')._wired) return; $('wa-search')._wired = true;
+    $('watchsheet-close').addEventListener('click', () => this.closeWatchAdd());
+    $('watchsheet-bg').addEventListener('click', () => this.closeWatchAdd());
+    $('wa-search').addEventListener('input', () => {
+      clearTimeout(this._waT);
+      const q = $('wa-search').value.trim();
+      if (q.length < 2) { $('wa-results').style.display = 'none'; return; }   // ≥2 chars: a miss charges quota
+      this._waT = setTimeout(() => this.runWatchSearch(q), 350);
+    });
+  }
+  async runWatchSearch(q) {
+    const box = document.getElementById('wa-results');
+    let hits;
+    try { hits = (await Fn.call('/search', { q })).data || []; }
+    catch (e) {
+      const msg = e.message === 'QUOTA_EXCEEDED' ? 'เกินโควต้าค้นหาวันนี้' : 'ค้นหาไม่สำเร็จ';
+      box.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:var(--down)">${msg}</div>`; box.style.display = 'block'; return;
+    }
+    if (!hits.length) { box.innerHTML = '<div style="padding:12px 14px;font-size:13px;color:var(--sub)">ไม่พบสินทรัพย์</div>'; box.style.display = 'block'; return; }
+    box.replaceChildren(...hits.slice(0, 8).map(h => {
+      const row = document.createElement('div');
+      row.style.cssText = 'padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--line);font-size:14px;color:var(--ink)';
+      row.innerHTML = `<b>${h.symbol}</b> <span style="color:var(--sub)">· ${h.market}${h.assetType ? ' · ' + h.assetType : ''}</span><div style="font-size:12px;color:var(--sub);margin-top:1px">${h.name || ''}</div>`;
+      row.addEventListener('click', () => this.pickWatch(h));
+      return row;
+    }));
+    box.style.display = 'block';
+  }
+  pickWatch(h) {
+    const inst = this.registerHit(h);          // catalog key (may be market-qualified)
+    this.setState(st => ({ starred: Object.assign({}, st.starred, { [inst.sym]: true }) }));
+    this.saveStar(inst.sym, true);
+    this.closeWatchAdd();
+    this.showToast('เพิ่มในเฝ้าดูแล้ว');
+  }
+
   // Holdings are derived from the transaction log: net qty per symbol, and a
   // buy-weighted average cost. Only positive net positions count as holdings.
   // FIFO pass over the ledger (Phase 2). Matches each sell against the oldest open buy
@@ -250,6 +295,15 @@ class Component {
   logoUrl(inst) {
     const t = (inst.bare || inst.sym).replace(/\.BK$/, '').replace(/-USD$/, '');
     return `https://assets.parqet.com/logos/symbol/${encodeURIComponent(t)}?format=png&size=96`;
+  }
+
+  // Set the txn-form price/fee currency glyphs from the chosen asset's native currency
+  // (NOT the app's ฿/$ display toggle — a Thai stock is priced in ฿ regardless of view).
+  setPriceCcy(sym) {
+    const thb = this.getInst(sym).native === 'thb';
+    const g = thb ? '฿' : '$';
+    const a = document.getElementById('tf-cur'), b = document.getElementById('tf-cur2');
+    if (a) a.textContent = g; if (b) b.textContent = g;
   }
   stubInst(sym) {
     return { sym, name: sym, name2: sym, logo: sym.slice(0, 2).toUpperCase(),
@@ -335,8 +389,11 @@ class Component {
     $('tf-results').style.display = 'none';
     $('tf-type').value = row ? row.side : 'buy';
     $('tf-qty').value = row ? row.qty : '';
-    $('tf-price').value = row ? row.price_usd : (this.data[sym] ? this.data[sym].price.toFixed(2) : '');
-    $('tf-fee').value = row ? (row.fee || 0) : 0;
+    // Price/fee shown in the asset's NATIVE currency (฿ for Thai, $ else); stored USD-canonical.
+    this.setPriceCcy(sym);
+    const div = inst.native === 'thb' ? this.RATE : 1;
+    $('tf-price').value = row ? (row.price_usd * div).toFixed(2) : (inst.price ? (inst.price * div).toFixed(2) : '');
+    $('tf-fee').value = row ? +((row.fee || 0) * div).toFixed(2) : 0;
     $('tf-date').value = (row ? row.ts : new Date().toISOString()).slice(0, 10);
     $('tf-delete').style.display = row ? 'block' : 'none';
     $('tf-err').style.display = 'none';
@@ -398,8 +455,10 @@ class Component {
     $('tf-sym').value = inst.sym;   // catalog key (may be market-qualified, e.g. GLD.BK)
     $('tf-search').value = inst.sym + (h.name ? ' · ' + h.name : '');
     $('tf-results').style.display = 'none';
+    this.setPriceCcy(inst.sym);                  // ฿/$ glyph follows the picked asset
     await this.quoteInst(inst);
-    if (!this.editingId && inst.price) $('tf-price').value = inst.price.toFixed(2);
+    const div = inst.native === 'thb' ? this.RATE : 1;   // prefill in native units
+    if (!this.editingId && inst.price) $('tf-price').value = (inst.price * div).toFixed(2);
   }
 
   // ponytail: one runnable check for the crash-safety + market-mapping logic.
@@ -431,7 +490,9 @@ class Component {
     const qty = parseFloat($('tf-qty').value), price = parseFloat($('tf-price').value);
     const fee = parseFloat($('tf-fee').value) || 0, date = $('tf-date').value;
     if (!(qty > 0) || !(price >= 0) || !date) return showErr('กรอกจำนวน ราคา และวันที่ให้ถูกต้อง');
-    const rowData = { user_id: this.user.id, sym, side: type, qty, price_usd: price, fee, ts: new Date(date).toISOString() };
+    // Thai assets are entered in ฿ → convert to USD-canonical for storage.
+    const div = this.getInst(sym).native === 'thb' ? this.RATE : 1;
+    const rowData = { user_id: this.user.id, sym, side: type, qty, price_usd: price / div, fee: fee / div, ts: new Date(date).toISOString() };
     const res = this.editingId
       ? await SB.from('transactions').update(rowData).eq('id', this.editingId)
       : await SB.from('transactions').insert(rowData);
@@ -863,10 +924,17 @@ class Component {
     // iOS delta: 'etf' (กองทุน) filter chip
     const wfDefs = [['all','ทั้งหมด'],['thai','หุ้นไทย'],['foreign','ต่างประเทศ'],['crypto','คริปโต'],['etf','กองทุน'],['gold','ทองคำ']];
     const watchTabs = wfDefs.map(([k, label]) => { const on = S.watchFilter === k; return { label, weight: on ? '600' : '400', bg: on ? t.gold : t.card, col: on ? t.ongold : t.sub, bd: on ? t.gold : t.line, onClick: () => this.setState({ watchFilter: k }) }; });
-    const watchRows = this.watchList.filter(sym => S.watchFilter === 'all' || this.data[sym].cat === S.watchFilter).map(sym => {
-      const s = this.data[sym]; const up = s.dayPct >= 0;
-      return { sym: s.sym, name2: s.name2, priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: up ? 'var(--up)' : 'var(--down)', spark: up ? this.USPARK : this.DSPARK, onOpen: () => this.open(sym) };
-    });
+    // Watchlist = the user's own starred set (persisted). getInst (not this.data[sym]) so a
+    // discovered/uncataloged starred symbol renders a stub instead of crashing the render.
+    const watchRows = Object.keys(S.starred || {})
+      .filter(sym => S.starred[sym])
+      .map(sym => this.getInst(sym))
+      .filter(s => S.watchFilter === 'all' || s.cat === S.watchFilter)
+      .map(s => {
+        const up = s.dayPct >= 0;
+        return { sym: s.sym, name2: s.name2, priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: up ? 'var(--up)' : 'var(--down)', spark: up ? this.USPARK : this.DSPARK, onOpen: () => this.open(s.sym), onRemove: () => this.removeWatch(s.sym) };
+      });
+    const watchEmpty = watchRows.length === 0;
 
     // Phase 3: market overview strip — curated live tickers from the catalog (no new fetch).
     const marketStrip = ['XAU', 'BTC', 'SPY', 'PTT'].map(sym => {
@@ -989,7 +1057,7 @@ class Component {
       thbBg, thbCol, usdBg, usdCol,
       darkTrack: mkTrack(S.dark), darkKnob: mkKnob(S.dark),
       notifTrack: mkTrack(S.notif), notifKnob: mkKnob(S.notif),
-      ranges, holdings, alloc, d, watchTabs, watchRows, txnTabs, txnGroups, txnEmpty,
+      ranges, holdings, alloc, d, watchTabs, watchRows, watchEmpty, hasWatch: !watchEmpty, txnTabs, txnGroups, txnEmpty,
       concRows, hasConc, hasOverCap: overCapSyms.length > 0, overCapMsg,
       trendPath: trendBag.path, trendLastX: trendBag.lastX, trendLastY: trendBag.lastY, trendColor: trendBag.color,
       marketStrip, newsItems, hasNews: newsItems.length > 0,
@@ -1025,6 +1093,7 @@ class Component {
       setThb: () => { this.setState({ cur: 'thb' }); this.savePrefs(); },
       setUsd: () => { this.setState({ cur: 'usd' }); this.savePrefs(); },
       toggleStar: () => { const sym = S.selected; const on = !S.starred[sym]; this.setState(st => ({ starred: Object.assign({}, st.starred, { [sym]: on }) })); this.saveStar(sym, on); },
+      openWatchAdd: () => this.openWatchAdd(),
       signOut: () => Auth.signOut().then(() => location.reload()),
       openBuy: () => this.setState(st => ({ ticket: { mode: 'buy', sym: st.selected, qty: 1 } })),
       openSell: () => this.setState(st => ({ ticket: { mode: 'sell', sym: st.selected, qty: 1 } })),
@@ -1081,6 +1150,7 @@ async function boot() {
   app.user = session.user;
   app.render();
   app.wireTxnForm();               // bind the (DOM) add/edit transaction sheet
+  app.wireWatchAdd();              // bind the (DOM) watchlist add-search sheet
   app.wirePlanForm();              // bind the (DOM) buy-planner sheet
   app.wireAlertForm();             // bind the (DOM) price-alert sheet
   await app.loadUserData();        // pull txns / watchlist / prefs, then re-render
