@@ -13,11 +13,12 @@ watchlist-only starred syms — so a starred `TISCO.BK` after reload had no seed
   cache has TISCO market TH (correct). So search/register/cache/hydrate all fine — ONLY the
   stub was wrong. Verified post-fix: starred `TISCO.BK` (unhydrated) → getInst cat thai/thb/SET,
   dispSym "TISCO", demo() 0 fails.
-- **ponytail follow-up (not done):** watchlist-only discovered syms still aren't hydrated with
-  live price on reload (they render at stub price 0 until quoted). The stub fix makes the
-  CATEGORY correct regardless; live-price hydration for watched-but-unheld syms is a separate
-  enhancement. Throwaway user `sutest_tisco_v1@mun-test.dev` left in auth.users.
-- File: `web/app.js` (stubInst + demo assert).
+- **ponytail follow-up (DONE, commit `05b5d28`):** `hydrateHeldSymbols` now unions held ∪
+  starred, so watchlist-only discovered syms also recover live price on reload (was stub price
+  0). Verified live: starred `TISCO.BK` → price 0 → 3.228 USD-canonical, cat thai. The free
+  cached `/quote` per symbol applies to watched syms too. Throwaway user
+  `sutest_tisco_v1@mun-test.dev` left in auth.users.
+- File: `web/app.js` (stubInst + demo assert; hydrateHeldSymbols held∪starred).
 
 ## Latest (2026-06-27 #8) — เครื่องมือ Tools hub + Pro-gating + DCA sim (PUSHED, redeploying)
 Commit `77c8522`. PortPro-style Tools hub (screenshots: portpro.app/Tools/*). Plan:
