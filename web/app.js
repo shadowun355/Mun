@@ -362,9 +362,13 @@ class Component {
   // Parqet logo CDN. Markup overlays this <img> on the initials badge; on 404 the img
   // removes itself and the 2-letter fallback shows through. Bare ticker (no .BK/-USD).
   logoUrl(inst) {
-    const t = (inst.bare || inst.sym).replace(/\.BK$/, '').replace(/-USD$/, '');
+    let t = (inst.bare || inst.sym).replace(/\.BK$/, '').replace(/-USD$/, '');
+    // Parqet keys Thai SET logos by the '.BK' ticker (PTT.BK), US by the bare ticker.
+    if (inst.cat === 'thai' || inst.native === 'thb' || /\.BK$/i.test(inst.sym || '')) t += '.BK';
     return `https://assets.parqet.com/logos/symbol/${encodeURIComponent(t)}?format=png&size=96`;
   }
+  // Human-facing ticker: drop the market-qualifier ('.BK') used only as a catalog key.
+  dispSym(sym) { return String(sym).replace(/\.BK$/i, ''); }
 
   // Set the txn-form price/fee currency glyphs from the chosen asset's native currency
   // (NOT the app's ฿/$ display toggle — a Thai stock is priced in ฿ regardless of view).
@@ -548,6 +552,10 @@ class Component {
     // Seed reuse: a hit for a seeded Thai symbol must NOT create a '.BK' duplicate.
     const ptt = this.registerHit({ symbol: 'PTT', market: 'TH', name: 'PTT', assetType: 'stock' });
     console.assert(ptt === this.data.PTT && !this.data['PTT.BK'], 'seed PTT duplicated');
+    // dispSym strips the '.BK' catalog qualifier; logoUrl keeps it for Thai (Parqet keys TH by .BK).
+    console.assert(this.dispSym('SCB.BK') === 'SCB' && this.dispSym('AAPL') === 'AAPL', 'dispSym broken');
+    console.assert(this.logoUrl({ sym: 'SCB.BK', bare: 'SCB', cat: 'thai', native: 'thb' }).includes('SCB.BK'), 'TH logo missing .BK');
+    console.assert(this.logoUrl({ sym: 'AAPL', cat: 'foreign', native: 'usd' }).includes('AAPL') && !this.logoUrl({ sym: 'AAPL', cat: 'foreign' }).includes('.BK'), 'US logo wrong');
     delete this.data.ADVANC; delete this.data.JEPQ; delete this.data.GLD; delete this.data['GLD.BK'];
     console.log('demo() OK');
   }
@@ -823,7 +831,7 @@ class Component {
     await Promise.all(fired.map(a => SB.from('alerts').update({ active: false, triggered_at: nowIso }).eq('id', a.id)));
     await this.loadAlerts();
     const a = fired[0];
-    this.showToast('⏰ ' + a.sym + ' ' + (a.op === 'above' ? 'ขึ้นถึง' : 'ลงถึง') + ' ' + this.price(Number(a.price)) +
+    this.showToast('⏰ ' + this.dispSym(a.sym) + ' ' + (a.op === 'above' ? 'ขึ้นถึง' : 'ลงถึง') + ' ' + this.price(Number(a.price)) +
       (fired.length > 1 ? ' +' + (fired.length - 1) : ''));
   }
 
@@ -906,7 +914,7 @@ class Component {
 
     const holdings = heldSyms.map(sym => {
       const s = this.getInst(sym); const qty = H[sym].qty; const v = qty * s.price;
-      return { logo: s.logo, logoUrl: this.logoUrl(s), name: s.name, holdSub: s.sym + ' · ' + this.qtyLabel(s, qty), valStr: this.val(v), pct: this.pctStr(s.dayPct), pctColor: s.dayPct >= 0 ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
+      return { logo: s.logo, logoUrl: this.logoUrl(s), name: s.name, holdSub: this.dispSym(s.sym) + ' · ' + this.qtyLabel(s, qty), valStr: this.val(v), pct: this.pctStr(s.dayPct), pctColor: s.dayPct >= 0 ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
     });
 
     let totalUsd = 0, dayAbsUsd = 0;   // no cash — total is the sum of holdings
@@ -941,7 +949,7 @@ class Component {
     const CAP = 25;
     const concRows = heldSyms.map(sym => { const s = this.getInst(sym); const v = H[sym].qty * s.price; const pct = totalUsd ? v / totalUsd * 100 : 0; return { sym, name: s.name, pct, v }; })
       .sort((a, b) => b.pct - a.pct)
-      .map(a => ({ sym: a.sym, name: a.name, pctLabel: a.pct.toFixed(1) + '%', barPct: Math.min(100, a.pct), over: a.pct > CAP, barColor: a.pct > CAP ? 'var(--down)' : 'var(--gold)', valStr: this.val(a.v) }));
+      .map(a => ({ sym: this.dispSym(a.sym), name: a.name, pctLabel: a.pct.toFixed(1) + '%', barPct: Math.min(100, a.pct), over: a.pct > CAP, barColor: a.pct > CAP ? 'var(--down)' : 'var(--gold)', valStr: this.val(a.v) }));
     const overCapSyms = concRows.filter(r => r.over).map(r => r.sym);
     const hasConc = concRows.length > 0;
     const overCapMsg = overCapSyms.length ? overCapSyms.join(', ') + ' เกิน ' + CAP + '% ของพอร์ต' : '';
@@ -983,7 +991,7 @@ class Component {
       });
     }
     const d = {
-      sym: sel.sym, name2: sel.name2,
+      sym: this.dispSym(sel.sym), name2: sel.name2,
       subline: sel.exch + ' · ' + (sel.native === 'usd' ? 'ดอลลาร์สหรัฐ' : 'บาท'),
       priceStr: this.price(sel.price), priceAlt: this.altVal(sel.price),
       dayStr: (dDayUp ? '▲ ' : '▼ ') + this.pctStr(sel.dayPct), dayBg: dDayUp ? 'color-mix(in oklab,var(--up) 16%,transparent)' : 'color-mix(in oklab,var(--down) 16%,transparent)', dayCol: dDayUp ? 'var(--up)' : 'var(--down)',
