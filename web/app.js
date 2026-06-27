@@ -81,7 +81,7 @@ class Component {
       screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
       range: '1d', watchFilter: 'all', txnFilter: 'all',
       selected: 'AAPL', starred: {}, notif: true,
-      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: [], snapshots: [], isPro: false, allocGroups: [], allocMap: {}, toolTab: 'avg'
+      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: [], snapshots: [], isPro: false, allocGroups: [], allocMap: {}, toolTab: 'avg', billCycle: 'year'
     };
   }
 
@@ -1239,7 +1239,23 @@ class Component {
       toolTabs, toolAvg: tt === 'avg', toolDca: tt === 'dca', toolDiv: tt === 'dividend', toolAlloc: tt === 'alloc', toolTax: tt === 'tax',
       openDca: () => this.openDcaForm(),
       isTransactions: scr === 'transactions', isAccount: scr === 'account',
-      showTabs: scr !== 'detail',
+      isPricing: scr === 'pricing',
+      goPricing: () => this.setState(st => ({ prevScreen: st.screen === 'detail' ? st.prevScreen : st.screen, screen: 'pricing' })),
+      ...(() => {
+        // Pricing: ฿300/mo, or ฿3,600/yr billed yearly at −25% = ฿2,700/yr (฿225/mo effective).
+        const yearly = (S.billCycle || 'year') === 'year';
+        return {
+          billYearly: yearly,
+          billMonthBg: yearly ? 'transparent' : t.gold, billMonthCol: yearly ? t.sub : t.ongold,
+          billYearBg: yearly ? t.gold : 'transparent', billYearCol: yearly ? t.ongold : t.sub,
+          setBillMonth: () => this.setState({ billCycle: 'month' }),
+          setBillYear: () => this.setState({ billCycle: 'year' }),
+          proPriceMain: yearly ? '฿225' : '฿300',
+          proPriceSub: yearly ? 'เรียกเก็บ ฿2,700/ปี · ประหยัด 25%' : 'เรียกเก็บรายเดือน · ฿300/เดือน',
+          proCtaLabel: yearly ? 'เริ่มใช้ Pro รายปี (จำลอง)' : 'เริ่มใช้ Pro รายเดือน (จำลอง)',
+        };
+      })(),
+      showTabs: scr !== 'detail' && scr !== 'pricing',
       planList, planEmpty, newPlan: () => this.openPlanForm(null),
       thbBg, thbCol, usdBg, usdCol,
       darkTrack: mkTrack(S.dark), darkKnob: mkKnob(S.dark),

@@ -1,5 +1,23 @@
 # Handoff
 
+## Latest (2026-06-27 #10) — feat: dedicated Pricing page (NOT pushed — needs eyeball)
+New `pricing` screen (`isPricing`, full-screen, hides bottom nav like detail). Free vs Mun Pro
+comparison + monthly/yearly billing toggle. **Prices (user-set):** ฿300/mo, OR yearly billed
+฿3,600 −25% = ฿2,700/yr (=฿225/mo effective, "ประหยัด 25%"). Toggle drives Pro card price +
+CTA label via `S.billCycle` (default `'year'`).
+- `web/app.js`: `billCycle:'year'` init state; template adds `isPricing`, `goPricing`
+  (stamps prevScreen), billing toggle data (`billYearly`, seg bg/col, `setBillMonth/Year`,
+  `proPriceMain/Sub`, `proCtaLabel`) via an IIFE-spread in the render-data object;
+  `showTabs` now also excludes `pricing`. CTA reuses existing `upgradeMock`; back reuses `back`.
+- `web/index.html`: pricing `<sc-if>` block (back header, billing seg toggle, highlighted Pro
+  card w/ price+CTA, Free card, footer). isFree→Pro CTA active + Free "แผนปัจจุบัน" badge;
+  isPro→Pro "แผนปัจจุบันของคุณ". All upgrade entry points rerouted to `goPricing`/"ดูแพ็กเกจ":
+  account free card + 3 tool paywalls (ปันผล/จัดสรร/ภาษี).
+- Payment still MOCK (`upgradeMock`→`setMockTier`). Real provider (Lemon Squeezy/Paddle) deferred.
+- **Verify:** `node --check app.js` clean. NO browser verify (extension was disconnected last
+  session). User should hard-refresh → บัญชี → ดูแพ็กเกจ, toggle รายเดือน/รายปี (฿300↔฿225),
+  Free CTA→upgrade, flip Pro→both cards show current-plan state.
+
 ## Latest (2026-06-27 #9) — fix: Thai (.BK) symbols stubbed as foreign (PUSHED, redeploying)
 Commit `36f6ce3`. User: TISCO showing ต่างประเทศ instead of หุ้นไทย. Root cause = `stubInst()`
 hardcoded `cat:'foreign'/native:'usd'`. A `.BK`-qualified key is ALWAYS Thai SET, but a
