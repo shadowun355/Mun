@@ -379,8 +379,12 @@ class Component {
     if (a) a.textContent = g; if (b) b.textContent = g;
   }
   stubInst(sym) {
-    return { sym, name: sym, name2: sym, logo: sym.slice(0, 2).toUpperCase(),
-      exch: '', native: 'usd', cat: 'foreign', kind: 'stock', price: 0, dayPct: 0,
+    // A '.BK'-qualified key is always a Thai SET symbol (the cross-market collision scheme).
+    // Infer cat/native from it so a not-yet-hydrated Thai symbol (e.g. a watchlist-only pick
+    // after reload) renders as หุ้นไทย, not defaulting to foreign.
+    const thai = /\.BK$/i.test(sym);
+    return { sym, name: sym, name2: sym, logo: sym.replace(/\.BK$/i, '').slice(0, 2).toUpperCase(),
+      exch: thai ? 'SET' : '', native: thai ? 'thb' : 'usd', cat: thai ? 'thai' : 'foreign', kind: 'stock', price: 0, dayPct: 0,
       shares: 0, avg: 0, open: 0, high: 0, low: 0, mcap: '—', vol: '—', pe: '—' };
   }
 
@@ -538,7 +542,8 @@ class Component {
   // Run in the browser console: `app.demo()` -> throws on regression, else logs OK.
   demo() {
     const stub = this.getInst('___NOPE___');
-    console.assert(stub.price === 0 && stub.sym === '___NOPE___', 'getInst stub broken');
+    console.assert(stub.price === 0 && stub.sym === '___NOPE___' && stub.cat === 'foreign', 'getInst stub broken');
+    console.assert(this.stubInst('TISCO.BK').cat === 'thai' && this.stubInst('TISCO.BK').native === 'thb', 'BK stub not Thai');
     console.assert(this.getInst('AAPL').name === 'Apple', 'getInst real-row broken');
     const reg = this.registerHit({ symbol: 'ADVANC', market: 'TH', name: 'Advanced Info', assetType: 'stock' });
     console.assert(reg.cat === 'thai' && reg.native === 'thb' && reg.market === 'TH', 'TH mapping broken');
