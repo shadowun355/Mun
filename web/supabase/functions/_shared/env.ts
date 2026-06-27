@@ -18,4 +18,9 @@ export const ENV = {
   // Provider keys are optional — a provider without its key is simply skipped.
   FINNHUB_KEY: opt("FINNHUB_KEY"),
   ALPHAVANTAGE_KEY: opt("ALPHAVANTAGE_KEY"),
+  // Lemon Squeezy billing (only the webhook function reads these — keep opt() so
+  // every OTHER function still cold-starts without them set).
+  LEMONSQUEEZY_WEBHOOK_SECRET: opt("LEMONSQUEEZY_WEBHOOK_SECRET"),
+  LEMONSQUEEZY_VARIANT_MONTHLY: opt("LEMONSQUEEZY_VARIANT_MONTHLY"),
+  LEMONSQUEEZY_VARIANT_YEARLY: opt("LEMONSQUEEZY_VARIANT_YEARLY"),
 };

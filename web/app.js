@@ -9,6 +9,18 @@
 const TPL = document.getElementById('tpl').content.firstElementChild;
 const APP = document.getElementById('app');
 
+// Lemon Squeezy checkout (merchant-of-record — no Thai entity needed). Paste the
+// per-variant "Share" buy-link URLs from the LS dashboard. `user_id` is appended at
+// click time as custom data so the webhook (functions/lemonsqueezy-webhook) can map
+// the resulting subscription back to this account. `portal` = LS customer billing
+// portal for cancel/manage. Leave as-is to keep the mock flow until LS is live.
+const LS = {
+  month: 'PUT_LS_MONTHLY_BUY_URL',   // e.g. https://mun.lemonsqueezy.com/buy/<uuid>
+  year:  'PUT_LS_YEARLY_BUY_URL',
+  portal: 'PUT_LS_CUSTOMER_PORTAL_URL', // e.g. https://mun.lemonsqueezy.com/billing
+};
+const LS_LIVE = !LS.month.startsWith('PUT_');
+
 function camelToKebab(k) { return k.replace(/[A-Z]/g, m => '-' + m.toLowerCase()); }
 function cssify(obj) {
   return Object.keys(obj).map(k => (k.startsWith('--') ? k : camelToKebab(k)) + ':' + obj[k]).join(';');
@@ -229,6 +241,24 @@ class Component {
     }
     this.setState({ isPro: pro });
     this.showToast(pro ? 'อัปเกรดเป็น Pro แล้ว (จำลอง)' : 'กลับสู่แผนฟรีแล้ว');
+  }
+
+  // Real billing: redirect to the Lemon Squeezy hosted checkout for the chosen
+  // cadence, tagging the LS subscription with this user_id so the webhook grants
+  // Pro on payment. Falls back to the mock upgrade until LS URLs are configured.
+  goCheckout(cycle) {
+    if (!LS_LIVE) return this.setMockTier(true); // dev/demo until LS is wired
+    const u = new URL(cycle === 'year' ? LS.year : LS.month);
+    u.searchParams.set('checkout[custom][user_id]', this.user.id);
+    if (this.user.email) u.searchParams.set('checkout[email]', this.user.email);
+    location.href = u.toString();
+  }
+
+  // Cancel/manage → LS customer portal (MoR handles proration/invoices). Mock
+  // downgrade until configured.
+  goPortal() {
+    if (!LS_LIVE) return this.setMockTier(false);
+    location.href = LS.portal;
   }
 
   // Phase 7: capture today's portfolio value (USD-canonical). Upsert one row per
@@ -1252,7 +1282,7 @@ class Component {
           setBillYear: () => this.setState({ billCycle: 'year' }),
           proPriceMain: yearly ? '฿225' : '฿300',
           proPriceSub: yearly ? 'เรียกเก็บ ฿2,700/ปี · ประหยัด 25%' : 'เรียกเก็บรายเดือน · ฿300/เดือน',
-          proCtaLabel: yearly ? 'เริ่มใช้ Pro รายปี (จำลอง)' : 'เริ่มใช้ Pro รายเดือน (จำลอง)',
+          proCtaLabel: (yearly ? 'เริ่มใช้ Pro รายปี' : 'เริ่มใช้ Pro รายเดือน') + (LS_LIVE ? '' : ' (จำลอง)'),
         };
       })(),
       showTabs: scr !== 'detail' && scr !== 'pricing',
@@ -1276,7 +1306,8 @@ class Component {
       exportTax: () => this.state.isPro ? this.exportTax() : this.setState({ screen: 'tools', toolTab: 'tax' }),
       isPro: S.isPro, isFree: !S.isPro, tierLabel: S.isPro ? 'Pro' : 'Free',
       upgradeMock: () => this.setMockTier(true),
-      downgradeMock: () => this.setMockTier(false),
+      downgradeMock: () => this.goPortal(),
+      goCheckout: () => this.goCheckout(S.billCycle === 'year' ? 'year' : 'month'),
       userEmail: (this.user && this.user.email) || '',
       userName: (this.user && (this.user.email || '').split('@')[0]) || 'นักลงทุน',
       userInitial: (this.user && (this.user.email || 'M')[0].toUpperCase()) || 'M',
