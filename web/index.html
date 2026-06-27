@@ -70,6 +70,25 @@
 
 <!-- Add/edit transaction sheet. Plain DOM (outside the reactive template) so the 60s
      live-data re-render can't wipe half-typed inputs. Wired in app.js (wireTxnForm). -->
+<!-- Allocation groups sheet (Phase B). Plain DOM, rebuilt by openAllocForm: rename/delete/add
+     groups + assign each holding via a <select> (tap-to-assign). -->
+<div id="allocsheet" style="display:none;position:fixed;inset:0;z-index:60;align-items:flex-end;justify-content:center;font-family:'Anuphan',sans-serif">
+  <div id="allocsheet-bg" style="position:absolute;inset:0;background:rgba(20,16,8,.42)"></div>
+  <div style="position:relative;width:100%;max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:24px 24px 0 0;padding:22px 20px 28px;max-height:88vh;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:18px;font-weight:700;color:var(--ink)">จัดกลุ่มการลงทุน</div>
+      <div id="allocsheet-close" style="cursor:pointer;font-size:20px;color:var(--sub);line-height:1;padding:4px 8px">✕</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+      <span style="font-size:13px;font-weight:600;color:var(--ink)">กลุ่ม</span>
+      <span id="alloc-add" style="font-size:12.5px;color:var(--gold);font-weight:600;cursor:pointer">+ เพิ่มกลุ่ม</span>
+    </div>
+    <div id="alloc-groups" style="margin-bottom:18px"></div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:9px">กำหนดสินทรัพย์เข้ากลุ่ม</div>
+    <div id="alloc-assign"></div>
+  </div>
+</div>
+
 <!-- Watchlist add sheet. Plain DOM like #txnsheet; search → pick stars the symbol. -->
 <div id="watchsheet" style="display:none;position:fixed;inset:0;z-index:60;align-items:flex-end;justify-content:center;font-family:'Anuphan',sans-serif">
   <div id="watchsheet-bg" style="position:absolute;inset:0;background:rgba(20,16,8,.42)"></div>
@@ -238,7 +257,7 @@
         <div style="margin:18px 16px 0">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
             <span style="font-size:14px;font-weight:600;color:var(--ink)">สัดส่วนการลงทุน</span>
-            <span style="font-size:12.5px;color:var(--gold);font-weight:600">ปรับสมดุล</span>
+            <span onClick="{{ openAlloc }}" style="font-size:12.5px;color:var(--gold);font-weight:600;cursor:pointer">จัดกลุ่ม</span>
           </div>
           <div style="display:flex;height:11px;border-radius:6px;overflow:hidden;gap:2px">
             <sc-for list="{{ alloc }}" as="a">

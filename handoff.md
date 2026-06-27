@@ -1,5 +1,26 @@
 # Handoff
 
+## Latest (2026-06-27 #5) — Phase B: custom allocation groups (CODE DONE+VERIFIED, awaiting SQL)
+Overview `สัดส่วนการลงทุน` now supports user-defined buckets (the "Custom groups + rename"
+option). The inert "ปรับสมดุล" link became **"จัดกลุ่ม"** → `#allocsheet` (plain DOM, rebuilt
+on open): rename/delete groups, "+ เพิ่มกลุ่ม", and assign each holding via a `<select>`
+(**tap-to-assign**, not drag — ponytail). When the user has groups, the alloc bar+legend show
+custom buckets (value summed per group; unassigned holdings → an `ไม่จัดกลุ่ม` bucket); with no
+groups it **falls back to the existing auto-category split** (existing users unchanged).
+- **Persistence — isolated tables (not the prefs upsert):** new migration
+  `web/supabase/migrations/20260627000001_alloc_groups.sql` = `alloc_groups`(id,user_id,name,
+  color,sort) + `alloc_assign`(user_id,sym,group_id; delete-cascades from groups) + own-rows
+  RLS. `loadUserData` adds both selects (→ `[]` when unmigrated → feature dormant, theme/currency
+  saving unaffected). app.js: `loadAlloc`/`addGroup`/`renameGroup`/`deleteGroup`/`assignSym` +
+  `openAllocForm`/`wireAllocForm` (bound at boot); renderVals branches `alloc`.
+- **Verified (Puppeteer, no login — `new Component()`):** fallback labels = auto-category;
+  custom Growth 78% (3500/4500) / Safe 0% / ไม่จัดกลุ่ม 22% (1000/4500); sheet builds group
+  inputs + per-holding selects with correct current assignment; screenshot confirmed. Live DB
+  round-trip (add/rename/delete/assign persist) needs the migration + login.
+- **TO FINISH (user):** run the migration in the Supabase SQL editor, then verify add 2 groups →
+  rename → assign holdings → % per bucket → reload persists → delete group → members revert to
+  ไม่จัดกลุ่ม. Files: `web/app.js`, `web/index.html`, the new migration.
+
 ## Latest (2026-06-27 #4) — Phase A: Thai-native txn price + watchlist add/delete (DONE+VERIFIED)
 Plan: `~/.claude/plans/generic-yawning-grove.md` (3 tasks; this is Phase A, client-only).
 - **Txn price/fee in the asset's native currency.** `เพิ่มรายการ` price/fee now show `฿` for

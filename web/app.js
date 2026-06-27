@@ -81,7 +81,7 @@ class Component {
       screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
       range: '1d', watchFilter: 'all', txnFilter: 'all',
       selected: 'AAPL', starred: {}, notif: true,
-      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: [], snapshots: [], isPro: false
+      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: [], snapshots: [], isPro: false, allocGroups: [], allocMap: {}
     };
   }
 
@@ -125,20 +125,89 @@ class Component {
 
   // ---- Supabase data layer (per-user; RLS scopes every row to this.user) ----
   async loadUserData() {
-    const [tx, wl, pf, bp, al, sn, sub] = await Promise.all([
+    const [tx, wl, pf, bp, al, sn, sub, ag, aa] = await Promise.all([
       SB.from('transactions').select('*').order('ts', { ascending: false }),
       SB.from('watchlist').select('sym'),
       SB.from('prefs').select('*').maybeSingle(),
       SB.from('buy_plans').select('*').order('created_at', { ascending: false }),  // [] if migration not yet run
       SB.from('alerts').select('*').order('created_at', { ascending: false }),      // [] if migration not yet run
       SB.from('portfolio_snapshots').select('date,total_usd').order('date', { ascending: true }).limit(90),
-      SB.from('subscriptions').select('plan_id,status,expires_at').in('status', ['active', 'trialing']).maybeSingle()
+      SB.from('subscriptions').select('plan_id,status,expires_at').in('status', ['active', 'trialing']).maybeSingle(),
+      SB.from('alloc_groups').select('*').order('sort', { ascending: true }),        // [] if migration not yet run
+      SB.from('alloc_assign').select('sym,group_id')                                 // [] if migration not yet run
     ]);
     const starred = {}; (wl.data || []).forEach(r => { starred[r.sym] = true; });
+    const allocMap = {}; (aa.data || []).forEach(r => { allocMap[r.sym] = r.group_id; });
     const p = pf.data;
     const isPro = !!(sub.data && sub.data.plan_id !== 'free');
-    this.setState(Object.assign({ txns: tx.data || [], starred, buyPlans: bp.data || [], alerts: al.data || [], snapshots: sn.data || [], isPro },
+    this.setState(Object.assign({ txns: tx.data || [], starred, buyPlans: bp.data || [], alerts: al.data || [], snapshots: sn.data || [], isPro, allocGroups: ag.data || [], allocMap },
       p ? { dark: p.dark, cur: p.cur, notif: p.notif } : {}));
+  }
+
+  // ---- Custom allocation buckets (Overview) — degrade to [] when unmigrated ----
+  async loadAlloc() {
+    const [ag, aa] = await Promise.all([
+      SB.from('alloc_groups').select('*').order('sort', { ascending: true }),
+      SB.from('alloc_assign').select('sym,group_id')
+    ]);
+    const allocMap = {}; (aa.data || []).forEach(r => { allocMap[r.sym] = r.group_id; });
+    this.setState({ allocGroups: ag.data || [], allocMap });
+  }
+  async addGroup() {
+    const sort = (this.state.allocGroups || []).length;
+    const { error } = await SB.from('alloc_groups').insert({ user_id: this.user.id, name: 'กลุ่มใหม่', sort });
+    if (error) return this.showToast(error.message);
+    await this.loadAlloc(); this.openAllocForm();
+  }
+  async renameGroup(id, name) { await SB.from('alloc_groups').update({ name }).eq('id', id); await this.loadAlloc(); }
+  async deleteGroup(id) {
+    await SB.from('alloc_groups').delete().eq('id', id);   // cascade clears its alloc_assign rows
+    await this.loadAlloc(); this.openAllocForm();
+  }
+  async assignSym(sym, groupId) {
+    if (groupId) await SB.from('alloc_assign').upsert({ user_id: this.user.id, sym, group_id: groupId }, { onConflict: 'user_id,sym' });
+    else await SB.from('alloc_assign').delete().eq('sym', sym);
+    await this.loadAlloc();
+  }
+  // Manage sheet (#allocsheet, plain DOM rebuilt on open): rename/delete groups, add a group,
+  // and assign each holding via a <select> (tap-to-assign — ponytail, no drag-and-drop).
+  openAllocForm() {
+    const $ = id => document.getElementById(id);
+    const sheet = $('allocsheet'); if (!sheet) return;
+    const groups = (this.state.allocGroups || []).slice().sort((a, b) => a.sort - b.sort);
+    const gWrap = $('alloc-groups');
+    gWrap.replaceChildren(...groups.map(g => {
+      const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px';
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = g.name;
+      inp.style.cssText = 'flex:1;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card2);color:var(--ink);font-size:14px;font-family:inherit';
+      inp.addEventListener('change', () => { const v = inp.value.trim(); if (v) this.renameGroup(g.id, v); });
+      const del = document.createElement('div'); del.textContent = '✕'; del.style.cssText = 'cursor:pointer;color:var(--faint);font-size:18px;padding:4px 6px';
+      del.addEventListener('click', () => this.deleteGroup(g.id));
+      row.append(inp, del); return row;
+    }));
+    if (!groups.length) { const e = document.createElement('div'); e.textContent = 'ยังไม่มีกลุ่ม — แตะ "เพิ่มกลุ่ม"'; e.style.cssText = 'font-size:13px;color:var(--sub);margin-bottom:8px'; gWrap.appendChild(e); }
+    const held = Object.keys(this.fifo(this.state.txns).holdings);
+    const aWrap = $('alloc-assign');
+    aWrap.replaceChildren(...held.map(sym => {
+      const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px';
+      const lbl = document.createElement('span'); lbl.textContent = sym; lbl.style.cssText = 'flex:1;font-size:14px;color:var(--ink);font-weight:600';
+      const sel = document.createElement('select'); sel.style.cssText = 'box-sizing:border-box;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card2);color:var(--ink);font-size:13px;font-family:inherit;max-width:180px';
+      const none = document.createElement('option'); none.value = ''; none.textContent = 'ไม่จัดกลุ่ม'; sel.appendChild(none);
+      groups.forEach(g => { const o = document.createElement('option'); o.value = g.id; o.textContent = g.name; sel.appendChild(o); });
+      sel.value = (this.state.allocMap || {})[sym] || '';
+      sel.addEventListener('change', () => this.assignSym(sym, sel.value));
+      row.append(lbl, sel); return row;
+    }));
+    if (!held.length) { const e = document.createElement('div'); e.textContent = 'ยังไม่มีสินทรัพย์ในพอร์ต'; e.style.cssText = 'font-size:13px;color:var(--sub)'; aWrap.appendChild(e); }
+    sheet.style.display = 'flex';
+  }
+  closeAllocForm() { document.getElementById('allocsheet').style.display = 'none'; }
+  wireAllocForm() {
+    const $ = id => document.getElementById(id);
+    if (!$('allocsheet') || $('allocsheet')._wired) return; $('allocsheet')._wired = true;
+    $('allocsheet-close').addEventListener('click', () => this.closeAllocForm());
+    $('allocsheet-bg').addEventListener('click', () => this.closeAllocForm());
+    $('alloc-add').addEventListener('click', () => this.addGroup());
   }
 
   // Phase 8: translate a server cap exception into a Thai upgrade prompt. The DB triggers
@@ -854,7 +923,19 @@ class Component {
       { label:'คริปโต', color:'var(--c-blue)', usd: catUsd.crypto },
       { label:'ทองคำ', color:'var(--c-clay)', usd: catUsd.gold }
     ];
-    const alloc = allocRaw.map(a => { const p = totalUsd ? Math.round(a.usd / totalUsd * 100) : 0; return { label: a.label, color: a.color, pct: p, pctLabel: p + '%' }; });
+    // Custom buckets if the user defined any (Phase B); else the auto-category split.
+    const groups = (S.allocGroups || []).slice().sort((a, b) => a.sort - b.sort);
+    let alloc;
+    if (groups.length) {
+      const palette = ['var(--gold)', 'var(--c-sage)', 'var(--c-blue)', 'var(--c-clay)'];
+      const map = S.allocMap || {}; const sums = {}; let unassigned = 0;
+      groups.forEach(g => { sums[g.id] = 0; });
+      heldSyms.forEach(sym => { const v = H[sym].qty * this.getInst(sym).price; const gid = map[sym]; if (gid && gid in sums) sums[gid] += v; else unassigned += v; });
+      alloc = groups.map((g, i) => { const p = totalUsd ? Math.round(sums[g.id] / totalUsd * 100) : 0; return { label: g.name, color: g.color || palette[i % palette.length], pct: p, pctLabel: p + '%' }; });
+      if (unassigned > 0.0001) { const p = totalUsd ? Math.round(unassigned / totalUsd * 100) : 0; alloc.push({ label: 'ไม่จัดกลุ่ม', color: 'var(--faint)', pct: p, pctLabel: p + '%' }); }
+    } else {
+      alloc = allocRaw.map(a => { const p = totalUsd ? Math.round(a.usd / totalUsd * 100) : 0; return { label: a.label, color: a.color, pct: p, pctLabel: p + '%' }; });
+    }
 
     // Phase 7: per-asset concentration + over-cap warning (default cap 25%).
     const CAP = 25;
@@ -1094,6 +1175,7 @@ class Component {
       setUsd: () => { this.setState({ cur: 'usd' }); this.savePrefs(); },
       toggleStar: () => { const sym = S.selected; const on = !S.starred[sym]; this.setState(st => ({ starred: Object.assign({}, st.starred, { [sym]: on }) })); this.saveStar(sym, on); },
       openWatchAdd: () => this.openWatchAdd(),
+      openAlloc: () => this.openAllocForm(),
       signOut: () => Auth.signOut().then(() => location.reload()),
       openBuy: () => this.setState(st => ({ ticket: { mode: 'buy', sym: st.selected, qty: 1 } })),
       openSell: () => this.setState(st => ({ ticket: { mode: 'sell', sym: st.selected, qty: 1 } })),
@@ -1151,6 +1233,7 @@ async function boot() {
   app.render();
   app.wireTxnForm();               // bind the (DOM) add/edit transaction sheet
   app.wireWatchAdd();              // bind the (DOM) watchlist add-search sheet
+  app.wireAllocForm();             // bind the (DOM) allocation-groups sheet
   app.wirePlanForm();              // bind the (DOM) buy-planner sheet
   app.wireAlertForm();             // bind the (DOM) price-alert sheet
   await app.loadUserData();        // pull txns / watchlist / prefs, then re-render
