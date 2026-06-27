@@ -81,7 +81,7 @@ class Component {
       screen: 'overview', prevScreen: 'overview', dark: false, cur: 'thb',
       range: '1d', watchFilter: 'all', txnFilter: 'all',
       selected: 'AAPL', starred: {}, notif: true,
-      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: [], snapshots: [], isPro: false, allocGroups: [], allocMap: {}
+      ticket: null, txns: [], toast: '', submitting: false, candles: [], buyPlans: [], divInfo: {}, alerts: [], snapshots: [], isPro: false, allocGroups: [], allocMap: {}, toolTab: 'avg'
     };
   }
 
@@ -556,6 +556,13 @@ class Component {
     console.assert(this.dispSym('SCB.BK') === 'SCB' && this.dispSym('AAPL') === 'AAPL', 'dispSym broken');
     console.assert(this.logoUrl({ sym: 'SCB.BK', bare: 'SCB', cat: 'thai', native: 'thb' }).includes('SCB.BK'), 'TH logo missing .BK');
     console.assert(this.logoUrl({ sym: 'AAPL', cat: 'foreign', native: 'usd' }).includes('AAPL') && !this.logoUrl({ sym: 'AAPL', cat: 'foreign' }).includes('.BK'), 'US logo wrong');
+    // dcaSim: zero-rate FV == invested; pure-annuity known case; positive rate beats invested.
+    const z = this.dcaSim({ initial: 1000, monthly: 100, annualPct: 0, years: 2 });
+    console.assert(Math.abs(z.fv - z.invested) < 1e-6 && z.invested === 3400, 'dcaSim zero-rate wrong');
+    const a = this.dcaSim({ initial: 0, monthly: 100, annualPct: 0, years: 1 });
+    console.assert(a.fv === 1200 && a.growth === 0, 'dcaSim annuity wrong');
+    const g = this.dcaSim({ initial: 10000, monthly: 500, annualPct: 10, years: 10 });
+    console.assert(g.fv > g.invested && g.pts.length === 11, 'dcaSim growth/pts wrong');
     delete this.data.ADVANC; delete this.data.JEPQ; delete this.data.GLD; delete this.data['GLD.BK'];
     console.log('demo() OK');
   }
@@ -617,6 +624,21 @@ class Component {
     let qty = 0, cost = 0;
     (levels || []).forEach(l => { const p = Number(l.price) || 0, n = Number(l.qty) || 0; qty += n; cost += p * n; });
     return { totalQty: qty, totalCost: cost, avg: qty ? cost / qty : 0 };
+  }
+
+  // Tools/DCA: compound-growth projection. Lump sum + monthly contributions grown at a
+  // monthly rate (annual%/12). FV of the initial + FV of a monthly annuity. pts[k] = the
+  // value at the end of year k (k = 0..years), for the growth-curve chart. Pure / stateless.
+  dcaSim({ initial, monthly, annualPct, years }) {
+    const P = Math.max(0, Number(initial) || 0), m = Math.max(0, Number(monthly) || 0);
+    const yrs = Math.max(0, Math.min(60, Number(years) || 0));
+    const r = (Number(annualPct) || 0) / 100 / 12;
+    const fvAt = months => r === 0 ? P + m * months : P * Math.pow(1 + r, months) + m * (Math.pow(1 + r, months) - 1) / r;
+    const n = Math.round(yrs * 12);
+    const fv = fvAt(n), invested = P + m * n, growth = fv - invested;
+    const pts = [];
+    for (let k = 0; k <= Math.ceil(yrs); k++) pts.push(fvAt(Math.min(k * 12, n)));
+    return { fv, invested, growth, growthPct: invested ? growth / invested * 100 : 0, pts };
   }
 
   openPlanForm(plan) {
@@ -720,6 +742,69 @@ class Component {
     this.closePlanForm();
     await this.loadPlans();
     this.showToast('ลบแผนแล้ว');
+  }
+
+  // ---- Tools hub (เครื่องมือ) -------------------------------------------------
+  // Switch the active tool tab; lazily load dividend data the first time that Pro tab opens.
+  setToolTab(k) {
+    this.setState({ screen: 'tools', toolTab: k });
+    if (k === 'dividend' && this.state.isPro) this.loadDividends();
+  }
+
+  // DCA compound simulator — plain DOM sheet (#dcasheet, outside the reactive template so
+  // the 60s tick can't wipe inputs). Stateless: read inputs → dcaSim → paint result + curve.
+  openDcaForm() {
+    const $ = id => document.getElementById(id);
+    if (!$('dcasheet')) return;
+    if (!$('dca-initial').value && !$('dca-monthly').value) {
+      $('dca-name').value = 'VOO'; $('dca-initial').value = 10000; $('dca-monthly').value = 500;
+      $('dca-growth').value = 10; $('dca-years').value = 10;
+    }
+    this.dcaRecompute();
+    $('dcasheet').style.display = 'flex';
+  }
+  closeDcaForm() { const s = document.getElementById('dcasheet'); if (s) s.style.display = 'none'; }
+  setDcaPreset(name, growth) {
+    const $ = id => document.getElementById(id);
+    $('dca-name').value = name; $('dca-growth').value = growth;
+    this.dcaRecompute();
+  }
+  dcaRecompute() {
+    const $ = id => document.getElementById(id);
+    const m = this.dcaSim({
+      initial: $('dca-initial').value, monthly: $('dca-monthly').value,
+      annualPct: $('dca-growth').value, years: $('dca-years').value
+    });
+    $('dca-fv').textContent = this.val(m.fv);
+    $('dca-fv-alt').textContent = this.altVal(m.fv);
+    $('dca-invested').textContent = this.val(m.invested);
+    $('dca-growth-val').textContent = '+' + this.val(m.growth) + ' · +' + m.growthPct.toFixed(1) + '%';
+    // Growth curve: yearly points → polyline over a 320×110 viewBox (green = up).
+    const pts = m.pts, lo = Math.min(...pts), hi = Math.max(...pts), span = hi - lo || 1;
+    const W = 320, H = 110, pad = 5;
+    const d = pts.map((v, i) => {
+      const x = pts.length > 1 ? i / (pts.length - 1) * W : 0;
+      const y = H - pad - (v - lo) / span * (H - pad * 2);
+      return (i ? 'L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ');
+    $('dca-curve').setAttribute('d', d);
+  }
+  clearDca() {
+    const $ = id => document.getElementById(id);
+    ['dca-name', 'dca-initial', 'dca-monthly', 'dca-growth', 'dca-years'].forEach(id => { $(id).value = ''; });
+    this.dcaRecompute();
+  }
+  wireDcaForm() {
+    const $ = id => document.getElementById(id);
+    if (!$('dcasheet') || $('dcasheet')._wired) return; $('dcasheet')._wired = true;
+    $('dcasheet-close').addEventListener('click', () => this.closeDcaForm());
+    $('dcasheet-bg').addEventListener('click', () => this.closeDcaForm());
+    $('dca-run').addEventListener('click', () => this.dcaRecompute());
+    $('dca-clear').addEventListener('click', () => this.clearDca());
+    ['dca-initial', 'dca-monthly', 'dca-growth', 'dca-years', 'dca-name'].forEach(id =>
+      $(id).addEventListener('input', () => this.dcaRecompute()));
+    document.querySelectorAll('#dca-presets [data-preset]').forEach(b =>
+      b.addEventListener('click', () => this.setDcaPreset(b.dataset.preset, b.dataset.growth)));
   }
 
   // ---- Dividend Calendar (Phase 5) ---------------------------------------
@@ -893,7 +978,7 @@ class Component {
     for (const k in rootStyle) if (k.startsWith('--')) rootEl.style.setProperty(k, rootStyle[k]);
 
     const ac = (n) => (scr === n ? t.gold : t.faint);
-    const c = { overview: ac('overview'), watch: ac('watch'), planner: ac('planner'), dividends: ac('dividends'), transactions: ac('transactions'), account: ac('account') };
+    const c = { overview: ac('overview'), watch: ac('watch'), tools: ac('tools'), transactions: ac('transactions'), account: ac('account') };
 
     const onSeg = S.cur === 'thb';
     const thbBg = onSeg ? t.gold : 'transparent', thbCol = onSeg ? t.ongold : t.sub;
@@ -1136,11 +1221,18 @@ class Component {
       };
     }
 
+    // Tools hub: 5 tab chips (reuse the watch/txn chip styling). Pro tabs gate in markup.
+    const tt = S.toolTab || 'avg';
+    const toolDefs = [['avg', 'ถัวเฉลี่ย'], ['dca', 'DCA'], ['dividend', 'ปันผล'], ['alloc', 'จัดสรร'], ['tax', 'ภาษี']];
+    const toolTabs = toolDefs.map(([k, label]) => { const on = tt === k; return { label, weight: on ? '600' : '400', bg: on ? t.gold : t.card, col: on ? t.ongold : t.sub, bd: on ? t.gold : t.line, onClick: () => this.setToolTab(k) }; });
+
     return {
       rootStyle, c,
       isOverview: scr === 'overview', isDetail: scr === 'detail', isWatch: scr === 'watch',
-      isPlanner: scr === 'planner',
-      isDividends: scr === 'dividends', isTransactions: scr === 'transactions', isAccount: scr === 'account',
+      isTools: scr === 'tools', goTools: () => this.setState({ screen: 'tools' }),
+      toolTabs, toolAvg: tt === 'avg', toolDca: tt === 'dca', toolDiv: tt === 'dividend', toolAlloc: tt === 'alloc', toolTax: tt === 'tax',
+      openDca: () => this.openDcaForm(),
+      isTransactions: scr === 'transactions', isAccount: scr === 'account',
       showTabs: scr !== 'detail',
       planList, planEmpty, newPlan: () => this.openPlanForm(null),
       thbBg, thbCol, usdBg, usdCol,
@@ -1159,7 +1251,7 @@ class Component {
       hasRealized: Math.abs(F.realizedUsd) > 1e-9,
       addTxn: () => this.openTxnForm(null),
       exportCSV: () => this.exportCSV(),
-      exportTax: () => this.exportTax(),
+      exportTax: () => this.state.isPro ? this.exportTax() : this.setState({ screen: 'tools', toolTab: 'tax' }),
       isPro: S.isPro, isFree: !S.isPro, tierLabel: S.isPro ? 'Pro' : 'Free',
       upgradeMock: () => this.setMockTier(true),
       downgradeMock: () => this.setMockTier(false),
@@ -1171,9 +1263,7 @@ class Component {
       showTicket, tk, showToast: !!S.toast, toastMsg: S.toast,
       goOverview: () => this.setState({ screen: 'overview' }),
       goWatch: () => this.setState({ screen: 'watch' }),
-      goPlanner: () => this.setState({ screen: 'planner' }),
       openAlert: () => this.openAlertForm(this.state.selected),
-      goDividends: () => { this.setState({ screen: 'dividends' }); this.loadDividends(); },
       goTransactions: () => this.setState({ screen: 'transactions' }),
       goAccount: () => this.setState({ screen: 'account' }),
       back: () => this.setState(st => ({ screen: st.prevScreen || 'overview' })),
@@ -1183,7 +1273,7 @@ class Component {
       setUsd: () => { this.setState({ cur: 'usd' }); this.savePrefs(); },
       toggleStar: () => { const sym = S.selected; const on = !S.starred[sym]; this.setState(st => ({ starred: Object.assign({}, st.starred, { [sym]: on }) })); this.saveStar(sym, on); },
       openWatchAdd: () => this.openWatchAdd(),
-      openAlloc: () => this.openAllocForm(),
+      openAlloc: () => this.state.isPro ? this.openAllocForm() : this.setState({ screen: 'tools', toolTab: 'alloc' }),
       signOut: () => Auth.signOut().then(() => location.reload()),
       openBuy: () => this.setState(st => ({ ticket: { mode: 'buy', sym: st.selected, qty: 1 } })),
       openSell: () => this.setState(st => ({ ticket: { mode: 'sell', sym: st.selected, qty: 1 } })),
@@ -1243,6 +1333,7 @@ async function boot() {
   app.wireWatchAdd();              // bind the (DOM) watchlist add-search sheet
   app.wireAllocForm();             // bind the (DOM) allocation-groups sheet
   app.wirePlanForm();              // bind the (DOM) buy-planner sheet
+  app.wireDcaForm();               // bind the (DOM) DCA simulator sheet
   app.wireAlertForm();             // bind the (DOM) price-alert sheet
   await app.loadUserData();        // pull txns / watchlist / prefs, then re-render
   await app.hydrateHeldSymbols();  // recover discovered holdings (market+price) so totals aren't $0

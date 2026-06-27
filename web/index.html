@@ -165,6 +165,49 @@
   </div>
 </div>
 
+<!-- DCA compound simulator (Tools hub). Plain DOM (outside the reactive template). Stateless:
+     wired in app.js (wireDcaForm) — read inputs → dcaSim → paint result + growth curve. -->
+<div id="dcasheet" style="display:none;position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;font-family:'Anuphan',sans-serif">
+  <div id="dcasheet-bg" style="position:absolute;inset:0;background:rgba(20,16,8,.42)"></div>
+  <div style="position:relative;width:calc(100% - 32px);max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px 20px 24px;max-height:90vh;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:18px;font-weight:700;color:var(--ink)">จำลอง DCA + ทบต้น</div>
+      <div id="dcasheet-close" style="cursor:pointer;font-size:20px;color:var(--sub);line-height:1;padding:4px 8px">✕</div>
+    </div>
+    <div style="font-size:12.5px;color:var(--sub);margin-bottom:6px">พรีเซ็ต</div>
+    <div id="dca-presets" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <span data-preset="VOO" data-growth="10" style="cursor:pointer;font-size:13px;font-weight:600;padding:9px 16px;border-radius:11px;border:1px solid var(--line);background:var(--card2);color:var(--ink)">VOO</span>
+      <span data-preset="SPY" data-growth="10" style="cursor:pointer;font-size:13px;font-weight:600;padding:9px 16px;border-radius:11px;border:1px solid var(--line);background:var(--card2);color:var(--ink)">SPY</span>
+      <span data-preset="QQQ" data-growth="13" style="cursor:pointer;font-size:13px;font-weight:600;padding:9px 16px;border-radius:11px;border:1px solid var(--line);background:var(--card2);color:var(--ink)">QQQ</span>
+      <span data-preset="กำหนดเอง" data-growth="8" style="cursor:pointer;font-size:13px;font-weight:600;padding:9px 16px;border-radius:11px;border:1px solid var(--line);background:var(--card2);color:var(--ink)">กำหนดเอง</span>
+    </div>
+    <div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">ชื่อสินทรัพย์</div>
+    <input id="dca-name" type="text" autocomplete="off" placeholder="เช่น VOO" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit;margin-bottom:14px">
+    <div style="display:flex;gap:12px;margin-bottom:14px">
+      <div style="flex:1"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">เงินเริ่มต้น (USD)</div><input id="dca-initial" type="number" step="any" min="0" placeholder="10000" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></div>
+      <div style="flex:1"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">ออมทุกเดือน (USD)</div><input id="dca-monthly" type="number" step="any" min="0" placeholder="500" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:18px">
+      <div style="flex:1"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">เติบโตเฉลี่ย/ปี (%)</div><input id="dca-growth" type="number" step="any" placeholder="10" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></div>
+      <div style="flex:1"><div style="font-size:12.5px;color:var(--sub);margin-bottom:5px">ระยะเวลา (ปี)</div><input id="dca-years" type="number" step="any" min="0" placeholder="10" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink);font-size:15px;font-family:inherit"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:18px">
+      <button id="dca-run" style="flex:1;padding:13px;border:none;border-radius:13px;background:var(--gold);color:var(--ongold);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">เริ่มจำลอง</button>
+      <button id="dca-clear" style="flex:none;padding:13px 20px;border:1px solid var(--line);border-radius:13px;background:transparent;color:var(--sub);font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit">ล้างค่า</button>
+    </div>
+    <div style="background:var(--card2);border:1px solid var(--line);border-radius:18px;padding:18px 18px 14px">
+      <div style="font-size:12.5px;color:var(--sub)">มูลค่าอนาคต (ประมาณ)</div>
+      <div style="display:flex;align-items:baseline;gap:9px;margin-top:4px"><div id="dca-fv" style="font-family:'Newsreader',serif;font-size:32px;font-weight:500;color:var(--ink);letter-spacing:-.5px">—</div><div id="dca-fv-alt" style="font-size:13px;color:var(--sub)"></div></div>
+      <svg viewBox="0 0 320 110" preserveAspectRatio="none" style="width:100%;height:88px;margin:12px 0 8px;overflow:visible"><path id="dca-curve" d="" fill="none" stroke="var(--up)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid var(--line)">
+        <div><div style="font-size:12px;color:var(--sub)">เงินลงทุนรวม</div><div id="dca-invested" style="font-size:15px;font-weight:600;color:var(--ink);margin-top:2px">—</div></div>
+        <div style="text-align:right"><div style="font-size:12px;color:var(--sub)">กำไรจากการทบต้น</div><div id="dca-growth-val" style="font-size:15px;font-weight:700;color:var(--up);margin-top:2px">—</div></div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--faint);text-align:center;margin-top:12px">จำลองตามสมมติฐาน ไม่ใช่การรับประกันผลตอบแทนจริง</div>
+  </div>
+</div>
+
 <!-- Price-alert sheet (Phase 6). Plain DOM like #txnsheet. Thresholds entered in the
      display currency, stored USD-canonical. Wired in app.js (wireAlertForm). -->
 <div id="alertsheet" style="display:none;position:fixed;inset:0;z-index:60;align-items:flex-end;justify-content:center;font-family:'Anuphan',sans-serif">
@@ -199,8 +242,7 @@
       <div class="brand"><img src="logo.png" alt="Mun" style="width:22px;height:22px;border-radius:6px;vertical-align:-5px;margin-right:8px">Mun · มั่น</div>
       <div class="navitem" onClick="{{ goOverview }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.overview }}" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2.2"></rect><rect x="13" y="3" width="8" height="5" rx="2.2"></rect><rect x="13" y="10" width="8" height="11" rx="2.2"></rect><rect x="3" y="13" width="8" height="8" rx="2.2"></rect></svg><span style="color:{{ c.overview }}">ภาพรวม</span></div>
       <div class="navitem" onClick="{{ goWatch }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.watch }}" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"></path></svg><span style="color:{{ c.watch }}">เฝ้าดู</span></div>
-      <div class="navitem" onClick="{{ goPlanner }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.planner }}" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h10M4 12h16M4 17h7"></path><circle cx="18" cy="7" r="2"></circle><circle cx="13" cy="17" r="2"></circle></svg><span style="color:{{ c.planner }}">วางแผน</span></div>
-      <div class="navitem" onClick="{{ goDividends }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.dividends }}" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v10M9.5 9.5h4a1.6 1.6 0 010 3.2h-3a1.6 1.6 0 000 3.2h4" stroke-linecap="round"></path></svg><span style="color:{{ c.dividends }}">ปันผล</span></div>
+      <div class="navitem" onClick="{{ goTools }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.tools }}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 01-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 005.4-5.4l-2.5 2.5-2.5-.6-.6-2.5z"></path></svg><span style="color:{{ c.tools }}">เครื่องมือ</span></div>
       <div class="navitem" onClick="{{ goTransactions }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.transactions }}" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg><span style="color:{{ c.transactions }}">รายการ</span></div>
       <div class="navitem" onClick="{{ goAccount }}"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ c.account }}" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg><span style="color:{{ c.account }}">บัญชี</span></div>
     </div>
@@ -447,65 +489,154 @@
       </sc-if>
 
       <!-- ===== BUY PLANNER (DCA) — Phase 4 ===== -->
-      <sc-if value="{{ isPlanner }}">
+      <sc-if value="{{ isTools }}">
       <div>
-        <div style="padding:6px 22px 4px;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">วางแผนซื้อ</div>
-          <div onClick="{{ newPlan }}" style="width:38px;height:38px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ongold)" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+        <div style="padding:6px 22px 4px"><div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">เครื่องมือ</div></div>
+        <div style="display:flex;gap:7px;padding:12px 18px 2px;overflow-x:auto">
+          <sc-for list="{{ toolTabs }}" as="tb">
+            <span onClick="{{ tb.onClick }}" style="flex:none;font-size:13px;font-weight:{{ tb.weight }};border-radius:10px;padding:8px 15px;background:{{ tb.bg }};color:{{ tb.col }};border:1px solid {{ tb.bd }};cursor:pointer">{{ tb.label }}</span>
+          </sc-for>
         </div>
-        <div style="padding:4px 22px 0;font-size:13px;color:var(--sub);line-height:1.5">วางแผนซื้อเฉลี่ยต้นทุน (DCA) — กำหนดราคาและจำนวนในแต่ละระดับ เพื่อดูต้นทุนเฉลี่ยที่ได้</div>
-        <sc-for list="{{ planList }}" as="p">
-          <div onClick="{{ p.onOpen }}" style="margin:14px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;cursor:pointer">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start">
-              <div><div style="font-size:16px;font-weight:700;color:var(--ink)">{{ p.sym }}</div><div style="font-size:12.5px;color:var(--sub);margin-top:2px">{{ p.sub }}</div></div>
-              <div style="text-align:right"><div style="font-size:11.5px;color:var(--sub)">ต้นทุนเฉลี่ย</div><div style="font-size:16px;font-weight:700;color:var(--gold);margin-top:1px">{{ p.avgStr }}</div></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)">
-              <span style="font-size:12.5px;color:var(--sub)">เงินลงทุนรวม {{ p.costStr }}</span>
-              <sc-if value="{{ p.hasDelta }}"><span style="font-size:12.5px;font-weight:600;color:{{ p.deltaCol }}">{{ p.deltaStr }}</span></sc-if>
-            </div>
+
+        <!-- TAB ถัวเฉลี่ย (free) = Buy Planner -->
+        <sc-if value="{{ toolAvg }}">
+        <div>
+          <div style="padding:14px 22px 0;display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="font-size:13px;color:var(--sub);line-height:1.5;flex:1">วางแผนซื้อเฉลี่ยต้นทุน — กำหนดราคาและจำนวนแต่ละระดับ เพื่อดูต้นทุนเฉลี่ยที่ได้</div>
+            <div onClick="{{ newPlan }}" style="flex:none;width:38px;height:38px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ongold)" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
           </div>
-        </sc-for>
-        <sc-if value="{{ planEmpty }}">
-        <div style="margin:16px 16px 0;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:26px 18px;text-align:center">
-          <div style="font-size:14px;color:var(--sub)">ยังไม่มีแผนซื้อ</div>
-          <div style="font-size:12.5px;color:var(--faint);margin-top:5px">แตะ + ด้านบนเพื่อสร้างแผนซื้อเฉลี่ยต้นทุน</div>
+          <sc-for list="{{ planList }}" as="p">
+            <div onClick="{{ p.onOpen }}" style="margin:14px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;cursor:pointer">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div><div style="font-size:16px;font-weight:700;color:var(--ink)">{{ p.sym }}</div><div style="font-size:12.5px;color:var(--sub);margin-top:2px">{{ p.sub }}</div></div>
+                <div style="text-align:right"><div style="font-size:11.5px;color:var(--sub)">ต้นทุนเฉลี่ย</div><div style="font-size:16px;font-weight:700;color:var(--gold);margin-top:1px">{{ p.avgStr }}</div></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)">
+                <span style="font-size:12.5px;color:var(--sub)">เงินลงทุนรวม {{ p.costStr }}</span>
+                <sc-if value="{{ p.hasDelta }}"><span style="font-size:12.5px;font-weight:600;color:{{ p.deltaCol }}">{{ p.deltaStr }}</span></sc-if>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ planEmpty }}">
+          <div style="margin:16px 16px 0;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:26px 18px;text-align:center">
+            <div style="font-size:14px;color:var(--sub)">ยังไม่มีแผนซื้อ</div>
+            <div style="font-size:12.5px;color:var(--faint);margin-top:5px">แตะ + ด้านบนเพื่อสร้างแผนซื้อเฉลี่ยต้นทุน</div>
+          </div>
+          </sc-if>
+          <div style="height:28px"></div>
         </div>
         </sc-if>
-        <div style="height:28px"></div>
-      </div>
-      </sc-if>
 
-      <!-- ===== DIVIDENDS (static showcase, parity with iOS) ===== -->
-      <sc-if value="{{ isDividends }}">
-      <div>
-        <div style="padding:6px 22px 4px"><div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px">เงินปันผล</div></div>
-        <div style="margin:12px 16px 0;padding:20px 22px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
-          <div style="font-size:13px;color:var(--sub)">รับแล้วในปีนี้</div>
-          <div style="font-family:'Newsreader',serif;font-size:38px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:6px;letter-spacing:-.5px">{{ divReceived }}</div>
-          <div style="display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
-            <div><div style="font-size:12px;color:var(--sub)">คาดทั้งปี</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">{{ divAnnual }}</div></div>
-            <div><div style="font-size:12px;color:var(--sub)">อัตราผลตอบแทน</div><div style="font-size:16px;font-weight:600;color:var(--gold);margin-top:3px">{{ divYield }}</div></div>
-            <div><div style="font-size:12px;color:var(--sub)">รับ/เดือน</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">{{ divMonthly }}</div></div>
+        <!-- TAB DCA (free) = compound simulator -->
+        <sc-if value="{{ toolDca }}">
+        <div style="padding:16px 16px 28px">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px 20px;text-align:center">
+            <div style="width:46px;height:46px;border-radius:14px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><path d="M8 7h8M8 11h8M8 15h4"></path></svg></div>
+            <div style="font-size:16px;font-weight:700;color:var(--ink)">จำลองลงทุนแบบ DCA + ทบต้น</div>
+            <div style="font-size:12.5px;color:var(--sub);margin-top:6px;line-height:1.5">คำนวณมูลค่าอนาคตจากการออมรายเดือนด้วยการทบต้นตามสมมติฐานที่คุณกำหนด</div>
+            <div onClick="{{ openDca }}" style="margin-top:18px;height:46px;border-radius:13px;background:var(--gold);color:var(--ongold);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;cursor:pointer">เริ่มจำลอง</div>
           </div>
+          <div style="font-size:11.5px;color:var(--faint);text-align:center;margin-top:10px">นี่คือการจำลองตามสมมติฐาน ไม่ใช่การรับประกันผลตอบแทนจริง</div>
         </div>
-        <div style="margin:18px 16px 28px">
-          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:9px">ปันผลของหุ้นที่ถือ</div>
-          <div style="font-size:12px;color:var(--faint);margin-bottom:9px">วันจ่ายถัดไปเป็นค่าประมาณจากรอบการจ่ายที่ผ่านมา · แตะเพื่อบันทึกรายการปันผล</div>
-          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
-            <sc-for list="{{ divRows }}" as="dv">
-              <div onClick="{{ dv.onSuggest }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer">
-                <div style="position:relative;width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px;overflow:hidden">{{ dv.logo }}<img src="{{ dv.logoUrl }}" onerror="this.remove()" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff"></div>
-                <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ dv.name }}</div><div style="font-size:12.5px;color:var(--sub)">{{ dv.xdSub }}</div></div>
-                <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">{{ dv.payout }}</div><div style="font-size:12px;color:var(--sub)">{{ dv.nextStr }}</div></div>
+        </sc-if>
+
+        <!-- TAB ปันผล (Pro) -->
+        <sc-if value="{{ toolDiv }}">
+        <div>
+          <sc-if value="{{ isPro }}">
+          <div>
+            <div style="margin:14px 16px 0;padding:20px 22px;border-radius:24px;background:var(--card);border:1px solid var(--line)">
+              <div style="font-size:13px;color:var(--sub)">รับแล้วในปีนี้</div>
+              <div style="font-family:'Newsreader',serif;font-size:38px;font-weight:500;color:var(--ink);line-height:1.05;margin-top:6px;letter-spacing:-.5px">{{ divReceived }}</div>
+              <div style="display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
+                <div><div style="font-size:12px;color:var(--sub)">คาดทั้งปี</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">{{ divAnnual }}</div></div>
+                <div><div style="font-size:12px;color:var(--sub)">อัตราผลตอบแทน</div><div style="font-size:16px;font-weight:600;color:var(--gold);margin-top:3px">{{ divYield }}</div></div>
+                <div><div style="font-size:12px;color:var(--sub)">รับ/เดือน</div><div style="font-size:16px;font-weight:600;color:var(--ink);margin-top:3px">{{ divMonthly }}</div></div>
               </div>
-            </sc-for>
+            </div>
+            <div style="margin:18px 16px 28px">
+              <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:9px">ปันผลของหุ้นที่ถือ</div>
+              <div style="font-size:12px;color:var(--faint);margin-bottom:9px">วันจ่ายถัดไปเป็นค่าประมาณจากรอบการจ่ายที่ผ่านมา · แตะเพื่อบันทึกรายการปันผล</div>
+              <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2px 16px">
+                <sc-for list="{{ divRows }}" as="dv">
+                  <div onClick="{{ dv.onSuggest }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer">
+                    <div style="position:relative;width:40px;height:40px;border-radius:12px;background:var(--goldsoft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:14px;overflow:hidden">{{ dv.logo }}<img src="{{ dv.logoUrl }}" onerror="this.remove()" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff"></div>
+                    <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--ink)">{{ dv.name }}</div><div style="font-size:12.5px;color:var(--sub)">{{ dv.xdSub }}</div></div>
+                    <div style="text-align:right"><div style="font-size:15px;font-weight:600;color:var(--up)">{{ dv.payout }}</div><div style="font-size:12px;color:var(--sub)">{{ dv.nextStr }}</div></div>
+                  </div>
+                </sc-for>
+              </div>
+              <sc-if value="{{ divEmpty }}">
+              <div style="margin:6px 0 0;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:26px 18px;text-align:center">
+                <div style="font-size:14px;color:var(--sub)">ยังไม่มีข้อมูลปันผล</div>
+                <div style="font-size:12.5px;color:var(--faint);margin-top:5px">ถือหุ้นหรือกองทุนที่จ่ายปันผลเพื่อดูปฏิทินและผลตอบแทน</div>
+              </div>
+              </sc-if>
+            </div>
           </div>
+          </sc-if>
+          <sc-if value="{{ isFree }}">
+          <div style="margin:16px 16px 28px;background:linear-gradient(135deg,var(--goldsoft),var(--card));border:1px solid var(--gold);border-radius:22px;padding:24px 20px;text-align:center">
+            <div style="display:inline-block;font-size:11.5px;font-weight:700;color:var(--gold);background:var(--card);border:1px solid var(--gold);padding:4px 12px;border-radius:20px">เฉพาะ Mun Pro</div>
+            <div style="font-size:17px;font-weight:700;color:var(--ink);margin-top:12px">ปลดล็อกปฏิทินเงินปันผล</div>
+            <div style="font-size:12.5px;color:var(--sub);margin-top:6px;line-height:1.5">ดูวันจ่าย XD ที่คาดการณ์ ผลตอบแทนต่อหุ้น และเงินปันผลทั้งปีของพอร์ต</div>
+            <div onClick="{{ upgradeMock }}" style="margin-top:18px;height:46px;border-radius:13px;background:var(--gold);color:var(--ongold);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;cursor:pointer">อัปเกรดเป็น Pro (จำลอง)</div>
+          </div>
+          </sc-if>
         </div>
-        <sc-if value="{{ divEmpty }}">
-        <div style="margin:6px 16px 28px;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:26px 18px;text-align:center">
-          <div style="font-size:14px;color:var(--sub)">ยังไม่มีข้อมูลปันผล</div>
-          <div style="font-size:12.5px;color:var(--faint);margin-top:5px">ถือหุ้นหรือกองทุนที่จ่ายปันผลเพื่อดูปฏิทินและผลตอบแทน</div>
+        </sc-if>
+
+        <!-- TAB จัดสรร (Pro) -->
+        <sc-if value="{{ toolAlloc }}">
+        <div>
+          <sc-if value="{{ isPro }}">
+          <div style="margin:14px 16px 28px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+              <span style="font-size:14px;font-weight:600;color:var(--ink)">สัดส่วนการลงทุน</span>
+              <span onClick="{{ openAlloc }}" style="font-size:12.5px;color:var(--gold);font-weight:600;cursor:pointer">จัดกลุ่ม</span>
+            </div>
+            <div style="display:flex;height:11px;border-radius:6px;overflow:hidden;gap:2px">
+              <sc-for list="{{ alloc }}" as="a"><span style="width:{{ a.pct }}%;background:{{ a.color }}"></span></sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;margin-top:13px">
+              <sc-for list="{{ alloc }}" as="a">
+                <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:{{ a.color }}"></span><span style="font-size:12.5px;color:var(--sub);flex:1">{{ a.label }}</span><span style="font-size:12.5px;font-weight:600;color:var(--ink)">{{ a.pctLabel }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+          <sc-if value="{{ isFree }}">
+          <div style="margin:16px 16px 28px;background:linear-gradient(135deg,var(--goldsoft),var(--card));border:1px solid var(--gold);border-radius:22px;padding:24px 20px;text-align:center">
+            <div style="display:inline-block;font-size:11.5px;font-weight:700;color:var(--gold);background:var(--card);border:1px solid var(--gold);padding:4px 12px;border-radius:20px">เฉพาะ Mun Pro</div>
+            <div style="font-size:17px;font-weight:700;color:var(--ink);margin-top:12px">ปลดล็อกการจัดกลุ่มพอร์ต</div>
+            <div style="font-size:12.5px;color:var(--sub);margin-top:6px;line-height:1.5">สร้างกลุ่มสินทรัพย์ของคุณเอง แล้วดูสัดส่วนการลงทุนตามกลุ่มที่กำหนด</div>
+            <div onClick="{{ upgradeMock }}" style="margin-top:18px;height:46px;border-radius:13px;background:var(--gold);color:var(--ongold);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;cursor:pointer">อัปเกรดเป็น Pro (จำลอง)</div>
+          </div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+        <!-- TAB ภาษี (Pro) -->
+        <sc-if value="{{ toolTax }}">
+        <div>
+          <sc-if value="{{ isPro }}">
+          <div style="margin:14px 16px 28px">
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:13px;color:var(--sub)">กำไร/ขาดทุนที่รับรู้แล้ว (FIFO)</span>
+              <span style="font-size:18px;font-weight:700;color:{{ realizedCol }}">{{ realizedStr }}</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--faint);margin:12px 4px 0;line-height:1.5">รายงานคำนวณด้วยวิธี FIFO — การขายตัดจากล็อตที่ซื้อก่อน ไฟล์ CSV ใช้ยื่นภาษีหรือเก็บบันทึกได้</div>
+            <div onClick="{{ exportTax }}" style="margin-top:16px;height:46px;border-radius:13px;background:var(--gold);color:var(--ongold);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;cursor:pointer">ส่งออกรายงานภาษี FIFO (CSV)</div>
+          </div>
+          </sc-if>
+          <sc-if value="{{ isFree }}">
+          <div style="margin:16px 16px 28px;background:linear-gradient(135deg,var(--goldsoft),var(--card));border:1px solid var(--gold);border-radius:22px;padding:24px 20px;text-align:center">
+            <div style="display:inline-block;font-size:11.5px;font-weight:700;color:var(--gold);background:var(--card);border:1px solid var(--gold);padding:4px 12px;border-radius:20px">เฉพาะ Mun Pro</div>
+            <div style="font-size:17px;font-weight:700;color:var(--ink);margin-top:12px">ปลดล็อกรายงานภาษี FIFO</div>
+            <div style="font-size:12.5px;color:var(--sub);margin-top:6px;line-height:1.5">คำนวณกำไร/ขาดทุนที่รับรู้แล้วแบบ FIFO และส่งออกเป็น CSV</div>
+            <div onClick="{{ upgradeMock }}" style="margin-top:18px;height:46px;border-radius:13px;background:var(--gold);color:var(--ongold);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;cursor:pointer">อัปเกรดเป็น Pro (จำลอง)</div>
+          </div>
+          </sc-if>
         </div>
         </sc-if>
       </div>
