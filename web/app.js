@@ -253,15 +253,23 @@ class Component {
   // rest of the app (holdings, detail, ticket) treats it like a seeded symbol.
   // market: US|TH|CRYPTO|COMMODITY -> internal cat/kind/native.
   registerHit(hit) {
-    if (this.data[hit.symbol]) return this.data[hit.symbol];
     const m = hit.market;
+    // Bare ticker collision across markets: e.g. GLD = SPDR Gold Shares (US, USD) AND
+    // GLD = KTAM Gold ETF Tracker (Thai SET, Yahoo GLD.BK). The catalog keys by symbol,
+    // so qualify the Thai one's key with '.BK' UNLESS a same-market (Thai) entry already
+    // exists — keeps both coexisting and reuses a seed (PTT stays 'PTT', not 'PTT.BK').
+    const existing = this.data[hit.symbol];
+    const key = (m === 'TH' && !(existing && existing.cat === 'thai'))
+      ? hit.symbol + '.BK' : hit.symbol;
+    if (this.data[key]) return this.data[key];
     const cat = m === 'TH' ? 'thai' : m === 'CRYPTO' ? 'crypto'
       : m === 'COMMODITY' ? 'gold' : (hit.assetType === 'etf' ? 'etf' : 'foreign');
     const kind = cat === 'crypto' ? 'crypto' : cat === 'gold' ? 'gold' : 'stock';
-    const inst = Object.assign(this.stubInst(hit.symbol), {
+    const inst = Object.assign(this.stubInst(key), {
+      sym: key, bare: hit.symbol,   // bare = un-suffixed ticker for quote/candle calls
       name: hit.name || hit.symbol, name2: hit.name || hit.symbol,
       exch: hit.exchange || '', native: m === 'TH' ? 'thb' : 'usd', cat, kind, market: m });
-    this.data[hit.symbol] = inst;
+    this.data[key] = inst;
     return inst;
   }
 
@@ -269,7 +277,7 @@ class Component {
   // deliberate quota charge — discovering a new symbol). THB markets -> USD-canonical.
   async quoteInst(inst) {
     try {
-      const { data: q } = await Fn.call('/quote', { sym: inst.sym, market: inst.market || 'US' });
+      const { data: q } = await Fn.call('/quote', { sym: inst.bare || inst.sym, market: inst.market || 'US' });
       const div = q.currency === 'THB' ? this.RATE : 1;
       Object.assign(inst, { price: q.price / div, dayPct: q.dayPct,
         open: (q.open || q.price) / div, high: (q.high || q.price) / div, low: (q.low || q.price) / div });
@@ -284,14 +292,22 @@ class Component {
     const held = Object.keys(this.fifo(this.state.txns).holdings);
     const missing = held.filter(s => !this.data[s]);
     if (!missing.length) return;
+    // A held key may be market-qualified (e.g. 'GLD.BK' = Thai KTAM gold); symbol_metadata
+    // stores the bare ticker ('GLD'). Look up by bare, then re-key the same way registerHit
+    // does so the recovered instrument matches the held key.
+    const bareOf = s => s.endsWith('.BK') ? s.slice(0, -3) : s;
+    const bares = [...new Set(missing.map(bareOf))];
     const { data: meta } = await SB.from('symbol_metadata')
-      .select('symbol,market,name,exchange,asset_type').in('symbol', missing);
-    const bySym = {}; (meta || []).forEach(m => { bySym[m.symbol] = m; });
+      .select('symbol,market,name,exchange,asset_type').in('symbol', bares);
+    const byKey = {};
+    (meta || []).forEach(m => { byKey[m.market === 'TH' ? m.symbol + '.BK' : m.symbol] = m; });
     for (const sym of missing) {
-      const m = bySym[sym];
+      const m = byKey[sym];
       const inst = this.registerHit(m
         ? { symbol: m.symbol, market: m.market, name: m.name, exchange: m.exchange, assetType: m.asset_type }
-        : { symbol: sym, market: 'US' });          // fallback: assume US if metadata missing
+        : sym.endsWith('.BK')
+          ? { symbol: bareOf(sym), market: 'TH' }  // qualified key implies Thai
+          : { symbol: sym, market: 'US' });        // else assume US
       await this.quoteInst(inst);
     }
     this.setState({});                             // re-render with recovered prices
@@ -371,8 +387,8 @@ class Component {
   async pickHit(h) {
     const $ = id => document.getElementById(id);
     const inst = this.registerHit(h);
-    $('tf-sym').value = h.symbol;
-    $('tf-search').value = h.symbol + (h.name ? ' · ' + h.name : '');
+    $('tf-sym').value = inst.sym;   // catalog key (may be market-qualified, e.g. GLD.BK)
+    $('tf-search').value = inst.sym + (h.name ? ' · ' + h.name : '');
     $('tf-results').style.display = 'none';
     await this.quoteInst(inst);
     if (!this.editingId && inst.price) $('tf-price').value = inst.price.toFixed(2);
@@ -388,7 +404,15 @@ class Component {
     console.assert(reg.cat === 'thai' && reg.native === 'thb' && reg.market === 'TH', 'TH mapping broken');
     const etf = this.registerHit({ symbol: 'JEPQ', market: 'US', name: 'JPM', assetType: 'etf' });
     console.assert(etf.cat === 'etf' && etf.kind === 'stock', 'ETF mapping broken');
-    delete this.data.ADVANC; delete this.data.JEPQ;  // leave catalog as found
+    // GLD collision: US SPDR keeps 'GLD'; Thai KTAM is qualified 'GLD.BK' (distinct).
+    const gus = this.registerHit({ symbol: 'GLD', market: 'US', name: 'SPDR Gold', assetType: 'etf' });
+    const gth = this.registerHit({ symbol: 'GLD', market: 'TH', name: 'KTAM Gold', assetType: 'etf' });
+    console.assert(gus.sym === 'GLD' && gth.sym === 'GLD.BK' && gus !== gth, 'GLD collision not split');
+    console.assert(MarketAPI.yahooSym(gus) === 'GLD' && MarketAPI.yahooSym(gth) === 'GLD.BK', 'gold ETF yahooSym wrong');
+    // Seed reuse: a hit for a seeded Thai symbol must NOT create a '.BK' duplicate.
+    const ptt = this.registerHit({ symbol: 'PTT', market: 'TH', name: 'PTT', assetType: 'stock' });
+    console.assert(ptt === this.data.PTT && !this.data['PTT.BK'], 'seed PTT duplicated');
+    delete this.data.ADVANC; delete this.data.JEPQ; delete this.data.GLD; delete this.data['GLD.BK'];
     console.log('demo() OK');
   }
 
@@ -842,7 +866,7 @@ class Component {
       return { sym: s.sym, name: s.name, priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: up ? 'var(--up)' : 'var(--down)', onOpen: () => this.open(sym) };
     });
     // Phase 3: news list (from MarketAPI.refresh → S.news; [] until first load / on failure).
-    const newsItems = (S.news || []).map(n => ({ headline: n.headline, source: n.source || 'ข่าว', url: n.url }));
+    const newsItems = (S.news || []).map(n => ({ headline: n.headline, summary: n.summary || '', hasSummary: !!(n.summary && n.summary !== n.headline), source: n.source || 'ข่าว', url: n.url }));
 
     const tfDefs = [['all','ทั้งหมด'],['buy','ซื้อ'],['sell','ขาย'],['dividend','ปันผล']];
     const txnTabs = tfDefs.map(([k, label]) => { const on = S.txnFilter === k; return { label, weight: on ? '600' : '400', bg: on ? t.gold : t.card, col: on ? t.ongold : t.sub, bd: on ? t.gold : t.line, onClick: () => this.setState({ txnFilter: k }) }; });

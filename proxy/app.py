@@ -13,6 +13,8 @@ data is ever needed.
 import os
 import time
 import statistics
+import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -159,20 +161,57 @@ def yquote(sym: str):
         raise HTTPException(status_code=404, detail=f"no yquote for {sym}: {e}")
 
 
+# Keyless Google Translate (same unofficial-endpoint approach as the keyless Yahoo
+# data above). Cache by source text so the client's 60s /news poll never re-translates
+# the same headline. ponytail: unbounded module dict — fine for personal news volume
+# (a few hundred strings/day); add an LRU cap if it ever grows unbounded.
+GT = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=th&dt=t&q={}"
+_tr_cache = {}
+
+
+def _to_thai(text):
+    """Translate English -> Thai, returning the ORIGINAL on any failure (so one bad
+    call never blanks an article). Cached by source string."""
+    text = (text or "").strip()
+    if not text:
+        return ""
+    if text in _tr_cache:
+        return _tr_cache[text]
+    try:
+        r = requests.get(GT.format(urllib.parse.quote(text)), headers=UA, timeout=6)
+        r.raise_for_status()
+        out = "".join(seg[0] for seg in r.json()[0] if seg[0])
+        _tr_cache[text] = out
+        return out
+    except Exception:
+        return text  # fall back to English for this field only
+
+
 @app.get("/news")
-def news(limit: int = 12):
-    """General market news headlines via Finnhub, key hidden server-side. Returns a
-    (possibly empty) list — never throws to the UI, which is the main screen."""
+def news(limit: int = 10):
+    """General market news, Finnhub key hidden server-side. Each item's headline +
+    summary are translated to Thai (brief = the main idea, no click-through needed);
+    `source`/`url` are kept only for credit. Returns [] on failure (UI hides news)."""
     if not FINNHUB_KEY:
         return []
     try:
         r = requests.get(FH_NEWS.format(FINNHUB_KEY), timeout=8)
         r.raise_for_status()
-        return [{"headline": a["headline"], "url": a["url"], "source": a.get("source", ""),
-                 "datetime": a.get("datetime", 0)}
-                for a in r.json()[:limit] if a.get("headline") and a.get("url")]
+        raw = [a for a in r.json() if a.get("headline") and a.get("url")][:limit]
     except Exception:
         return []
+
+    def render(a):
+        # Per-article try: a single translation hiccup degrades to English, not blank.
+        return {"headline": _to_thai(a["headline"]),
+                "summary": _to_thai(a.get("summary", "")),
+                "source": a.get("source", ""), "url": a["url"],
+                "datetime": a.get("datetime", 0)}
+
+    # Parallel first-fill so a cold proxy isn't ~20 sequential translate calls; cached
+    # after the first poll. Order preserved by executor.map.
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        return list(pool.map(render, raw))
 
 
 @app.get("/dividends")

@@ -74,12 +74,16 @@ const MarketAPI = {
     try { return await this.getJSON(`${this.proxyBase}/news`); } catch (e) { return []; }
   },
 
-  // Map an instrument to its Yahoo symbol: Thai -> .BK, crypto -> -USD, else plain.
+  // Map an instrument to its Yahoo symbol. `s.bare` is the un-suffixed ticker for
+  // discovered symbols whose catalog key was market-qualified (e.g. Thai KTAM gold
+  // keyed 'GLD.BK' to avoid colliding with US SPDR 'GLD'); fall back to s.sym for
+  // seeded instruments. Only the synthetic XAU maps to gold futures — real gold ETFs
+  // (GLD, GLD.BK) keep their own ticker.
   yahooSym(s) {
-    if (s.cat === 'thai') return s.sym + '.BK';
-    if (s.kind === 'crypto') return s.sym + '-USD';
-    if (s.kind === 'gold') return 'GC=F';
-    return s.sym;
+    if (s.sym === 'XAU') return 'GC=F';
+    if (s.cat === 'thai') { const b = s.bare || s.sym; return b.endsWith('.BK') ? b : b + '.BK'; }
+    if (s.kind === 'crypto') return (s.bare || s.sym) + '-USD';
+    return s.bare || s.sym;
   },
 
   // OHLC bars for the detail candlestick chart. USD-canonical: THB bars / FX rate.

@@ -1,5 +1,30 @@
 # Handoff
 
+## Latest (2026-06-27) — Thai news brief + GLD collision fix (CODE DONE + VERIFIED, awaiting push→deploy)
+Two changes, not yet committed/pushed (push redeploys Render proxy = needed for news live).
+- **News = Thai brief, no click-through.** Proxy `/news` now translates each Finnhub
+  headline + summary to Thai (keyless Google `gtx` endpoint, same unofficial-source style as
+  Yahoo), caches by source string (module dict — client polls every 60s, never re-translate),
+  parallel first-fill (`ThreadPoolExecutor`), **per-article fallback to English** so one bad
+  translate never blanks the list. `summary` carried through (empty → headline only). Client:
+  `index.html` news card = Thai headline + Thai brief body + demoted source credit link
+  (`ที่มา: <source> ↗`, no forced redirect); `app.js` newsItems maps `summary`/`hasSummary`.
+  Verified: proxy pipeline direct (Thai out, empty/junk fallback, shape) — local has no
+  FINNHUB_KEY so end-to-end Thai news only shows after deploy (live proxy has the key).
+- **GLD ticker collision FIXED (client-only, no edge redeploy).** Real collision: `GLD` =
+  SPDR Gold Shares (US, USD $373) AND `GLD` = KTAM Gold ETF Tracker (Thai SET, Yahoo `GLD.BK`,
+  THB ฿5.34) — both keyed bare `'GLD'` in the catalog → second pick silently returned the first.
+  Fix: `registerHit` market-aware key (TH collisions → `'GLD.BK'`, reuses a same-market seed so
+  PTT stays `'PTT'`); discovered insts carry `bare` (un-suffixed) for quote/candle calls;
+  `quoteInst`/`pickHit` use it; `marketapi.yahooSym` guards double-`.BK` + maps only synthetic
+  `XAU`→`GC=F` (real gold ETFs keep their own ticker); `hydrateHeldSymbols` maps qualified held
+  keys back to bare for the metadata lookup. Verified in-browser: `demo()` 0 fails; US `GLD`→
+  `GLD`(USD), TH `GLD`→`GLD.BK`(THB) distinct; `XAU`→`GC=F`; seed `PTT` not duplicated.
+- **TO FINISH (user decision):** push → Render redeploys `mun-re6q` (proxy) + `mun-web` (static);
+  then live-verify Thai news renders on mun-3skf.onrender.com + GLD search shows two distinct rows
+  (SPDR/NYSEArca vs KTAM/Thailand). gtx is unofficial — if Render egress gets blocked, swap to
+  MyMemory; news degrades to English, never blank.
+
 ## Current status
 **Web logo shipped + verified live 2026-06-26 (commit `296cd41`, pushed).** Gold "M"
 PNG (`web/logo.png`, 128px/17KB, downscaled from `~/Downloads/Untitled40` 1024px) is now
