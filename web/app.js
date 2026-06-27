@@ -1259,6 +1259,7 @@ class Component {
       userName: (this.user && (this.user.email || '').split('@')[0]) || 'นักลงทุน',
       userInitial: (this.user && (this.user.email || 'M')[0].toUpperCase()) || 'M',
       totalMain: this.val(totalUsd), totalAlt: this.altVal(totalUsd),
+      fxStr: '1 USD = ฿' + this.nf(this.RATE, 2),
       dayStr, dayBg: dayUp ? 'color-mix(in oklab,var(--up) 16%,transparent)' : 'color-mix(in oklab,var(--down) 16%,transparent)', dayCol: dayUp ? 'var(--up)' : 'var(--down)',
       showTicket, tk, showToast: !!S.toast, toastMsg: S.toast,
       goOverview: () => this.setState({ screen: 'overview' }),
