@@ -90,9 +90,9 @@
 </div>
 
 <!-- Watchlist add sheet. Plain DOM like #txnsheet; search → pick stars the symbol. -->
-<div id="watchsheet" style="display:none;position:fixed;inset:0;z-index:60;align-items:flex-end;justify-content:center;font-family:'Anuphan',sans-serif">
+<div id="watchsheet" style="display:none;position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;font-family:'Anuphan',sans-serif">
   <div id="watchsheet-bg" style="position:absolute;inset:0;background:rgba(20,16,8,.42)"></div>
-  <div style="position:relative;width:100%;max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:24px 24px 0 0;padding:22px 20px 28px;max-height:80vh;overflow:visible">
+  <div style="position:relative;width:calc(100% - 32px);max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px 20px 28px;max-height:80vh;overflow:visible">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
       <div style="font-size:18px;font-weight:700;color:var(--ink)">เพิ่มในเฝ้าดู</div>
       <div id="watchsheet-close" style="cursor:pointer;font-size:20px;color:var(--sub);line-height:1;padding:4px 8px">✕</div>
