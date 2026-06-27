@@ -1,6 +1,14 @@
 # Handoff
 
-## Latest (2026-06-27 #5) — Phase B: custom allocation groups (CODE DONE+VERIFIED, awaiting SQL)
+## Latest (2026-06-27 #5) — Phase B: custom allocation groups (VERIFIED LIVE 2026-06-27)
+**Migration applied + persistence verified live on mun-3skf.onrender.com** (commit `3f4f561`,
+pushed). Fresh signup `sutest_alloc_v1@mun-test.dev`: add group (live `alloc_groups` insert,
+RLS ok) → rename "Growth" → assign AAPL (`alloc_assign`) → alloc shows Growth 75% / ไม่จัดกลุ่ม
+25% → **reload PERSISTS** (group + assignment reloaded) → delete group → AAPL assignment
+cascade-removed → reverts to auto-category fallback. 0 console errors. Throwaway test holdings
+deleted after; throwaway user `sutest_alloc_v1@mun-test.dev` left in auth.users.
+
+(original entry) Overview `สัดส่วนการลงทุน` supports user-defined buckets ("Custom groups +
 Overview `สัดส่วนการลงทุน` now supports user-defined buckets (the "Custom groups + rename"
 option). The inert "ปรับสมดุล" link became **"จัดกลุ่ม"** → `#allocsheet` (plain DOM, rebuilt
 on open): rename/delete groups, "+ เพิ่มกลุ่ม", and assign each holding via a `<select>`
