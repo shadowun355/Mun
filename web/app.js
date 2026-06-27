@@ -190,7 +190,7 @@ class Component {
     const aWrap = $('alloc-assign');
     aWrap.replaceChildren(...held.map(sym => {
       const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px';
-      const lbl = document.createElement('span'); lbl.textContent = sym; lbl.style.cssText = 'flex:1;font-size:14px;color:var(--ink);font-weight:600';
+      const lbl = document.createElement('span'); lbl.textContent = this.dispSym(sym); lbl.style.cssText = 'flex:1;font-size:14px;color:var(--ink);font-weight:600';
       const sel = document.createElement('select'); sel.style.cssText = 'box-sizing:border-box;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card2);color:var(--ink);font-size:13px;font-family:inherit;max-width:180px';
       const none = document.createElement('option'); none.value = ''; none.textContent = 'ไม่จัดกลุ่ม'; sel.appendChild(none);
       groups.forEach(g => { const o = document.createElement('option'); o.value = g.id; o.textContent = g.name; sel.appendChild(o); });
@@ -458,7 +458,7 @@ class Component {
     const inst = this.getInst(sym);
     $('txnsheet-title').textContent = row ? 'แก้ไขรายการ' : 'เพิ่มรายการ';
     $('tf-sym').value = sym;                                  // hidden chosen symbol
-    $('tf-search').value = sym + (inst.name && inst.name !== sym ? ' · ' + inst.name : '');
+    $('tf-search').value = this.dispSym(sym) + (inst.name && inst.name !== sym ? ' · ' + inst.name : '');
     $('tf-results').style.display = 'none';
     $('tf-type').value = row ? row.side : 'buy';
     $('tf-qty').value = row ? row.qty : '';
@@ -526,7 +526,7 @@ class Component {
     const $ = id => document.getElementById(id);
     const inst = this.registerHit(h);
     $('tf-sym').value = inst.sym;   // catalog key (may be market-qualified, e.g. GLD.BK)
-    $('tf-search').value = inst.sym + (h.name ? ' · ' + h.name : '');
+    $('tf-search').value = this.dispSym(inst.sym) + (h.name ? ' · ' + h.name : '');
     $('tf-results').style.display = 'none';
     this.setPriceCcy(inst.sym);                  // ฿/$ glyph follows the picked asset
     await this.quoteInst(inst);
@@ -746,7 +746,7 @@ class Component {
     this.openTxnForm(null);
     const inst = this.getInst(info.sym);
     $('tf-sym').value = info.sym;
-    $('tf-search').value = info.sym + (inst.name && inst.name !== info.sym ? ' · ' + inst.name : '');
+    $('tf-search').value = this.dispSym(info.sym) + (inst.name && inst.name !== info.sym ? ' · ' + inst.name : '');
     $('tf-type').value = 'dividend';
     $('tf-qty').value = info.qty;
     $('tf-price').value = info.amountUsd.toFixed(4);
@@ -766,7 +766,7 @@ class Component {
     const $ = id => document.getElementById(id);
     const inst = this.getInst(sym);
     this.alertSym = sym;
-    $('alertsheet-title').textContent = 'แจ้งเตือนราคา · ' + sym;
+    $('alertsheet-title').textContent = 'แจ้งเตือนราคา · ' + this.dispSym(sym);
     $('af-op').value = 'above';
     $('af-price').value = inst.price ? this.price(inst.price).replace(/[^\d.]/g, '') : '';
     $('af-cur').textContent = this.state.cur === 'thb' ? '฿' : '$';
@@ -1021,7 +1021,7 @@ class Component {
       .filter(s => S.watchFilter === 'all' || s.cat === S.watchFilter)
       .map(s => {
         const up = s.dayPct >= 0;
-        return { sym: s.sym, name2: s.name2, priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: up ? 'var(--up)' : 'var(--down)', spark: up ? this.USPARK : this.DSPARK, onOpen: () => this.open(s.sym), onRemove: () => this.removeWatch(s.sym) };
+        return { sym: this.dispSym(s.sym), name2: s.name2, priceStr: this.price(s.price), pct: this.pctStr(s.dayPct), pctColor: up ? 'var(--up)' : 'var(--down)', spark: up ? this.USPARK : this.DSPARK, onOpen: () => this.open(s.sym), onRemove: () => this.removeWatch(s.sym) };
       });
     const watchEmpty = watchRows.length === 0;
 
@@ -1070,7 +1070,7 @@ class Component {
       const div = tx.side === 'dividend';
       const verb = div ? 'ปันผล ' : buy ? 'ซื้อ ' : 'ขาย ';
       const item = Object.assign({
-        type: tx.side, title: verb + tx.sym,
+        type: tx.side, title: verb + this.dispSym(tx.sym),
         sub: this.qtyLabel(s, q) + ' · ' + this.price(pr),
         amt: (buy ? '−' : '+') + this.val(q * pr), time,
         onEdit: () => this.openTxnForm(tx)
