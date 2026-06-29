@@ -1,5 +1,24 @@
 # Handoff
 
+## Latest (2026-06-29 #12) — fix: Thai stock prices wrong/stale (PUSHED, redeploying)
+User: SCB + other Thai stocks showing wrong price. Proxy CONFIRMED correct
+(`/quote?sym=SCB` → 146.5 THB, matches Yahoo). Bug client-side, two compounding defects
+(traced via Explore agent):
+- **Stale:** `marketapi.js thai()` only refreshed hardcoded `['PTT','CPALL','KBANK']`.
+  SCB is discovery-only (keyed `SCB.BK`, not seeded) → never patched by 60s tick;
+  `patch()` no-ops on absent keys anyway. **Fix:** `thai()` now iterates every
+  `cat:'thai'`/`native:'thb'` instrument in the live catalog (held+watched+discovered)
+  via the FREE keyless proxy (bare ticker), patches by the `.BK` catalog key. Dropped
+  `thaiSyms` const. Seeded PTT/CPALL/KBANK still covered (cat thai).
+- **Wrong value:** `boot()` ran `hydrateHeldSymbols()` BEFORE first `fx()` → `quoteInst`
+  divided 146.5 THB by fallback `RATE=36.4`, display later ×live rate (~32.5) → ~10% low,
+  permanent (never re-quoted). **Fix:** `await MarketAPI.fx(app)` before hydrate.
+  (Fixing the stale defect also self-heals this on the first tick.)
+- Files: `web/marketapi.js` (rewrote `thai()`, dropped `thaiSyms`), `web/app.js` (1 line
+  in boot). No migration/proxy/deps. `node --check` both clean. Commit pushed on
+  `feat/pricing-page`. **NOT browser-verified** (extension disconnected). User: after
+  redeploy, log SCB → reload → ≈฿146.5 not ฿131; PTT/CPALL/KBANK still refresh.
+
 ## Latest (2026-06-27 #11) — feat: Lemon Squeezy real billing (CODE DONE, needs LS dashboard + secrets)
 Real subscriptions via Lemon Squeezy (merchant-of-record — no Thai company; remits VAT).
 Drops into existing `subscriptions` table (provider CHECK already allows 'lemonsqueezy'); quota
