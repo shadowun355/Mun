@@ -10,7 +10,6 @@ const MarketAPI = {
   proxyBase: 'https://mun-re6q.onrender.com',
   cryptoIds: { BTC: 'bitcoin', ETH: 'ethereum' },
   usSyms: ['AAPL', 'NVDA', 'TSLA', 'SPY', 'QQQ'],
-  thaiSyms: ['PTT', 'CPALL', 'KBANK'],
 
   async getJSON(url) {
     const r = await fetch(url);
@@ -50,9 +49,17 @@ const MarketAPI = {
 
   async thai(app) {
     const rate = app.RATE;
-    await Promise.allSettled(this.thaiSyms.map(async sym => {
-      const j = await this.getJSON(`${this.proxyBase}/quote?sym=${sym}`); // THB
-      this.patch(app, sym, { price: j.price / rate, dayPct: j.dayPct, open: j.open / rate, high: j.high / rate, low: j.low / rate });
+    // Refresh every Thai symbol in the catalog (seeded OR discovered) via the FREE
+    // keyless proxy — no Supabase quota charge. Catalog key may be '.BK'-qualified;
+    // the proxy takes the bare ticker. patch() writes back by the catalog key.
+    const keys = [...new Set(Object.values(app.data)
+      .filter(s => s.cat === 'thai' || s.native === 'thb')
+      .map(s => s.sym))];
+    await Promise.allSettled(keys.map(async key => {
+      const inst = app.data[key];
+      const bare = (inst.bare || key).replace(/\.BK$/i, '');
+      const j = await this.getJSON(`${this.proxyBase}/quote?sym=${bare}`); // THB
+      this.patch(app, key, { price: j.price / rate, dayPct: j.dayPct, open: j.open / rate, high: j.high / rate, low: j.low / rate });
     }));
   },
 

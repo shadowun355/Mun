@@ -1390,6 +1390,7 @@ async function boot() {
   app.wireDcaForm();               // bind the (DOM) DCA simulator sheet
   app.wireAlertForm();             // bind the (DOM) price-alert sheet
   await app.loadUserData();        // pull txns / watchlist / prefs, then re-render
+  await MarketAPI.fx(app).catch(() => {});  // live FX rate before hydrate divides THB
   await app.hydrateHeldSymbols();  // recover discovered holdings (market+price) so totals aren't $0
   await app.snapshotToday();       // capture today's portfolio value for the growth trend
   tick(); setInterval(tick, 60000);
