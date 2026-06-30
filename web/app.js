@@ -941,6 +941,7 @@ class Component {
   // Called after each live refresh. Fire any active alert whose threshold is crossed:
   // toast, mark triggered_at + deactivate (one-shot). Compare in USD-canonical.
   async checkAlerts() {
+    if (!this.state.notif) return; // in-app toast alerts off → don't fire (alerts stay active)
     const active = (this.state.alerts || []).filter(a => a.active);
     if (!active.length) return;
     const fired = active.filter(a => {
