@@ -1,5 +1,22 @@
 # Handoff
 
+## Latest (2026-06-30 #14) — account screen: notif toggle gates toasts + drop dead security row (LIVE + VERIFIED)
+Commit `30e8a37`, pushed to main, Render redeployed, browser-verified live (logged in as wutsun506).
+- **การแจ้งเตือนราคา toggle now means something.** Was wired (`toggleNotif` flips `notif` +
+  savePrefs) but cosmetic — `checkAlerts()` fired regardless. Added `if (!this.state.notif)
+  return;` at top of `checkAlerts()` → OFF skips in-app toast firing; alerts stay ACTIVE (not
+  consumed/deactivated) so they resume when re-enabled. In-app toasts only; email notif left for
+  a separate future pref (user's call).
+- **ความปลอดภัย row removed** (`web/index.html` ทั่วไป card) — was a dead chevron row, no
+  onClick. User chose remove over wiring (account is Google-OAuth → no password to reset).
+- **Pricing page (#10) eyeballed live + PASS:** toggle รายปี−25%(default ฿225/mo, เรียกเก็บ
+  ฿2,700/ปี)↔รายเดือน(฿300/mo) reactive; Pro card แนะนำ badge + 3 features; Free ฿0 + caps;
+  footer "ชำระเงินปลอดภัยผ่าน Lemon Squeezy". CTA showed "แผนปัจจุบันของคุณ" because the account
+  is **mock-Pro from prior testing** — Free→Pro upgrade flow NOT exercised. Pricing screen is a
+  SPA state (no URL); reached via `app.setState({screen:'pricing'})` since Pro accounts hide the
+  Free-only ดูแพ็กเกจ entry.
+- Files: `web/app.js` (checkAlerts guard), `web/index.html` (drop security row). `node --check` clean.
+
 ## Latest (2026-06-30 #13) — DEPLOY: merged feat/pricing-page → main (SCB fix LIVE + VERIFIED)
 **SCB price VERIFIED correct by user 2026-06-30.**
 Root cause SCB still stale after #12: **Render deploys `main`, but #10/#11/#12 all lived only on
