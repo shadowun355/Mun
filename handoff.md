@@ -1,5 +1,72 @@
 # Handoff
 
+## Latest (2026-06-29 #12) — fix: Thai stock prices wrong/stale (PUSHED, redeploying)
+User: SCB + other Thai stocks showing wrong price. Proxy CONFIRMED correct
+(`/quote?sym=SCB` → 146.5 THB, matches Yahoo). Bug client-side, two compounding defects
+(traced via Explore agent):
+- **Stale:** `marketapi.js thai()` only refreshed hardcoded `['PTT','CPALL','KBANK']`.
+  SCB is discovery-only (keyed `SCB.BK`, not seeded) → never patched by 60s tick;
+  `patch()` no-ops on absent keys anyway. **Fix:** `thai()` now iterates every
+  `cat:'thai'`/`native:'thb'` instrument in the live catalog (held+watched+discovered)
+  via the FREE keyless proxy (bare ticker), patches by the `.BK` catalog key. Dropped
+  `thaiSyms` const. Seeded PTT/CPALL/KBANK still covered (cat thai).
+- **Wrong value:** `boot()` ran `hydrateHeldSymbols()` BEFORE first `fx()` → `quoteInst`
+  divided 146.5 THB by fallback `RATE=36.4`, display later ×live rate (~32.5) → ~10% low,
+  permanent (never re-quoted). **Fix:** `await MarketAPI.fx(app)` before hydrate.
+  (Fixing the stale defect also self-heals this on the first tick.)
+- Files: `web/marketapi.js` (rewrote `thai()`, dropped `thaiSyms`), `web/app.js` (1 line
+  in boot). No migration/proxy/deps. `node --check` both clean. Commit pushed on
+  `feat/pricing-page`. **NOT browser-verified** (extension disconnected). User: after
+  redeploy, log SCB → reload → ≈฿146.5 not ฿131; PTT/CPALL/KBANK still refresh.
+
+## Latest (2026-06-27 #11) — feat: Lemon Squeezy real billing (CODE DONE, needs LS dashboard + secrets)
+Real subscriptions via Lemon Squeezy (merchant-of-record — no Thai company; remits VAT).
+Drops into existing `subscriptions` table (provider CHECK already allows 'lemonsqueezy'); quota
+hot-path + client unchanged (per `functions/BILLING.md`). Prices ฿300/mo · ฿2,700/yr.
+- **New Edge Function** `web/supabase/functions/lemonsqueezy-webhook/index.ts`: verifies
+  `X-Signature` HMAC-SHA256 (timing-safe) of raw body vs `LEMONSQUEEZY_WEBHOOK_SECRET` →
+  service-role upsert into `subscriptions` onConflict `(provider,provider_subscription_id)`.
+  Allowlists 7 `subscription_*` lifecycle events (NOT payment_* — those carry an Invoice obj,
+  would write garbage). Status map: active/on_trial→Pro; cancelled/past_due→Pro until ends_at
+  (grace); paused/unpaid/expired→revoked. Cancels all active rows before granting (one-active
+  -per-user index). user_id from checkout `custom_data`, fallback lookup by sub id.
+- **Migration** `20260627000002_lemonsqueezy_webhook.sql`: PLAIN unique index on
+  `(provider,provider_subscription_id)` — partial predicate breaks PostgREST onConflict (42P10);
+  NULLs distinct so 'mock' rows coexist.
+- **env.ts**: +3 opt() vars (WEBHOOK_SECRET, VARIANT_MONTHLY, VARIANT_YEARLY). opt() so other
+  functions still cold-start.
+- **Client `web/app.js`**: `LS` config const (buy URLs + portal, placeholders `PUT_*`) +
+  `LS_LIVE` flag. `goCheckout(cycle)` redirects to LS hosted checkout w/ `checkout[custom]
+  [user_id]`; `goPortal()` → LS billing portal. Both fall back to mock (`setMockTier`) until
+  URLs set. Pricing CTA → goCheckout; account cancel → goPortal. CTA label drops "(จำลอง)"
+  when LS_LIVE.
+- **Setup doc** `functions/lemonsqueezy-webhook/README.md`: dashboard steps, secrets, deploy
+  (`--no-verify-jwt`), client wiring, status map, test.
+- **advisor-reviewed (3 blocks fixed):** partial-index onConflict 42P10 → plain index; pre-cancel
+  `.neq` missed NULL mock rows → cancel-all; payment_* Invoice-shape corruption → lifecycle
+  allowlist. **Not deployed/tested** — needs user LS account + secrets + `supabase db push` +
+  function deploy. `node --check app.js` clean; webhook not deno-checked (deno not local).
+- **User TODO:** create LS store/product/2 variants → fill `LS` URLs in app.js + 3 secrets →
+  `supabase db push` + `supabase functions deploy lemonsqueezy-webhook --no-verify-jwt`.
+
+## Latest (2026-06-27 #10) — feat: dedicated Pricing page (NOT pushed — needs eyeball)
+New `pricing` screen (`isPricing`, full-screen, hides bottom nav like detail). Free vs Mun Pro
+comparison + monthly/yearly billing toggle. **Prices (user-set):** ฿300/mo, OR yearly billed
+฿3,600 −25% = ฿2,700/yr (=฿225/mo effective, "ประหยัด 25%"). Toggle drives Pro card price +
+CTA label via `S.billCycle` (default `'year'`).
+- `web/app.js`: `billCycle:'year'` init state; template adds `isPricing`, `goPricing`
+  (stamps prevScreen), billing toggle data (`billYearly`, seg bg/col, `setBillMonth/Year`,
+  `proPriceMain/Sub`, `proCtaLabel`) via an IIFE-spread in the render-data object;
+  `showTabs` now also excludes `pricing`. CTA reuses existing `upgradeMock`; back reuses `back`.
+- `web/index.html`: pricing `<sc-if>` block (back header, billing seg toggle, highlighted Pro
+  card w/ price+CTA, Free card, footer). isFree→Pro CTA active + Free "แผนปัจจุบัน" badge;
+  isPro→Pro "แผนปัจจุบันของคุณ". All upgrade entry points rerouted to `goPricing`/"ดูแพ็กเกจ":
+  account free card + 3 tool paywalls (ปันผล/จัดสรร/ภาษี).
+- Payment still MOCK (`upgradeMock`→`setMockTier`). Real provider (Lemon Squeezy/Paddle) deferred.
+- **Verify:** `node --check app.js` clean. NO browser verify (extension was disconnected last
+  session). User should hard-refresh → บัญชี → ดูแพ็กเกจ, toggle รายเดือน/รายปี (฿300↔฿225),
+  Free CTA→upgrade, flip Pro→both cards show current-plan state.
+
 ## Latest (2026-06-27 #9) — fix: Thai (.BK) symbols stubbed as foreign (PUSHED, redeploying)
 Commit `36f6ce3`. User: TISCO showing ต่างประเทศ instead of หุ้นไทย. Root cause = `stubInst()`
 hardcoded `cat:'foreign'/native:'usd'`. A `.BK`-qualified key is ALWAYS Thai SET, but a
