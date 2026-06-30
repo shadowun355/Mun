@@ -1,5 +1,21 @@
 # Handoff
 
+## Latest (2026-06-30 #13) — DEPLOY: merged feat/pricing-page → main (SCB fix now LIVE)
+Root cause SCB still stale after #12: **Render deploys `main`, but #10/#11/#12 all lived only on
+`feat/pricing-page`** — never reached main → live site ran old `marketapi.js` (`thaiSyms:
+['PTT','CPALL','KBANK']`, SCB absent → never refreshed). Proxy was always correct
+(`/quote?sym=SCB` → 148.0 THB).
+- **Action:** merged `feat/pricing-page` → `main` (`--no-ff`), pushed `cac17d6`. Clean merge,
+  no conflicts. Render redeployed static. Confirmed deployed `marketapi.js` = new `thai()`
+  (iterates every `cat:'thai'`/`native:'thb'` catalog key, FREE proxy, patch by `.BK` key);
+  `app.js` boot `await fx()` before hydrate also live.
+- **Went live this merge (user chose "merge whole branch"):** #10 pricing page, #11 Lemon Squeezy
+  billing (client falls back to MOCK until LS secrets set — safe), #12 SCB price fix.
+- **User verify:** hard-refresh → open SCB → ≈฿148 (not ฿131); PTT/CPALL/KBANK still tick. Eyeball
+  pricing screen. **#11 still needs:** LS store/2 variants → fill `LS` URLs in app.js + 3 secrets →
+  `supabase db push` (migration 20260627000002) + `supabase functions deploy lemonsqueezy-webhook
+  --no-verify-jwt`.
+
 ## Latest (2026-06-29 #12) — fix: Thai stock prices wrong/stale (PUSHED, redeploying)
 User: SCB + other Thai stocks showing wrong price. Proxy CONFIRMED correct
 (`/quote?sym=SCB` → 146.5 THB, matches Yahoo). Bug client-side, two compounding defects
