@@ -1,6 +1,7 @@
 # Handoff
 
-## Latest (2026-06-30 #13) — DEPLOY: merged feat/pricing-page → main (SCB fix now LIVE)
+## Latest (2026-06-30 #13) — DEPLOY: merged feat/pricing-page → main (SCB fix LIVE + VERIFIED)
+**SCB price VERIFIED correct by user 2026-06-30.**
 Root cause SCB still stale after #12: **Render deploys `main`, but #10/#11/#12 all lived only on
 `feat/pricing-page`** — never reached main → live site ran old `marketapi.js` (`thaiSyms:
 ['PTT','CPALL','KBANK']`, SCB absent → never refreshed). Proxy was always correct
